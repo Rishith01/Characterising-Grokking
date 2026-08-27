@@ -1,0 +1,11 @@
+# Personal reference PDFs at the BTP root -- never intended for this repo.
+*.pdf
+
+# agop_alignment_testing project excludes
+agop_alignment_testing/.venv/
+agop_alignment_testing/**/__pycache__/
+*.pyc
+agop_alignment_testing/.vscode/
+
+# GPL-3.0 reference clone -- see agop_alignment_testing/external/README.md for how to get it.
+agop_alignment_testing/external/rfm-grokking/
