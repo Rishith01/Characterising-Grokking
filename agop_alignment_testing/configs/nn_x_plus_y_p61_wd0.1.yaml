@@ -1,0 +1,17 @@
+# Diagnostic run, not canonical (see agopx/learners/neural.py module docstring).
+# wd=0.1 fixes circulant deviation's monotonicity but degrades the paper's actual
+# no-diag NFM-vs-sqrt(AGOP) correlation check below the 0.92 bar -- superseded by
+# nn_x_plus_y_p61.yaml (literal wd=1.0) as the canonical run.
+learner: nn
+run_id: nn_x_plus_y_p61_r0.5_seed0_wd0.1
+
+operation: "x+y"
+p: 61
+training_fraction: 0.5
+width: 1024
+epochs: 50
+batch_size: 32
+lr: 0.001
+weight_decay: 0.1
+snapshot_every: 1
+seed: 0

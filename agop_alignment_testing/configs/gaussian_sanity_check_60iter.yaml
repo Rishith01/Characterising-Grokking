@@ -1,0 +1,13 @@
+# Diagnostic: does Gaussian just need more iterations than quadratic to fully grok?
+# Not part of the frozen Phase 2 corpus.
+learner: rfm
+run_id: gaussian_sanity_check_60iter
+
+operation: "x+y"
+p: 61
+training_fraction: 0.5
+iters: 60
+kernel_type: gaussian
+bandwidth: 2.5
+agop_power: 0.5
+seed: 0

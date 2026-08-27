@@ -1,0 +1,16 @@
+# GPU smoke test: identical to nn_x_plus_y_p61.yaml except device=cuda. Used only to
+# check GPU-vs-CPU parity before trusting NNLearner's device support for Phase 2.
+learner: nn
+run_id: nn_x_plus_y_p61_r0.5_seed0_gpu_smoketest
+
+operation: "x+y"
+p: 61
+training_fraction: 0.5
+width: 1024
+epochs: 50
+batch_size: 32
+lr: 0.001
+weight_decay: 1.0
+snapshot_every: 1
+seed: 0
+device: cuda

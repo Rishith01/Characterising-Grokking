@@ -1,0 +1,10 @@
+learner: rfm
+run_id: x_mult_y_p61_quadratic_r0.5_seed0_50iter
+
+operation: "x*y"
+p: 61
+training_fraction: 0.5
+iters: 50
+kernel_type: quadratic
+agop_power: 0.5
+seed: 0

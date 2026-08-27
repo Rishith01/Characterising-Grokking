@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+.vscode/
+
+# GPL-3.0 reference clone -- see external/README.md for how to get it.
+external/rfm-grokking/

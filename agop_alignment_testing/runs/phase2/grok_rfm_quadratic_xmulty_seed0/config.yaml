@@ -1,0 +1,10 @@
+run_id: grok_rfm_quadratic_xmulty_seed0
+learner: rfm
+operation: x*y
+p: 61
+training_fraction: 0.5
+iters: 30
+kernel_type: quadratic
+bandwidth: 2.5
+agop_power: 0.5
+seed: 0

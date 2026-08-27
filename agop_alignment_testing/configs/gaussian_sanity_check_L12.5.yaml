@@ -1,0 +1,15 @@
+# Diagnostic: same as gaussian_sanity_check.yaml but L=12.5, matching the reference
+# repo's exp(-D/(2*bandwidth^2)) convention at bandwidth=2.5, instead of project.md's
+# literal exp(-D/L) at L=2.5 (a 5x difference in effective decay rate despite both
+# using the number "2.5"). Not part of the frozen Phase 2 corpus.
+learner: rfm
+run_id: gaussian_sanity_check_L12.5
+
+operation: "x+y"
+p: 61
+training_fraction: 0.5
+iters: 30
+kernel_type: gaussian
+bandwidth: 12.5
+agop_power: 0.5
+seed: 0

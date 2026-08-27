@@ -1,0 +1,19 @@
+# Extended-length diagnostic: literal Appendix B weight_decay=1.0, but run much
+# longer (300 epochs) to test whether the reference repo's own default of 1000
+# epochs (train_net.py --epochs default=1000, vs project.md's "50 epochs") is the
+# real explanation for the circulant-deviation drift seen at 50 epochs -- i.e.
+# whether wd=1.0 eventually reaches its own stable equilibrium given enough time,
+# rather than 50 epochs just catching it mid-relaxation.
+learner: nn
+run_id: nn_x_plus_y_p61_r0.5_seed0_wd1.0_long
+
+operation: "x+y"
+p: 61
+training_fraction: 0.5
+width: 1024
+epochs: 300
+batch_size: 32
+lr: 0.001
+weight_decay: 1.0
+snapshot_every: 5
+seed: 0

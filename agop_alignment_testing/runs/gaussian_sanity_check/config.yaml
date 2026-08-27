@@ -1,0 +1,14 @@
+# One-off sanity check: has the Gaussian-kernel closed-form AGOP (kernels.py) ever
+# been run through a full RFM loop end-to-end? Only unit-tested against a tiny
+# autograd reference so far. Not part of the frozen Phase 2 corpus.
+learner: rfm
+run_id: gaussian_sanity_check
+
+operation: "x+y"
+p: 61
+training_fraction: 0.5
+iters: 30
+kernel_type: gaussian
+bandwidth: 2.5
+agop_power: 0.5
+seed: 0

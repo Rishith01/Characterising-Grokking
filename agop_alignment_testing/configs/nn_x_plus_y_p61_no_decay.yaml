@@ -1,0 +1,16 @@
+# Diagnostic run (see agopx/learners/neural.py module docstring): zero weight decay
+# fixes circulant deviation's monotonicity but never reaches 100% test accuracy.
+learner: nn
+run_id: nn_x_plus_y_p61_r0.5_seed0_no_decay
+
+operation: "x+y"
+p: 61
+training_fraction: 0.5
+width: 1024
+epochs: 50
+batch_size: 32
+lr: 0.001
+weight_decay: 0.0
+w2_weight_decay: 0.0
+snapshot_every: 1
+seed: 0
