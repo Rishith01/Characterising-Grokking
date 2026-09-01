@@ -3,8 +3,7 @@ learner: rfm
 operation: x/y
 p: 61
 training_fraction: 0.5
-iters: 30
+iters: 50
 kernel_type: quadratic
-bandwidth: 2.5
 agop_power: 0.5
 seed: 2

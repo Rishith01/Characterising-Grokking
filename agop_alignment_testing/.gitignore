@@ -2,6 +2,11 @@
 __pycache__/
 *.pyc
 .vscode/
-
+# Run artifacts are local and reproducible: configs/ + the seed in each config fully
+# determine them, so they are regenerated rather than versioned (~500MB per corpus
+# build, and a fresh copy would enter history on every rebuild). Covers runs/<run_id>/
+# too, which is runner.run's default output path -- not just runs/phase2/.
+runs/*
+!runs/.gitkeep
 # GPL-3.0 reference clone -- see external/README.md for how to get it.
 external/rfm-grokking/

@@ -1,0 +1,10 @@
+run_id: heldout_rfm_gaussian_p97_xminusy_seed0
+learner: rfm
+operation: x-y
+p: 97
+training_fraction: 0.5
+iters: 50
+kernel_type: gaussian
+agop_power: 0.5
+seed: 0
+bandwidth: 2.5

@@ -17,7 +17,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import yaml
 
-from agopx.probes.offline import AGOPAlignment, CirculantDeviation
+from agopx import probes as probe_registry
+from agopx.probes.offline import ALIGNMENT_REGIONS
 from agopx.runner import load_run
 
 
@@ -26,14 +27,26 @@ def gate_check(run_dir: Path, out_path: Path | None = None) -> tuple[pd.DataFram
     with open(run_dir / "config.yaml") as f:
         config = yaml.safe_load(f)
     p, operation = config["p"], config["operation"]
+    # The paper measures NN progress on sqrt(AGOP); Snapshot.M is the NFM there.
+    source = "sqrt_agop" if config.get("learner", "rfm") == "nn" else "M"
 
     traj = load_run(run_dir)
 
-    align = AGOPAlignment(p=p).finalize(traj)["trajectory"]
-    dev = CirculantDeviation(p=p, operation=operation).finalize(traj)["trajectory"]
+    align_cls = probe_registry.get("agop_alignment")
+    deviation_cls = probe_registry.get("circulant_deviation")
+
+    align = align_cls(p=p, source=source).finalize(traj)["trajectory"]
+    dev = deviation_cls(p=p, operation=operation, source=source).finalize(traj)["trajectory"]
 
     df_metrics = pd.DataFrame([{"t": s.t, **s.metrics} for s in traj])
     df = df_metrics.merge(pd.DataFrame(align), on="t").merge(pd.DataFrame(dev), on="t")
+
+    # Also record the paper-literal alignment regions alongside the project's
+    # off-diagonal-block default, so the deviation from Eq. 8 stays visible in the
+    # gate-check table rather than only in a docstring.
+    for region in ALIGNMENT_REGIONS:
+        col = pd.DataFrame(align_cls(p=p, source=source, region=region).finalize(traj)["trajectory"])
+        df[f"align_{region}"] = col["agop_alignment"]
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.5), sharex=True)
 

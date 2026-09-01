@@ -4,10 +4,42 @@ in five places.
 """
 from __future__ import annotations
 
+from typing import Any, Optional
+
 import numpy as np
 import scipy.linalg
 
 from .kernels import matrix_power_psd
+
+# Which matrix a probe reads out of a Snapshot.
+#   "M"         -- Snapshot.M: the RFM feature matrix, or the NN's NFM (W_1^T W_1).
+#   "sqrt_agop" -- [Snapshot.agop]^{1/2}, only available for learners that record a
+#                  separate AGOP (currently the NN).
+MATRIX_SOURCES = ("M", "sqrt_agop")
+
+
+def select_matrix(snap: Any, source: str = "M") -> np.ndarray:
+    """The d x d matrix a probe should measure, as float64.
+
+    The paper computes the neural-network progress measures (Fig. 5B) on the square
+    root of the AGOP, not on the NFM: "Given that the square root of the AGOP of
+    neural networks exhibits block-circulant structure, we can use circulant
+    deviation and AGOP alignment to measure gradual progress of neural networks
+    toward a generalizing solution." Snapshot.M is the NFM for NNLearner, so probes
+    scoring NN runs against Fig. 5B must pass source="sqrt_agop". For RFM the two
+    coincide by construction (M_t IS [G]^{1/2}), and RFMLearner records no separate
+    agop, so "M" is the only valid source there.
+    """
+    if source == "M":
+        return snap.M.astype(np.float64)
+    if source == "sqrt_agop":
+        if snap.agop is None:
+            raise ValueError(
+                "source='sqrt_agop' requires a learner that records a separate AGOP; "
+                "this snapshot has none (RFM's M_t is already [G]^{1/2} -- use source='M')"
+            )
+        return matrix_power_psd(snap.agop.astype(np.float64), 0.5)
+    raise ValueError(f"unknown matrix source {source!r}; have {list(MATRIX_SOURCES)}")
 
 
 def offdiag_block(M: np.ndarray, p: int) -> np.ndarray:
@@ -20,13 +52,25 @@ def offdiag_block(M: np.ndarray, p: int) -> np.ndarray:
     return M[p:2 * p, 0:p]
 
 
-def frobenius_normalize(M: np.ndarray) -> np.ndarray:
-    """Normalise before differencing trajectories, else trace growth from the
-    s = 1/2 AGOP power gets measured instead of direction.
+def unit_direction(M: np.ndarray) -> Optional[np.ndarray]:
+    """M / ||M||_F, or None when M is exactly zero.
+
+    Normalise before differencing trajectories, else trace growth from the s = 1/2
+    AGOP power gets measured instead of direction (project.md Phase 3 preprocessing
+    note).
+
+    Returning None rather than the zero matrix matters: M_0 = I has an *exactly*
+    zero off-diagonal block, so a caller that normalises it gets a matrix with no
+    defined direction. Silently passing the zero matrix through made IncrementNorm
+    report exactly 1.0 at t=1 for every M_0=I run (||M_hat_1 - 0|| = 1 by
+    construction, carrying no information about the run), and made
+    IncrementCoherence's first delta the *state* M_hat_1 rather than an increment.
+    Probes must treat None as "no direction yet" and start their difference chain at
+    the next step.
     """
     norm = np.linalg.norm(M)
     if norm == 0.0:
-        return M
+        return None
     return M / norm
 
 
@@ -175,6 +219,28 @@ def random_circulant_seed_matrix(p: int, operation: str, rng: np.random.Generato
     accuracy almost immediately -- separating "measures a real signal" from
     "counts iterations" for a probe.
 
+    This IS the paper's Eq. 9, despite looking different. Eq. 9 transforms the
+    inputs, x -> (M*)^{1/4} x, and trains with an ordinary kernel; the reference
+    repo's train_random_circulant_kernel.py instead builds the same M*, takes
+    np.real(sqrtm(M*)), and passes it straight in as the kernel's Mahalanobis
+    matrix. The two are algebraically identical for both kernels here, since
+    x^T (M*)^{1/2} x' = ((M*)^{1/4} x)^T ((M*)^{1/4} x') -- and the Gaussian's
+    ||x - x'||^2_M is the same substitution. So seeding M_0 with (M*)^{1/2}, as
+    this function does, reproduces Eq. 9 exactly; no separate input-transform code
+    path is needed.
+
+    Note M* is genuinely indefinite (for p=61, ~26% of the spectral mass is
+    negative), so the matrix_power_psd below clips those directions to zero. That
+    is not a shortcut: the reference's np.real(scipy.linalg.sqrtm(M*)) does exactly
+    the same thing, since a negative eigenvalue's square root is purely imaginary
+    and taking the real part discards it.
+
+    Expect the resulting RFM run to be generalizing at t=0 rather than merely fast
+    -- that is Fig. 4's actual claim (random circulant features let a *static*
+    kernel machine generalize with no feature learning at all). A fast-learner arm
+    with a genuine time axis is the neural-network version, Fig. 7, where random
+    circulant inputs cut time-to-100% from >3000 epochs to several hundred.
+
     Independent reimplementation of nmallinar/rfm-grokking's
     train_random_circulant_kernel.py per-operation M construction (not ported): a
     random mean-centered circulant seeds the off-diagonal block, inverse-transformed
@@ -222,7 +288,22 @@ def random_circulant_seed_matrix(p: int, operation: str, rng: np.random.Generato
 
 
 def ema_smooth(values: np.ndarray, alpha: float) -> np.ndarray:
-    """Smooth NN-learner trajectories over epochs; single-epoch AdamW increments
-    are minibatch noise (project.md Section 3, Phase 3 preprocessing note).
+    """Exponential moving average, out[i] = alpha * values[i] + (1 - alpha) * out[i-1],
+    seeded with out[0] = values[0]. Larger alpha tracks the raw series more closely;
+    alpha = 1 is the identity.
+
+    Smooths NN-learner trajectories over epochs; single-epoch AdamW increments are
+    minibatch noise (project.md Section 3, Phase 3 preprocessing note). Causal by
+    construction -- out[i] depends only on values[:i+1] -- so it is safe to apply
+    inside a causal probe, unlike a centred filter.
     """
-    raise NotImplementedError
+    if not 0.0 < alpha <= 1.0:
+        raise ValueError(f"alpha must be in (0, 1], got {alpha}")
+    values = np.asarray(values, dtype=np.float64)
+    if values.size == 0:
+        return values
+    out = np.empty_like(values)
+    out[0] = values[0]
+    for i in range(1, len(values)):
+        out[i] = alpha * values[i] + (1.0 - alpha) * out[i - 1]
+    return out

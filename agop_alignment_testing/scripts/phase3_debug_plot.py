@@ -26,8 +26,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import yaml
 
-from agopx.probes.offline import AGOPAlignment
-from agopx.probes.online import ConsecutiveAGOPAlignment, IncrementCoherence, IncrementNorm
+from agopx import probes as probe_registry
 from agopx.runner import load_run
 
 DEBUG_SET = [
@@ -39,18 +38,18 @@ DEBUG_SET = [
     "grok_nn_xminusy_seed0",
 ]
 
-# (probe class, metric key, legend label, plot title suffix, output filename)
+# (registry name, metric key, legend label, plot title suffix, output filename)
 CANDIDATES = [
-    (IncrementNorm, "increment_norm", "||Delta_t||_F", "increment norm", "phase3_debug_increment_norm.png"),
+    ("increment_norm", "increment_norm", "||Delta_t||_F", "increment norm", "phase3_debug_increment_norm.png"),
     (
-        ConsecutiveAGOPAlignment,
+        "consecutive_agop_alignment",
         "consecutive_agop_alignment",
         "AGOP alignment (vs M_{t-1})",
         "consecutive AGOP alignment",
         "phase3_debug_consecutive_alignment.png",
     ),
     (
-        IncrementCoherence,
+        "increment_coherence",
         "increment_coherence",
         "increment coherence cos(Delta_t, Delta_{t-1})",
         "increment coherence",
@@ -59,17 +58,20 @@ CANDIDATES = [
 ]
 
 
-def plot_one(run_id: str, ax_acc, ax_probe, probe_cls, metric_key: str, metric_label: str):
+def plot_one(run_id: str, ax_acc, ax_probe, probe_name: str, metric_key: str, metric_label: str):
     run_dir = Path("runs/phase2") / run_id
     with open(run_dir / "config.yaml") as f:
         config = yaml.safe_load(f)
     p = config["p"]
+    source = "sqrt_agop" if config.get("learner", "rfm") == "nn" else "M"
 
     traj = load_run(run_dir)
     df_metrics = pd.DataFrame([{"t": s.t, **s.metrics} for s in traj])
 
-    align = pd.DataFrame(AGOPAlignment(p=p).finalize(traj)["trajectory"])
-    metric = pd.DataFrame(probe_cls(p=p).finalize(traj)["trajectory"])
+    align_cls = probe_registry.get("agop_alignment")
+    probe_cls = probe_registry.get(probe_name)
+    align = pd.DataFrame(align_cls(p=p, source=source).finalize(traj)["trajectory"])
+    metric = pd.DataFrame(probe_cls(p=p, source=source).finalize(traj)["trajectory"])
 
     ax_acc.plot(df_metrics["t"], df_metrics["train/accuracy"], color="tab:blue", label="train acc")
     ax_acc.plot(df_metrics["t"], df_metrics["test/accuracy"], color="tab:orange", label="test acc")
@@ -82,12 +84,12 @@ def plot_one(run_id: str, ax_acc, ax_probe, probe_cls, metric_key: str, metric_l
     ax_acc.set_xlabel("t")
 
 
-def make_plot(probe_cls, metric_key: str, metric_label: str, title_suffix: str, out_name: str):
+def make_plot(probe_name: str, metric_key: str, metric_label: str, title_suffix: str, out_name: str):
     fig, axes = plt.subplots(2, 3, figsize=(17, 8))
     probe_axes = []
     for ax, run_id in zip(axes.flat, DEBUG_SET):
         ax_probe = ax.twinx()
-        plot_one(run_id, ax, ax_probe, probe_cls, metric_key, metric_label)
+        plot_one(run_id, ax, ax_probe, probe_name, metric_key, metric_label)
         probe_axes.append(ax_probe)
 
     lo = min(a.get_ylim()[0] for a in probe_axes)
@@ -114,8 +116,8 @@ def make_plot(probe_cls, metric_key: str, metric_label: str, title_suffix: str, 
 
 
 def main():
-    for probe_cls, metric_key, metric_label, title_suffix, out_name in CANDIDATES:
-        make_plot(probe_cls, metric_key, metric_label, title_suffix, out_name)
+    for probe_name, metric_key, metric_label, title_suffix, out_name in CANDIDATES:
+        make_plot(probe_name, metric_key, metric_label, title_suffix, out_name)
 
 
 if __name__ == "__main__":

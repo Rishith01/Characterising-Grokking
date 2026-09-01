@@ -1,0 +1,9 @@
+run_id: nongrok_rfm_lowfrac0.05_xmulty_seed1
+learner: rfm
+operation: x*y
+p: 61
+training_fraction: 0.05
+iters: 50
+kernel_type: quadratic
+agop_power: 0.5
+seed: 1

@@ -30,6 +30,20 @@ reliable NN-side check (it isn't an implemented/verified paper metric for the NN
 either -- grep of the reference repo found no circulant-deviation code anywhere, only
 imshow heatmap logging), so it's treated as informative for RFM only going forward.
 Weight decay is kept at the paper's literal 1.0 rather than tuned further.
+
+Update to that conclusion: part of the discrepancy was a measurement bug, not the
+network. The paper computes the Fig. 5B progress measures on the square root of the
+AGOP, not on the NFM -- "Given that the square root of the AGOP of neural networks
+exhibits block-circulant structure, we can use circulant deviation and AGOP alignment
+to measure gradual progress" -- while the probes were reading Snapshot.M, which is
+the NFM. Measured on a 50-epoch x+y run, circulant deviation over the trajectory
+falls 0.0162 -> 0.0125 on the NFM but 0.0162 -> 0.0095 on sqrt(AGOP), i.e. roughly
+twice the descent, and closer to Fig. 5B's 0.015 -> 0.005. Probes now take a `source`
+argument (features.select_matrix) and corpus entries for NN runs set
+probe_source="sqrt_agop". The reversal after the minimum persists on both matrices,
+so this is a partial explanation, not a resolution -- but the residual gap should be
+re-examined against sqrt(AGOP) and a longer horizon before drawing conclusions about
+the network.
 """
 from __future__ import annotations
 
@@ -61,6 +75,14 @@ class NeuralConfig:
     # difference to the circulant-deviation drift investigated there (see module
     # docstring) -- kept as a knob since it's cheap, but not used by default.
     w2_weight_decay: Optional[float] = None
+    # "adamw" is the paper's Appendix B spec. "sgd" exists for the Appendix Fig. 5
+    # no-regularization control, which is vanilla SGD (lr 1.0, batch 128, width 512,
+    # weight decay 1e-5, 40% training fraction) run for 200k epochs -- AdamW with
+    # weight_decay=0 is NOT that control: it groks, just later (epoch ~25 instead of
+    # ~14 at p=61, r=0.5), which is why it cannot serve as a non-grokker.
+    optimizer: str = "adamw"
+    betas: tuple = (0.9, 0.98)  # adamw only; matches train_net.py (PyTorch default is 0.999)
+    momentum: float = 0.0  # sgd only
     snapshot_every: int = 1
     seed: int = 0
     device: str = "cpu"  # "cuda" to train on GPU; snapshot/AGOP extraction stays on CPU either way
@@ -101,17 +123,23 @@ class NNLearner(Learner):
         self.X_te = torch.from_numpy(one_hot_pairs(X_te_raw, config.p)).float().to(self.device)
         self.y_te = torch.from_numpy(one_hot_labels(y_te_raw, config.p)).float().to(self.device)
 
+        # AGOP extraction needs the training inputs as float64 numpy every snapshot;
+        # convert once rather than round-tripping off the device each time.
+        self._X_tr_np = one_hot_pairs(X_tr_raw, config.p)
+
         d = self.X_tr.shape[1]
         self.model = _QuadNet(d, config.width, config.p).to(self.device)
         w2_wd = config.weight_decay if config.w2_weight_decay is None else config.w2_weight_decay
-        self.opt = torch.optim.AdamW(
-            [
-                {"params": self.model.w1.parameters(), "weight_decay": config.weight_decay},
-                {"params": self.model.w2.parameters(), "weight_decay": w2_wd},
-            ],
-            lr=config.lr,
-            betas=(0.9, 0.98),  # matches train_net.py; PyTorch's default is (0.9, 0.999)
-        )
+        param_groups = [
+            {"params": self.model.w1.parameters(), "weight_decay": config.weight_decay},
+            {"params": self.model.w2.parameters(), "weight_decay": w2_wd},
+        ]
+        if config.optimizer == "adamw":
+            self.opt = torch.optim.AdamW(param_groups, lr=config.lr, betas=tuple(config.betas))
+        elif config.optimizer == "sgd":
+            self.opt = torch.optim.SGD(param_groups, lr=config.lr, momentum=config.momentum)
+        else:
+            raise ValueError(f"unknown optimizer {config.optimizer!r}; have ['adamw', 'sgd']")
 
     def steps(self) -> Iterator[Snapshot]:
         cfg = self.config
@@ -148,7 +176,7 @@ class NNLearner(Learner):
         # kernels.py's docstring for why this closed-form beats per-sample
         # Jacobians) -- cheap enough already that it stays on CPU regardless of
         # where training ran, per project.md: "this is a CPU workload."
-        agop = _quad_net_agop(self.X_tr.detach().cpu().numpy().astype(np.float64), W1, W2)
+        agop = _quad_net_agop(self._X_tr_np, W1, W2)
 
         metrics = {
             "train/accuracy": train_metrics["accuracy"],

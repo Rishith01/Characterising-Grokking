@@ -1,0 +1,10 @@
+run_id: fastlearn_rfm_xplusy_seed1
+learner: rfm
+operation: x+y
+p: 61
+training_fraction: 0.5
+iters: 50
+kernel_type: quadratic
+agop_power: 0.5
+seed: 1
+fast_learner: true

@@ -1,0 +1,15 @@
+run_id: nongrok_nn_random_labels_x_plus_y_seed1
+learner: nn
+operation: x+y
+p: 61
+training_fraction: 0.5
+width: 1024
+epochs: 300
+batch_size: 32
+lr: 0.001
+weight_decay: 1.0
+optimizer: adamw
+snapshot_every: 1
+device: cpu
+seed: 1
+random_labels: true
