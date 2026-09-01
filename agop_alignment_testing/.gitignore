@@ -8,5 +8,8 @@ __pycache__/
 # too, which is runner.run's default output path -- not just runs/phase2/.
 runs/*
 !runs/.gitkeep
+# Figures are small and worth versioning, unlike the feature matrices. runs/plots/ is
+# the one path under runs/ that stays tracked; plotting scripts write there.
+!runs/plots/
 # GPL-3.0 reference clone -- see external/README.md for how to get it.
 external/rfm-grokking/
