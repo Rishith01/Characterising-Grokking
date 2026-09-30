@@ -109,7 +109,9 @@ def make_plot(probe_name: str, metric_key: str, metric_label: str, title_suffix:
     fig.suptitle(f"Phase 3 debug set: accuracy vs AGOP alignment (vs M*) vs {title_suffix}", y=1.06)
     fig.tight_layout()
 
-    out = Path("runs/phase2/plots") / out_name
+    # runs/plots/ is the one path under runs/ that is versioned (see .gitignore).
+    out = Path("runs/plots") / out_name
+    out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=140, bbox_inches="tight")
     plt.close(fig)
     print(f"wrote {out}")

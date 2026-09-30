@@ -14,7 +14,7 @@ import pandas as pd
 
 from agopx.runner import load_run
 
-OUT_DIR = Path("runs/phase2/plots")
+OUT_DIR = Path("runs/plots")  # the one versioned path under runs/
 OP_COLORS = {
     "x+y": "tab:blue",
     "x-y": "tab:orange",
@@ -66,12 +66,12 @@ def plot_non_grokkers(corpus: pd.DataFrame):
     for _, row in non_grok.iterrows():
         df = _traj_df(row["run_dir"])
         label = row["run_id"].replace("nongrok_", "")
-        style = "-" if "no_decay" in row["run_id"] else ("--" if "random_labels" in row["run_id"] else ":")
+        style = "--" if "random_labels" in row["run_id"] else ":"
         ax.plot(df["t"], df["test/accuracy"], label=label, linewidth=1.5, linestyle=style)
     ax.axhline(0.9, color="gray", linestyle=":", linewidth=1, label="grok threshold")
     ax.set_xlabel("t (iteration / epoch)")
     ax.set_ylabel("test accuracy")
-    ax.set_title("Phase 2 non-grokkers: low training fraction, NN no-decay, random labels (9 runs)")
+    ax.set_title(f"Phase 2 non-grokkers: low training fraction, random labels ({len(non_grok)} runs)")
     ax.legend(fontsize=7, loc="center right")
     fig.tight_layout()
     out = OUT_DIR / "non_grokkers.png"
@@ -111,7 +111,7 @@ def plot_fast_learners(corpus: pd.DataFrame):
 
 def plot_grok_step_summary(corpus: pd.DataFrame):
     fig, ax = plt.subplots(figsize=(10, 6))
-    categories = ["grokker", "fast_learner", "non_grokker"]
+    categories = ["grokker", "fast_learner", "partial_learner", "non_grokker"]
     cat_x = {c: i for i, c in enumerate(categories)}
     markers = {"rfm": "o", "nn": "^"}
 

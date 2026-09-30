@@ -1,7 +1,6 @@
-"""Plotting (project.md Section 6). Phase 0 only needs a sanity-check plot of the
+"""Plotting (project.md Section 6). A sanity-check plot of the
 raw metrics.jsonl (accuracy/loss/trace(M) vs t) to eyeball that a run behaved. The
-Figure 2B / 5B reproduction plots (alignment + circulant deviation vs t) are Phase 1
-work, gated on agopx/probes/offline.py being implemented.
+Figure 2B / 5B reproduction plots live in scripts/gate_check_fig2b.py.
 """
 from __future__ import annotations
 

@@ -1,6 +1,6 @@
 """Probe scoring protocol (project.md Section 6): (probe, corpus) -> table of lead
-time / false-positive rate / seed variance. Not implemented in Phase 0 -- this is
-Phase 3 work, and depends on corpus.py (Phase 2) existing first.
+time / false-positive rate / seed variance. Not implemented yet -- Phase 3 work,
+blocked on the Phase 2 corpus (corpus.jsonl) being built from the deferred runs.
 
 This is also where causal probes get their future-leakage guard enforced in code
 (project.md: "the harness must refuse to score a causal probe using anything past

@@ -22,9 +22,9 @@ Adding centering fixed it: 98%+ by t=24 and still climbing, vs ~42% uncentered a
 same t. It made no visible difference to quadratic, which already grokked cleanly
 either way, but the reference repo applies it uniformly, so this implementation now
 does too. Centering doesn't change AGOPAlignment/CirculantDeviation's Phase 1
-conclusions for quadratic (re-verified after this change), but the earlier
-uncentered runs (Phase 1) are numerically superseded -- see run directories with a
-'_centered' or later timestamp for the corrected versions.
+conclusions for quadratic (re-verified after this change); the earlier uncentered
+Phase 1 runs are numerically superseded and have been discarded (every Phase 2 run is
+centered).
 
 Both kernels expand G(f) algebraically into O(n^3) matrix products (dominated by one
 n x n matmul) instead of ever forming the (n, d, p) per-sample Jacobian tensor, which
