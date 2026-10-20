@@ -1,0 +1,48 @@
+# Phase 1 gate G1-det (PLAN.md §6): one config per application x every optimizer.
+# 20k steps with keyframes every 10k, so replay crosses two full keyframe intervals (the
+# worst-case drift distance). det_check's --steps / --keyframe-every override these for
+# the shorter CPU pass.
+optimizers: &optimizers
+  - {name: adamw, lr: 1.0e-3, weight_decay: 0.01}
+  - {name: adam_l2, lr: 1.0e-3, weight_decay: 1.0e-4}
+  - {name: sgd_momentum, lr: 1.0e-2, weight_decay: 1.0e-4, momentum: 0.9}
+  - {name: sgd, lr: 5.0e-2, weight_decay: 1.0e-4}
+
+blocks:
+  - base:
+      task: {name: teacher_student, params: {n_train: 100, n_test: 100}}
+      model: {depth: 3, width: 100, activation: tanh, init_scale: 2.0}
+      optim: {name: adamw, lr: 3.0e-4, weight_decay: 0.03}
+      loss: mse
+      steps: 20000
+      seed: 0
+    product: {optim: *optimizers}
+
+  - base:
+      task: {name: modular, params: {op: x+y, p: 97, train_frac: 0.3}}
+      model: {depth: 3, width: 512, activation: relu, init_scale: 1.0}
+      optim: {name: adamw, lr: 1.0e-3, weight_decay: 1.0}
+      loss: ce
+      steps: 20000
+      seed: 0
+    product: {optim: *optimizers}
+
+  - base:
+      task: {name: mnist, params: {n_train: 1000}}
+      model: {depth: 3, width: 200, activation: relu, init_scale: 8.0}
+      optim: {name: adamw, lr: 1.0e-3, weight_decay: 0.01}
+      loss: mse
+      steps: 20000
+      seed: 0
+      batch_size: 200
+    product: {optim: *optimizers}
+
+  - base:
+      task: {name: mnist, params: {n_train: 2000}}
+      model: {depth: 8, width: 400, activation: relu, init_scale: 8.0}
+      optim: {name: adamw, lr: 1.0e-3, weight_decay: 0.01}
+      loss: mse
+      steps: 20000
+      seed: 0
+      batch_size: 200
+    product: {optim: *optimizers}

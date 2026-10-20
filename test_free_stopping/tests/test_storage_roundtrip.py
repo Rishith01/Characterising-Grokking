@@ -65,3 +65,17 @@ def test_meta_records_environment(dummy_run):
     assert meta["env"]["device"] == "cpu"
     assert meta["env"]["flags"]["deterministic_algorithms"] is True
     assert meta["n_params"] > 0 and "code" in meta
+
+
+def test_divergence_detected_at_a_log_step(dummy_cfg, tmp_path):
+    from dataclasses import replace
+
+    from tfs.config import OptimConfig
+
+    from .conftest import train
+
+    cfg = replace(dummy_cfg, optim=OptimConfig("sgd", lr=1e6))
+    r = RunReader(train(cfg, tmp_path))
+    assert r.status == "diverged"
+    # detection happens on the update that leads into a log step
+    assert (r.meta["diverged_at"] + 1) % cfg.record.log_every == 0

@@ -32,7 +32,8 @@ class Trainer:
         self.x_test = data.x_test.to(self.device)
         self.y_test = data.y_test.to(self.device)
         self.loop = TrainLoop(cfg, data.x_train, data.y_train, data.kind, data.d_in, data.d_out, self.device)
-        self.recorder = Recorder(self.loop, self.task, cfg.record.n_fingerprint_proj, cfg.seed)
+        self.recorder = Recorder(self.loop, self.task, cfg.record.n_fingerprint_proj, cfg.seed,
+                                 cfg.record.n_probe, cfg.record.probe_batch)
         self.schedule = Schedule.build(cfg.steps, cfg.record)
         self.run_dir = layout.run_dir(runs_root, cfg.app, cfg.run_id)
         self.writer = RunWriter(self.run_dir, cfg, overwrite=overwrite)

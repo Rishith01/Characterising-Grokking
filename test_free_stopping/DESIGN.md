@@ -322,8 +322,10 @@ class Task(Protocol):
 ```
 
 - **Modular.** Builds every (a, b) pair and splits them at `train_frac`.
-- **MNIST.** Loads from a cached torchvision download (checksummed), then takes a seeded
-  subset of the training set. The test set is the full 10k images.
+- **MNIST.** Reads the raw IDX files (downloaded once into `$TFS_DATA_DIR/mnist` from
+  torchvision's official mirror, MD5-checked; no torchvision dependency), then takes a
+  seeded subset of the training set. Pixels are scaled to [0, 1]. The test set is the
+  full 10k images.
 - **Teacher–student.** Builds the teacher from its own seed stream, then draws
   `N_train` and `N_test` Gaussian inputs.
 
@@ -405,6 +407,10 @@ def launch(configs: list[RunConfig], workers: int, device: str, upload: bool): .
   `torch.backends.cudnn.allow_tf32 = False`
 - full-batch losses use a fixed reduction order. No atomics-based ops (e.g. `index_add`
   on CUDA) are used in the training step.
+- CPU thread count is part of the environment: CPU reductions are partitioned by
+  thread count, so it can change results. Parallel CPU workers each get an equal share
+  of cores (`TFS_NUM_THREADS`), the count is recorded, and a CPU replay sets the same
+  count before it starts.
 - `EnvRecord` captures torch, CUDA, cuDNN, driver, GPU name, Python and numpy versions,
   and the flags above. It is stored in `meta.json`.
 

@@ -96,6 +96,9 @@ class ReplayEngine:
         self.tol = tolerance or ReplayTolerance.load()
         self.device = torch.device(device)
 
+        recorded_threads = self.reader.env.flags.get("num_threads")
+        if self.device.type == "cpu" and recorded_threads:
+            torch.set_num_threads(int(recorded_threads))  # CPU reductions depend on it
         here = determinism.EnvRecord.capture(str(self.device))
         self.env_mismatches = self.reader.env.mismatches(here)
         if self.env_mismatches and not allow_env_mismatch:
@@ -106,7 +109,8 @@ class ReplayEngine:
 
         ctx = TrainContext.from_config(self.cfg)
         self.loop = TrainLoop(self.cfg, ctx.x_train, ctx.y_train, ctx.kind, ctx.d_in, ctx.d_out, self.device)
-        self.recorder = Recorder(self.loop, ctx.task, self.cfg.record.n_fingerprint_proj, self.cfg.seed)
+        self.recorder = Recorder(self.loop, ctx.task, self.cfg.record.n_fingerprint_proj, self.cfg.seed,
+                                 self.cfg.record.n_probe, self.cfg.record.probe_batch)
         self._log_steps = set(self.reader.log_steps.tolist())
         self._key_steps = self.reader.keyframe_steps
         self._stored = None  # lazily loaded stored streams for verification

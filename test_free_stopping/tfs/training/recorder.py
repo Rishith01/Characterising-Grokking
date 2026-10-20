@@ -26,12 +26,19 @@ GRAM_MAX_IN = 512
 
 
 class Recorder:
-    def __init__(self, loop: TrainLoop, task: Task, n_proj: int, seed: int):
+    def __init__(self, loop: TrainLoop, task: Task, n_proj: int, seed: int,
+                 n_probe: int = 8, probe_batch: int = 256):
         self.loop = loop
         self.task = task
         self.n_layers = len(loop.model.layers)
+        streams = SeedStreams(seed)
+        # Fixed probe minibatches for gradient-noise statistics, from their own stream:
+        # the same batches at every summary step, never touching the training order.
+        g = streams.torch("probe")
+        b = min(probe_batch, loop.n)
+        self._probes = [torch.randperm(loop.n, generator=g)[:b].to(loop.device) for _ in range(n_probe)]
         # Fixed random unit vectors per parameter tensor, regenerable from the seed.
-        rng = SeedStreams(seed).numpy("fingerprint")
+        rng = streams.numpy("fingerprint")
         self._proj = []
         for _, p in loop.model.param_list():
             r = rng.normal(size=(n_proj, p.numel()))
@@ -72,11 +79,9 @@ class Recorder:
     # ---- every summary step ----------------------------------------------------------
     @torch.no_grad()
     def summaries(self) -> dict[str, np.ndarray]:
-        """Per layer: singular values of W, W^T W (narrow layers), and the spectrum of
-        the training-set activation covariance (hidden layers).
-
-        Gradient-noise statistics are added in Phase 1 (PLAN.md §4).
-        """
+        """Per layer: singular values of W, W^T W (narrow layers), the spectrum of the
+        training-set activation covariance (hidden layers), and gradient-noise
+        statistics over the fixed probe minibatches."""
         lp = self.loop
         out = {}
         for i, layer in enumerate(lp.model.layers):
@@ -88,4 +93,34 @@ class Recorder:
             h = h.to(torch.float64).cpu()
             h = h - h.mean(0, keepdim=True)
             out[f"actspec/l{i}"] = (torch.linalg.svdvals(h) ** 2 / h.shape[0]).numpy()
+        out.update(self._gradient_noise())
+        return out
+
+    def _gradient_noise(self) -> dict[str, np.ndarray]:
+        """gnoise/l{i} = [‖mean g‖², tr Cov(g), mean ‖g‖²] of the per-probe-batch data-loss
+        gradient for layer i, in float64.
+
+        Uses torch.autograd.grad, so p.grad and the optimizer are never touched.
+        """
+        lp = self.loop
+        layers = lp.model.layer_params()
+        sums = [None] * len(layers)
+        sq_norms = [0.0] * len(layers)
+        for idx in self._probes:
+            with torch.enable_grad():
+                loss = compute_loss(lp.cfg.loss, lp.model(lp.x_train[idx]), lp.y_train[idx], lp.kind)
+                grads = torch.autograd.grad(loss, [p for ps in layers for p in ps])
+            k = 0
+            for i, ps in enumerate(layers):
+                g = torch.cat([x.reshape(-1) for x in grads[k:k + len(ps)]]).to(torch.float64)
+                k += len(ps)
+                sums[i] = g if sums[i] is None else sums[i] + g
+                sq_norms[i] += float(g @ g)
+        n = len(self._probes)
+        out = {}
+        for i in range(len(layers)):
+            mean = sums[i] / n
+            mean_sq = float(mean @ mean)
+            mean_norm_sq = sq_norms[i] / n
+            out[f"gnoise/l{i}"] = np.array([mean_sq, mean_norm_sq - mean_sq, mean_norm_sq])
         return out

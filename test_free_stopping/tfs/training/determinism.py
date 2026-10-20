@@ -29,6 +29,8 @@ def apply() -> dict:
     torch.backends.cuda.matmul.allow_tf32 = False
     torch.backends.cudnn.allow_tf32 = False
     torch.set_float32_matmul_precision("highest")
+    if os.environ.get("TFS_NUM_THREADS"):
+        torch.set_num_threads(int(os.environ["TFS_NUM_THREADS"]))
     return current_flags()
 
 
@@ -41,6 +43,8 @@ def current_flags() -> dict:
         "cudnn_allow_tf32": torch.backends.cudnn.allow_tf32,
         "float32_matmul_precision": torch.get_float32_matmul_precision(),
         "cublas_workspace_config": os.environ.get("CUBLAS_WORKSPACE_CONFIG"),
+        # CPU reductions are partitioned by thread count, so it can change results.
+        "num_threads": torch.get_num_threads(),
     }
 
 
@@ -87,6 +91,8 @@ class EnvRecord:
         out = [k for k in keys if getattr(self, k) != getattr(other, k)]
         if self.flags.get("deterministic_algorithms") != other.flags.get("deterministic_algorithms"):
             out.append("flags.deterministic_algorithms")
+        if self.device == "cpu" and self.flags.get("num_threads") != other.flags.get("num_threads"):
+            out.append("flags.num_threads")
         return out
 
     def compatible_with(self, other: "EnvRecord") -> bool:

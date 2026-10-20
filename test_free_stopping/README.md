@@ -5,8 +5,10 @@ Causal, test-data-free stopping criteria that survive grokking. The plan is in
 
 ## Status
 
-**Phase 0 (scaffold and infrastructure).** Code and tests are done locally. The G0 gate
-on Molab is pending: [`molab/phase0_g0.py`](molab/phase0_g0.py).
+- **Phase 0** (scaffold and infrastructure): done. G0 passed on Molab, bit-exact (L0) on
+  CPU and on the Blackwell GPU.
+- **Phase 1** (tasks, recording, determinism, reproductions): code and tests done locally.
+  Gates G1-det and G1 are pending on Molab: [`molab/phase1.py`](molab/phase1.py).
 
 ## Local setup (development, CPU)
 
@@ -23,6 +25,7 @@ python -m venv .venv
 |---|---|
 | `python -m scripts.train configs/runs/dummy.yaml --runs-root runs` | Train one run locally |
 | `python -m scripts.replay_check <run_dir> [--full]` | Verify deterministic replay (L0 / L1 / failed) |
+| `python -m scripts.det_check <sweep.yaml> --device cuda --workers 8` | Gate G1-det: train each config twice, compare, replay |
 | `HF_TOKEN=... python -m scripts.sync push --repo advay333/<repo>` | Upload complete runs, verify remotely, delete local copies |
 | `python -m scripts.sync pull --repo ... --app <app> --run-id <id>` | Download one run and check its checksums |
 | `python -m scripts.sync status --repo ...` | Summarize the remote manifest |

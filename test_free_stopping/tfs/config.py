@@ -43,6 +43,10 @@ class RecordConfig:
     summary_every: int = 500
     keyframe_every: int = 10_000
     n_fingerprint_proj: int = 8
+    # Gradient-noise summaries: per-layer statistics of the data-loss gradient over a
+    # fixed set of n_probe minibatches of size probe_batch (DESIGN.md §5).
+    n_probe: int = 8
+    probe_batch: int = 256
 
 
 @dataclass(frozen=True)
@@ -108,17 +112,30 @@ class RunConfig:
     def run_id(self) -> str:
         """<app>__<readable axes>__<8-char hash of the canonical config>. Deterministic,
         so regenerating a sweep regenerates the same ids (what makes resuming work)."""
-        o, m = self.optim, self.model
-        readable = f"{o.name}_wd{o.weight_decay:g}_a{m.init_scale:g}_s{self.seed}"
-        return f"{self.app}__{readable}__{_hash(self.to_dict())}"
+        return f"{self._readable()}_s{self.seed}__{_hash(self.to_dict())}"
 
     @property
     def group_id(self) -> str:
         """run_id with the seed removed: runs differing only by seed share a group."""
         d = self.to_dict()
         d.pop("seed")
+        return f"{self._readable()}__{_hash(d)}"
+
+    def _readable(self) -> str:
         o, m = self.optim, self.model
-        return f"{self.app}__{o.name}_wd{o.weight_decay:g}_a{m.init_scale:g}__{_hash(d)}"
+        return (f"{self.app}__{_task_tag(self.task)}d{m.depth}w{m.width}_"
+                f"{o.name}_lr{o.lr:g}_wd{o.weight_decay:g}_a{m.init_scale:g}")
+
+
+def _task_tag(task: TaskConfig) -> str:
+    """Short human-readable task variant for run ids (the hash is what makes ids unique)."""
+    t = task.params
+    if task.name == "modular":
+        op = t["op"].replace("+", "plus").replace("-", "minus").replace("*", "mult").replace("/", "div").replace("^", "")
+        return f"{op}_p{t['p']}_f{t['train_frac']:g}_"
+    if task.name in ("mnist", "teacher_student"):
+        return f"n{t['n_train']}_"
+    return ""
 
 
 def _hash(d: dict) -> str:

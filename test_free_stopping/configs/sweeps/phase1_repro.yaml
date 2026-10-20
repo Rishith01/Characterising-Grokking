@@ -1,0 +1,59 @@
+# Phase 1 gate G1 (PLAN.md §6): qualitative reproductions of published grokking setups.
+# Seed 0 only. Horizon 1e5 steps, default recording (log 50 / summary 500 / keyframe 10k).
+blocks:
+  # Omnigrok Fig. 2b: teacher-student, 5-100-100-5 tanh student, Adam(W) lr 3e-4, N=100.
+  # alpha=2: gamma=0 -> no generalization, small gamma -> grokking, large gamma -> fast.
+  # alpha=0.5 -> fast regardless.
+  - base:
+      task: {name: teacher_student, params: {n_train: 100, n_test: 100, theta: 0.01}}
+      model: {depth: 3, width: 100, activation: tanh, init_scale: 2.0}
+      optim: {name: adamw, lr: 3.0e-4, weight_decay: 0.03}
+      loss: mse
+      steps: 100000
+      seed: 0
+    variants:
+      - {optim.weight_decay: 0.0}
+      - {optim.weight_decay: 0.03}
+      - {optim.weight_decay: 1.0}
+      - {model.init_scale: 0.5}
+
+  # Omnigrok Fig. 3d: MNIST, 1k training points, depth-3 width-200 ReLU, AdamW, MSE,
+  # batch 200. Large alpha groks; alpha=1 is the no-grokking control.
+  - base:
+      task: {name: mnist, params: {n_train: 1000}}
+      model: {depth: 3, width: 200, activation: relu, init_scale: 8.0}
+      optim: {name: adamw, lr: 1.0e-3, weight_decay: 0.01}
+      loss: mse
+      steps: 100000
+      seed: 0
+      batch_size: 200
+    variants:
+      - {}
+      - {model.init_scale: 1.0}
+
+  # Modular addition, p=97: 2 hidden layers x 512 ReLU on one-hot(a)+one-hot(b), AdamW
+  # lr 1e-3, gamma=1, cross-entropy, full batch.
+  - base:
+      task: {name: modular, params: {op: x+y, p: 97, train_frac: 0.3}}
+      model: {depth: 3, width: 512, activation: relu, init_scale: 1.0}
+      optim: {name: adamw, lr: 1.0e-3, weight_decay: 1.0}
+      loss: ce
+      steps: 100000
+      seed: 0
+    variants:
+      - {}
+      - {task.params.train_frac: 0.5}
+
+  # Deep Grokking: depth-8 MLP, width 400, alpha=8. Two-stage generalization expected at
+  # |D|=7000 with gamma=0.01, and at |D|=2000 with gamma=0.05. Soft gate.
+  - base:
+      task: {name: mnist, params: {n_train: 7000}}
+      model: {depth: 8, width: 400, activation: relu, init_scale: 8.0}
+      optim: {name: adamw, lr: 1.0e-3, weight_decay: 0.01}
+      loss: mse
+      steps: 100000
+      seed: 0
+      batch_size: 200
+    variants:
+      - {}
+      - {task.params.n_train: 2000, optim.weight_decay: 0.05}

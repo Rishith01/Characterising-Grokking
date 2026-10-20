@@ -63,6 +63,11 @@ class TrainLoop:
 
         Extra quantities (want_info) are read-only views on the gradient and the update;
         computing them never changes the trajectory.
+
+        The loss is checked for NaN/inf only when want_info is set, i.e. on steps about to
+        be logged. Checking reads the loss back to the CPU, a sync that would otherwise
+        stall the GPU every step. Divergence is therefore detected up to log_every steps
+        late; the trajectory before it is unaffected.
         """
         if self.cfg.batch_size is None:
             xb, yb = self.x_train, self.y_train
@@ -73,11 +78,11 @@ class TrainLoop:
         self.opt.zero_grad(set_to_none=True)
         loss = compute_loss(self.cfg.loss, self.model(xb), yb, self.kind)
         loss.backward()
-        if not torch.isfinite(loss):
-            raise NonFiniteLoss(f"non-finite loss at step {t}")
 
         info = None
         if want_info:
+            if not torch.isfinite(loss):
+                raise NonFiniteLoss(f"non-finite loss at step {t}")
             layers = self.model.layer_params()
             w_prev = [[p.detach().clone() for p in ps] for ps in layers]
             g_norm, reg_g_norm, cos_g_w = [], [], []

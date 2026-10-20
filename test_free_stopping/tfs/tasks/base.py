@@ -57,6 +57,6 @@ class ClassificationTask:
 
 
 def get_task(name: str) -> Task:
-    from . import dummy  # noqa: F401  (registration side effect)
+    from . import dummy, mnist, modular, teacher_student  # noqa: F401  (registration side effect)
 
     return TASKS.get(name)()
