@@ -4,8 +4,8 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 # Run data and signal caches live on Hugging Face, never in git (PLAN.md §4).
-runs/
-cache/
+/runs/
+/cache/
 # marimo's local session cache
 __marimo__/
-g0_work/
+/g0_work/

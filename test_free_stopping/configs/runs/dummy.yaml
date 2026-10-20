@@ -1,0 +1,12 @@
+# G0 infrastructure run (PLAN.md Phase 0): tiny synthetic task, 200 steps, minibatched
+# so that the batch-order path is exercised too.
+task:
+  name: dummy
+  params: {d_in: 8, n_classes: 4, n_train: 256, n_test: 256, noise: 1.0}
+model: {depth: 3, width: 32, activation: relu, init_scale: 1.0}
+optim: {name: adamw, lr: 0.001, weight_decay: 0.1, betas: [0.9, 0.98]}
+loss: ce
+steps: 200
+seed: 0
+batch_size: 64
+record: {log_every: 10, summary_every: 50, keyframe_every: 50, n_fingerprint_proj: 8}
