@@ -60,22 +60,22 @@ slowest grokking runs finish inside it.
 | weight decay γ | {0, low, mid, high} = {0, 1e-3, 1e-2, 1e-1} × c_app | `c_app` is set in the pilot so that "mid" groks within the horizon |
 | init scale α | 3 levels per application. Modular {1, 2, 4}; MNIST {1, 4, 8}; teacher–student {0.5, 1, 2} | α = 1 is the no-grokking control |
 | training size | 3 levels. Modular fraction {0.3, 0.5, 0.7}; MNIST n {500, 1k, 4k}; teacher–student N {50, 100, 400} | Straddles the critical data size, so some runs never generalize |
-| seed | 3 seeds: {0, 1} for calibration, {2} held out | See open question Q1 |
+| seed | 4 seeds: {0, 1} for calibration, {2, 3} held out | Decided 2026-10-20 |
 
 ### Grid size
 
 | Variant | Grid | Runs |
 |---|---|---|
-| teacher–student | full: 4 × 4 × 3 × 3 × 3 | 432 |
-| modular `x+y` | full | 432 |
-| modular `x*y` | reduced: all 4 opt × all 4 γ × α {1, high} × size {mid} × 3 seeds | 96 |
-| modular `x^2+xy+y^2` | reduced | 96 |
-| MNIST depth 3 | reduced | 96 |
-| MNIST depth 8 | reduced | 96 |
-| **Total** | | **≈ 1,250** |
+| teacher–student | full: 4 × 4 × 3 × 3 × 4 | 576 |
+| modular `x+y` | full | 576 |
+| modular `x*y` | reduced: all 4 opt × all 4 γ × α {1, high} × size {mid} × 4 seeds | 128 |
+| modular `x^2+xy+y^2` | reduced | 128 |
+| MNIST depth 3 | reduced | 128 |
+| MNIST depth 8 | reduced | 128 |
+| **Total** | | **≈ 1,660** |
 
-Plain SGD is the fourth optimizer you asked for, which grows the full grids from 324 to
-432 runs. If the pilot shows storage or compute is too tight, the first cut is
+Plain SGD (the fourth optimizer) and the fourth seed grow the full grids to 576
+runs. If the pilot shows storage or compute is too tight, the first cut is
 teacher–student's training-size axis.
 
 ---
@@ -126,7 +126,7 @@ trusted if it reproduces the recorded run.
 | **L1: tolerance** (minimum acceptable) | Per layer, at every keyframe: ‖w_replay − w_stored‖ / ‖w_stored‖. At every log step: fingerprints and telemetry, relative difference. Train predictions. | weights ≤ 1e-6 relative; fingerprints and telemetry ≤ 1e-5 relative; train-prediction agreement ≥ 99.9% |
 | **L2: decision** (sanity) | Every stopping rule's τ computed from replayed signals vs. from dense recorded signals, on the debug set | identical τ |
 
-- Every run carries a `replay_level` field: `L0`, `L1` or `failed`.
+- Every run carries a `replay_level` (in `replay_report.json` and the manifest): `L0`, `L1` or `failed`.
 - **Runs that are `failed` are excluded from the corpus** and rerun.
 - Replay drift accumulates with distance from a keyframe. The tolerances apply to the
   worst case: the step just before the next keyframe.
@@ -138,11 +138,11 @@ All values are fp32 and use the full model sizes and full grid.
 
 | Variant | Params | Keyframes (~11 × weights + optimizer state) | Dense streams | Runs | Total |
 |---|---|---|---|---|---|
-| teacher–student | 11k | ~1.5 MB | <5 MB | 432 | ~3 GB |
-| modular (all ops) | 0.41M | ~55 MB | ~20 MB | 624 | ~47 GB |
-| MNIST depth 3 | 0.2M | ~27 MB | ~15 MB | 96 | ~4 GB |
-| MNIST depth 8 | 1.3M | ~170 MB | ~40 MB | 96 | ~20 GB |
-| **Total** | | | | | **≈ 75 GB** |
+| teacher–student | 11k | ~1.5 MB | <5 MB | 576 | ~4 GB |
+| modular (all ops) | 0.41M | ~55 MB | ~20 MB | 832 | ~62 GB |
+| MNIST depth 3 | 0.2M | ~27 MB | ~15 MB | 128 | ~5 GB |
+| MNIST depth 8 | 1.3M | ~170 MB | ~40 MB | 128 | ~27 GB |
+| **Total** | | | | | **≈ 100 GB** |
 
 The previous design needed ≈ 470 GB. This one fits with no compromise on model size,
 breadth or precision. If needed, `k_key` can be raised to 20k, which halves keyframe
@@ -155,7 +155,7 @@ storage at the cost of longer replays.
 Each metric produces a **signal**: a time series computed causally from stored data. A
 shared **rule template** turns a signal into a stopping step: causal smoothing, then a
 threshold (with direction), then a patience window. The rule's hyperparameters are
-calibrated on seeds {0, 1} and scored on seed {2}.
+calibrated on seeds {0, 1} and scored on seeds {2, 3}.
 
 ### Candidates
 
@@ -241,7 +241,7 @@ Each phase ends at a gate. We don't start the next phase until the gate passes.
 - **G2:**
   - Grok times are spread over at least 1.5 decades across the γ levels.
   - Every application has at least some never-generalizing runs.
-  - The projected corpus is ≤ 100 GB and ≤ the available GPU-hours, counting training
+  - The projected corpus is ≤ 120 GB and ≤ the available GPU-hours, counting training
     plus one replay pass per run.
   - Every pilot run verifies at `replay_level ∈ {L0, L1}`.
   - The final grid is frozen in `configs/sweeps/*.yaml`.
@@ -274,7 +274,7 @@ Each phase ends at a gate. We don't start the next phase until the gate passes.
   are broken by lag.
 - Calibrate two ways: per application, and one global setting across all applications.
   The second tests whether a rule transfers.
-- Score on seed {2}. Produce the results tables and plots.
+- Score on seeds {2, 3}. Produce the results tables and plots.
 - **G5:** A reproducible `evaluate` command regenerates every table from the HF data
   from scratch.
 
@@ -295,11 +295,11 @@ Each phase ends at a gate. We don't start the next phase until the gate passes.
   - teacher–student: a few minutes
   - modular: ~10 min
   - MNIST depth 8: ~20–30 min
-- About 1,250 runs at 16-way concurrency is **≈ 15–25 Molab hours**, split across
-  sessions.
+- About 1,660 runs at 16-way concurrency is **≈ 20–33 Molab hours**. With 12-hour
+  sessions that is 2–3 sessions, batched by application.
 - Phase 4 (signals) runs on the **same GPU type** as training, because replay
   determinism depends on it. Cost per run ≈ one training run (the replay) plus the
-  signal math (per-example gradients and AGOPs dominate). Budget about another 15–25
+  signal math (per-example gradients and AGOPs dominate). Budget about another 20–33
   Molab hours. Runs are processed in a streaming loop: download the keyframes, replay
   and compute, upload the signal cache, delete the local copy.
 
@@ -314,18 +314,17 @@ Each phase ends at a gate. We don't start the next phase until the gate passes.
 | Replay is not reproducible (GPU nondeterminism, library or driver updates) | Determinism flags in code; pinned environment recorded per run; L0/L1 verification on every replay; hard gates G1-det and G2. The keyframe interval bounds how far drift can spread. As a last resort, train and replay on CPU. |
 | Molab's environment changes between sessions | Pin package versions. Record the driver, CUDA and GPU model per run. Replay refuses a mismatched environment unless explicitly overridden, and even then it must still pass L1. |
 | Some combinations never grok within the horizon | Expected. They form the never-generalizes category, and the pilot ensures there are enough grokkers too. |
-| 3 seeds gives only 1 held-out seed | See Q1 |
 | Softmax collapse / NaNs in cross-entropy runs | Recorded as a run outcome, not a failure. Training stops on NaN, and `status=diverged` is stored. Diverged runs are scored separately. |
 
 ---
 
-## 9. Open questions
+## 9. Decisions log
 
-- **Q1. Seeds.** With 3 seeds, the held-out set is a single seed per configuration. I
-  suggest 4 seeds: {0, 1} for calibration and {2, 3} held out. That costs +33%
-  compute and storage. Decision needed before G2.
-- **Q2. Molab session limits.** What is the maximum session length? Can a session keep
-  running in the background? This sets the batch size in Phase 3.
-- **Q3. Hugging Face.** Which account or organization hosts the dataset repo, and under
-  what name, e.g. `<user>/test-free-stopping-runs`? The write token goes in as a Molab
-  secret or environment variable. I won't handle the token directly.
+- **Seeds (2026-10-20):** 4 seeds; {0, 1} calibration, {2, 3} held out.
+- **Molab (2026-10-20):** sessions last up to 12 hours. Every Molab run is a marimo
+  notebook (`molab/*.py`) that the user runs from a clone of this repo. Notebooks ask for
+  the HF token in a password field and never store it.
+- **Hugging Face (2026-10-20):** account `advay333`, public dataset repos. The corpus repo
+  is `advay333/tfs-runs`; G0 uses the throwaway `advay333/tfs-g0-test`. All uploads and
+  downloads happen from Molab. Any local upload must leave HF with the latest version
+  and delete the local copy.

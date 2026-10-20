@@ -165,9 +165,13 @@ class RunConfig:
 
 - `run_id` is deterministic. Rerunning a sweep YAML regenerates the same IDs, which is
   what makes resuming work.
-- **Seed handling.** One integer seed is split by `numpy.random.SeedSequence` into
-  independent streams for: data split, teacher network, model init, and minibatch order.
-  Changing one never shifts the others.
+- **Seed handling** (`tfs/seeding.py`). One integer seed is split by
+  `numpy.random.SeedSequence` into independent named streams: data, teacher, init,
+  order, probe, fingerprint. Changing one never shifts the others.
+- **Minibatch order is stateless.** The batch at step t is a pure function of
+  (order seed, t): each epoch's permutation is derived from (order seed, epoch). Nothing
+  else in a training step is random. A keyframe therefore needs no RNG state, and replay
+  cannot drift through RNG bookkeeping.
 
 ---
 
@@ -177,7 +181,7 @@ One directory per run, identical locally and on Hugging Face:
 
 ```
 runs/<app>/<run_id>/
-  meta.json            # RunConfig, status, replay_level, environment, versions, wall time, layer shapes
+  meta.json            # RunConfig, status, environment, code version, versions, wall time, param shapes
   telemetry.parquet    # one row per log step (train side only)
   train_preds.npy      # int16 [n_log, n_train]  (teacher-student: float16 per-sample error)
   summaries.safetensors   # dense summaries, keys "s{step}/<name>/l{i}"
@@ -185,8 +189,14 @@ runs/<app>/<run_id>/
   keyframes.safetensors   # ~11 keyframes: full TrainState, keys "k{step}/..."
   keyframe_hashes.json # step -> {tensor key: sha256}
   oracle.parquet       # test loss/acc per log step  (QUARANTINED: see §10)
+  checksums.json       # sha256 of every file above (immutable after training)
   DONE                 # written last; presence = run complete
+  replay_report.json   # latest replay verification (mutable, outside checksums.json)
 ```
+
+The run's replay level lives in `replay_report.json` and in the manifest, never in
+`meta.json`. That keeps every checksummed file immutable after training, so a
+re-verification never invalidates the checksums.
 
 ### `telemetry.parquet` columns
 
@@ -235,10 +245,10 @@ class TrainState:
     step: int
     weights: list[Tensor]                 # fp32, MLP.weight_list() order (+ biases)
     optim_state: dict[str, Tensor]        # flattened optimizer.state_dict() tensors (Adam m, v, step; momentum buffers)
-    rng: dict[str, bytes | Tensor]        # torch CPU, torch CUDA, numpy Generator states, minibatch-order stream position
+    # no RNG state: minibatch order is a pure function of the step (§4)
     def to_flat(self) -> dict[str, Tensor]: ...
     @classmethod
-    def from_flat(cls, d: dict[str, Tensor]) -> "TrainState": ...
+    def from_flat(cls, step: int, d: dict[str, Tensor]) -> "TrainState": ...
 ```
 
 - Keyframes are taken at step 0, every `keyframe_every` steps, and at the final step.
@@ -266,7 +276,7 @@ class RunWriter:                       # used only by Trainer
 
 class RunReader:                       # lazy, read-only
     def __init__(self, run_dir: Path): ...
-    config: RunConfig; status: str; replay_level: str; env: EnvRecord
+    config: RunConfig; status: str; env: EnvRecord
     log_steps: np.ndarray; summary_steps: np.ndarray; keyframe_steps: np.ndarray
     def telemetry(self) -> pd.DataFrame: ...
     def train_preds(self) -> np.ndarray: ...
@@ -425,7 +435,7 @@ class ReplayTolerance:                      # loaded from configs/replay_toleran
     pred_agreement: float = 0.999           # train-prediction agreement, at every log step
 ```
 
-**Verification levels.** These are recorded per run as `meta.json: replay_level`.
+**Verification levels.** Recorded per run in `replay_report.json` and the manifest (`replay_level`).
 
 | Level | Condition |
 |---|---|
@@ -435,6 +445,10 @@ class ReplayTolerance:                      # loaded from configs/replay_toleran
 
 The tolerances above are starting values. Phase 1 (G1-det) measures the actual drift
 and freezes them.
+
+**Integrity before replay.** `ReplayEngine` first checks every present file against
+`checksums.json` and raises `CorruptRun` on a mismatch. Replay compares against the
+stored keyframes and streams, so they must be the recorded bytes.
 
 **When verification happens:**
 1. **After training, on Molab:** replay one random keyframe interval and set the
@@ -639,7 +653,7 @@ def evaluate(rule_specs: dict[str, RuleSpec], runs: list[str]) -> pd.DataFrame: 
 | `python -m scripts.train <run.yaml>` | One run, local, no upload (development) |
 | `python -m scripts.sweep <sweep.yaml> --workers 16 --upload` | Expand the grid, launch, resume, upload |
 | `python -m scripts.sync {push,pull,status}` | Manifest-driven HF synchronization |
-| `python -m scripts.replay_check --runs <filter> [--full]` | Verify replay (one random interval, or the full run) and update `replay_level` in the manifest |
+| `python -m scripts.replay_check <run_dir>... [--full]` | Verify replay (one random interval, or the full run) and write `replay_report.json`; `hub.update_replay_level` pushes it to the manifest |
 | `python -m scripts.compute_signals --signals all --runs <filter>` | Stream runs, fill the signal cache, optionally upload it |
 | `python -m scripts.calibrate --mode {per_app,global}` | Write `results/rule_specs.json` |
 | `python -m scripts.evaluate` | Score held-out seeds, write the tables |

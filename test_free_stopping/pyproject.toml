@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tfs"
+version = "0.1.0"
+description = "Test-free, causal stopping criteria under grokking"
+requires-python = ">=3.11"
+dependencies = [
+    "torch>=2.4",
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "pyarrow>=14",
+    "safetensors>=0.4",
+    "huggingface_hub>=0.25",
+    "pyyaml>=6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "marimo>=0.9"]
+
+[tool.setuptools.packages.find]
+include = ["tfs*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

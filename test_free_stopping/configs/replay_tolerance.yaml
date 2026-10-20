@@ -1,0 +1,8 @@
+# L1 replay tolerances (PLAN.md §4.1). Starting values; Phase 1 gate G1-det measures the
+# actual drift and freezes these.
+weight_rel: 1.0e-6
+optim_rel: 1.0e-5
+fingerprint_rel: 1.0e-5
+telemetry_rel: 1.0e-5
+telemetry_atol: 1.0e-8
+pred_agreement: 0.999
