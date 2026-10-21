@@ -21,8 +21,6 @@ from .loop import StepInfo, TrainLoop
 
 PER_LAYER_FIELDS = ("w_norm", "g_norm", "reg_g_norm", "update_norm",
                     "update_radial", "update_tangential", "cos_g_w")
-# Gram matrices W^T W are stored densely only for layers this narrow at the input.
-GRAM_MAX_IN = 512
 
 
 class Recorder:
@@ -79,22 +77,25 @@ class Recorder:
     # ---- every summary step ----------------------------------------------------------
     @torch.no_grad()
     def summaries(self) -> dict[str, np.ndarray]:
-        """Per layer: singular values of W, W^T W (narrow layers), the spectrum of the
-        training-set activation covariance (hidden layers), and gradient-noise
-        statistics over the fixed probe minibatches."""
+        """Per layer: singular values of W, the spectrum of the training-set activation
+        covariance (hidden layers), and gradient-noise statistics over the fixed probe
+        minibatches. Computed in float64, stored as float32.
+
+        Only spectra and scalars: O(width) numbers per layer. Phase 1 also stored W^T W
+        here, which was O(width^2) per layer and made summaries 85-93% of every run's
+        size (1.8 GB for a depth-8 MNIST run). Full matrices come from replay instead.
+        """
         lp = self.loop
         out = {}
         for i, layer in enumerate(lp.model.layers):
             W = layer.weight.detach().to(torch.float64).cpu()
             out[f"sv/l{i}"] = torch.linalg.svdvals(W).numpy()
-            if layer.in_features <= GRAM_MAX_IN:
-                out[f"gram/l{i}"] = (W.T @ W).numpy()
         for i, h in enumerate(lp.model.features(lp.x_train)):
             h = h.to(torch.float64).cpu()
             h = h - h.mean(0, keepdim=True)
             out[f"actspec/l{i}"] = (torch.linalg.svdvals(h) ** 2 / h.shape[0]).numpy()
         out.update(self._gradient_noise())
-        return out
+        return {k: v.astype(np.float32) for k, v in out.items()}
 
     def _gradient_noise(self) -> dict[str, np.ndarray]:
         """gnoise/l{i} = [‖mean g‖², tr Cov(g), mean ‖g‖²] of the per-probe-batch data-loss

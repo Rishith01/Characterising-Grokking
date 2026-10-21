@@ -33,6 +33,8 @@ def test_duplicate_ids_rejected():
 def test_phase1_sweeps_expand():
     assert len(expand("configs/sweeps/phase1_repro.yaml")) == 10
     assert len(expand("configs/sweeps/phase1_det.yaml")) == 16
+    assert len(expand("configs/sweeps/phase1b_repro.yaml")) == 11
+    assert len(expand("configs/sweeps/phase1b_lr_scan.yaml")) == 16
 
 
 def test_launcher_runs_and_resumes(tmp_path):

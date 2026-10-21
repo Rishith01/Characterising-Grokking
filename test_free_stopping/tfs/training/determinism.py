@@ -15,11 +15,19 @@ from typing import Optional
 import numpy as np
 import torch
 
+from .. import cpu_env
+
 CUBLAS_WORKSPACE = ":4096:8"
 
 
 def apply() -> dict:
-    """Put torch into deterministic mode. Returns the flags actually set."""
+    """Put torch into deterministic mode. Returns the flags actually set.
+
+    Entry points should also call tfs.cpu_env.pin() before importing torch: OpenMP reads
+    its variables when it loads. Pinning again here covers MKL, which reads its own
+    lazily on first use.
+    """
+    cpu_env.pin()
     os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", CUBLAS_WORKSPACE)
     if os.environ["CUBLAS_WORKSPACE_CONFIG"] not in (":4096:8", ":16:8"):
         raise RuntimeError("CUBLAS_WORKSPACE_CONFIG must be :4096:8 or :16:8 for determinism")
@@ -29,6 +37,8 @@ def apply() -> dict:
     torch.backends.cuda.matmul.allow_tf32 = False
     torch.backends.cudnn.allow_tf32 = False
     torch.set_float32_matmul_precision("highest")
+    # oneDNN has no reproducibility mode; keep CPU math on the MKL/native paths.
+    torch.backends.mkldnn.enabled = cpu_env.unpinned()
     if os.environ.get("TFS_NUM_THREADS"):
         torch.set_num_threads(int(os.environ["TFS_NUM_THREADS"]))
     return current_flags()
@@ -45,6 +55,8 @@ def current_flags() -> dict:
         "cublas_workspace_config": os.environ.get("CUBLAS_WORKSPACE_CONFIG"),
         # CPU reductions are partitioned by thread count, so it can change results.
         "num_threads": torch.get_num_threads(),
+        "mkldnn_enabled": torch.backends.mkldnn.enabled,
+        "cpu": cpu_env.snapshot(),
     }
 
 
@@ -91,8 +103,14 @@ class EnvRecord:
         out = [k for k in keys if getattr(self, k) != getattr(other, k)]
         if self.flags.get("deterministic_algorithms") != other.flags.get("deterministic_algorithms"):
             out.append("flags.deterministic_algorithms")
-        if self.device == "cpu" and self.flags.get("num_threads") != other.flags.get("num_threads"):
-            out.append("flags.num_threads")
+        if self.device == "cpu":
+            for k in ("num_threads", "mkldnn_enabled"):
+                if self.flags.get(k) != other.flags.get(k):
+                    out.append(f"flags.{k}")
+            mine, theirs = self.flags.get("cpu") or {}, other.flags.get("cpu") or {}
+            for k in ("cpu_model", *cpu_env.PINNED):
+                if mine.get(k) != theirs.get(k):
+                    out.append(f"flags.cpu.{k}")
         return out
 
     def compatible_with(self, other: "EnvRecord") -> bool:

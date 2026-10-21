@@ -89,7 +89,7 @@ Details are in DESIGN.md §5.
 |---|---|---|---|
 | **Telemetry** | every `k_log` steps (default 50) | Train loss and accuracy. Per-layer weight norm, gradient norm (data term and regularizer term separately), update norm. The radial and tangential parts of each update. The cosine between gradient and weights. | yes |
 | **Train predictions** | every `k_log` steps | argmax predictions on the training set (int16). Teacher–student stores the per-sample error instead. | yes |
-| **Dense summaries** | every `k_sum` steps (default 500) | Per-layer singular values. Per-layer W_lᵀW_l for layers with width ≤ 512. Gradient-noise statistics on fixed minibatches. Training-set activation spectra per layer. | yes |
+| **Dense summaries** | every `k_sum` steps (default 500) | Per-layer singular values. Gradient-noise statistics on fixed minibatches. Training-set activation spectra per layer. float32, O(width) per layer (full matrices such as W_lᵀW_l come from replay). | yes |
 | **Weight fingerprints** | every `k_log` steps | Per layer: sum, sum of squares, and projections onto 8 fixed random vectors. Lets replay be checked at **any** log step, not just at keyframes. | no: replay verification only |
 | **Keyframes** | every `k_key` steps (default 10k, ~11 per run including step 0 and the final step) | **Complete training state**: weights, optimizer state (Adam moments / momentum buffers), and RNG states (torch CPU/CUDA, numpy, minibatch-order stream). Stored in fp32. | via replay only |
 | **Oracle** | every `k_log` steps | Test loss and accuracy | **no**: scoring only |
@@ -319,6 +319,19 @@ Each phase ends at a gate. We don't start the next phase until the gate passes.
 ---
 
 ## 9. Decisions log
+
+- **Phase 1 results (2026-10-21):** GPU determinism L0 everywhere. Modular arithmetic
+  reproduced cleanly; teacher–student and MNIST depth 3 reproduced qualitatively; Deep
+  Grokking two-stage did not. CPU replay drifted for 2/16 configs on Molab under load.
+  Open items moved to a Phase 1b clean-up run (`molab/phase1b.py`):
+  - CPU numerics pinned (DESIGN.md §6.5); verified by running the CPU check unpinned
+    (should reproduce the drift) and pinned (should be clean).
+  - Teacher–student accuracy is RMS error < θ (was MSE < θ, ~100x too loose).
+  - Dense summaries no longer store W_lᵀW_l: they were 85–93% of every run's size
+    (≈ 1 TB projected corpus). Full matrices come from replay.
+  - MNIST SGD learning rates at init scale 8 are scanned (Phase 1 diverged at step 1).
+  - MNIST depth 3 tried at larger γ and a 3e5 horizon; Deep Grokking tried at 12 layers.
+  - GPU throughput measured at 8/16/32 workers and under MPS.
 
 - **Seeds (2026-10-20):** 4 seeds; {0, 1} calibration, {2, 3} held out.
 - **Molab (2026-10-20):** sessions last up to 12 hours. Every Molab run is a marimo

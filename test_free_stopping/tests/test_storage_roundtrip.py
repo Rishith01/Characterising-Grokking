@@ -28,7 +28,9 @@ def test_streams_shapes(dummy_run, dummy_cfg):
     assert r.keyframe_steps.tolist() == [0, 50, 100, 150, 200]
     assert r.summary_steps() == [0, 50, 100, 150, 200]
     s = r.summaries(100)
-    assert {"sv/l0", "sv/l2", "gram/l0", "actspec/l0", "actspec/l1"} <= set(s)
+    assert {"sv/l0", "sv/l2", "actspec/l0", "actspec/l1", "gnoise/l0"} <= set(s)
+    assert not any(k.startswith("gram/") for k in s)  # O(width^2) matrices come from replay
+    assert all(v.dtype == np.float32 for v in s.values())
 
 
 def test_update_columns_nan_only_at_step0(dummy_run):

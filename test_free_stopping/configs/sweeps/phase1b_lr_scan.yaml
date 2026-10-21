@@ -1,0 +1,21 @@
+# Phase 1b: SGD learning-rate scan for MNIST at the grokking init scale (alpha = 8).
+# In Phase 1, SGD (lr 0.05) and SGD+momentum (lr 0.01) diverged on the first step. The
+# corpus needs a stable SGD setting at alpha = 8, so this measures which learning rates
+# train at all. 5k steps each: enough to see divergence or progress, not to grok.
+lrs: &lrs [1.0e-3, 1.0e-4, 1.0e-5, 1.0e-6]
+blocks:
+  - base:
+      task: {name: mnist, params: {n_train: 1000}}
+      model: {depth: 3, width: 200, activation: relu, init_scale: 8.0}
+      optim: {name: sgd, lr: 1.0e-3, weight_decay: 1.0e-4}
+      loss: mse
+      steps: 5000
+      seed: 0
+      batch_size: 200
+      record: {log_every: 50, summary_every: 500, keyframe_every: 5000}
+    variants:
+      - {optim: {name: sgd, weight_decay: 1.0e-4}}
+      - {optim: {name: sgd_momentum, weight_decay: 1.0e-4, momentum: 0.9}}
+      - {model.depth: 8, model.width: 400, optim: {name: sgd, weight_decay: 1.0e-4}}
+      - {model.depth: 8, model.width: 400, optim: {name: sgd_momentum, weight_decay: 1.0e-4, momentum: 0.9}}
+    product: {optim.lr: *lrs}

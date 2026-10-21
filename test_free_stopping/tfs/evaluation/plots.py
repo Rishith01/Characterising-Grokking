@@ -49,9 +49,17 @@ def plot_run(run_dir: Path, ax_acc, ax_norm: Optional[object] = None, title: boo
 
 
 def plot_runs(run_dirs: list[Path], out_path: Path, ncols: int = 2) -> Path:
+    # Molab's dark theme leaked into Phase 1's figures (black axes, invisible labels):
+    # always render in matplotlib's default light style on a white background.
+    with plt.style.context("default"):
+        return _plot_runs(run_dirs, out_path, ncols)
+
+
+def _plot_runs(run_dirs: list[Path], out_path: Path, ncols: int) -> Path:
     n = len(run_dirs)
     nrows = -(-n // ncols)
-    fig, axes = plt.subplots(nrows, ncols, figsize=(7.5 * ncols, 3.6 * nrows), squeeze=False)
+    fig, axes = plt.subplots(nrows, ncols, figsize=(7.5 * ncols, 3.6 * nrows), squeeze=False,
+                             facecolor="white")
     for ax, d in zip(axes.flat, run_dirs):
         plot_run(d, ax, ax.twinx())
     for ax in list(axes.flat)[n:]:

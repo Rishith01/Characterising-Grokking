@@ -7,7 +7,11 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from tfs.training import determinism
+from tfs import cpu_env
+
+cpu_env.pin()  # before torch loads: OpenMP reads its variables at load time
+
+from tfs.training import determinism  # noqa: E402
 
 determinism.apply()  # before anything touches CUDA
 

@@ -1,8 +1,13 @@
 """Teacher–student regression (Omnigrok §3; PLAN.md §2).
 
 The teacher is a fixed random MLP (default 5-100-100-5, tanh, standard init) built from
-the seed's "teacher" stream. Inputs are x ~ N(0, I) from the "data" stream. A sample
-counts as correct when its mean squared error is below θ (Omnigrok uses θ = 0.01).
+the seed's "teacher" stream. Inputs are x ~ N(0, I) from the "data" stream.
+
+A sample counts as correct when its prediction error, the RMS over outputs, is below θ
+(Omnigrok: "prediction error less than θ = 0.01"). Phase 1 used mean *squared* error
+< θ, which is 100x looser in squared terms: the teacher's outputs are small (mean
+y² ≈ 0.027), so a model that had not generalized already scored ~88% test accuracy, and
+grokking showed in the loss but barely in the accuracy.
 """
 from __future__ import annotations
 
@@ -35,7 +40,8 @@ class TeacherStudent:
         return TaskData(x[:n_train], y[:n_train], x[n_train:], y[n_train:], d_in, d_out, "regression")
 
     def per_sample_error(self, pred: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        return ((pred - y) ** 2).mean(-1)
+        """RMS error over outputs, per sample."""
+        return ((pred - y) ** 2).mean(-1).sqrt()
 
     def accuracy(self, pred: torch.Tensor, y: torch.Tensor) -> float:
         return float((self.per_sample_error(pred, y) < self.theta).float().mean())

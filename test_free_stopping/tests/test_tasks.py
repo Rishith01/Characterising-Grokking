@@ -52,7 +52,10 @@ def test_teacher_student_is_seeded_and_accuracy_thresholded():
     assert task.accuracy(d.y_test, d.y_test) == 1.0
     assert task.accuracy(d.y_test + 1.0, d.y_test) == 0.0
     rec = task.train_pred_record(d.y_train + 0.05, d.y_train)
-    assert rec.dtype == np.float16 and np.allclose(rec, 0.0025, rtol=1e-2)
+    assert rec.dtype == np.float16 and np.allclose(rec, 0.05, rtol=1e-2)
+    # RMS error 0.005 < θ = 0.01 counts as correct; 0.05 does not
+    assert task.accuracy(d.y_test + 0.005, d.y_test) == 1.0
+    assert task.accuracy(d.y_test + 0.05, d.y_test) == 0.0
 
 
 def _write_idx(path, arr):
@@ -95,7 +98,7 @@ def test_recording_cadence_never_changes_trajectory(dummy_cfg, tmp_path):
 def test_gradient_noise_summaries(dummy_run):
     s = RunReader(dummy_run).summaries(100)
     g = s["gnoise/l0"]
-    assert g.shape == (3,) and g[1] >= -1e-12 and np.isclose(g[0] + g[1], g[2])
+    assert g.shape == (3,) and g[1] >= -1e-6 * g[2] and np.isclose(g[0] + g[1], g[2], rtol=1e-5)
 
 
 @pytest.mark.parametrize("loss,task,params", [

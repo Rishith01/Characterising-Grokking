@@ -1,0 +1,49 @@
+# Phase 1b (clean-up run): re-run or extend the reproductions that Phase 1 left open.
+# Modular arithmetic reproduced cleanly in Phase 1 and is not repeated.
+blocks:
+  # Teacher-student, Omnigrok Fig. 2b, with the corrected accuracy (RMS error < 0.01).
+  # Same four cases as Phase 1, so the accuracy curves can be compared directly.
+  - base:
+      task: {name: teacher_student, params: {n_train: 100, n_test: 100, theta: 0.01}}
+      model: {depth: 3, width: 100, activation: tanh, init_scale: 2.0}
+      optim: {name: adamw, lr: 3.0e-4, weight_decay: 0.03}
+      loss: mse
+      steps: 100000
+      seed: 0
+    variants:
+      - {optim.weight_decay: 0.0}
+      - {optim.weight_decay: 0.03}
+      - {optim.weight_decay: 1.0}
+      - {model.init_scale: 0.5}
+
+  # MNIST depth 3, alpha = 8 was still improving at 1e5 steps with gamma = 0.01.
+  # Omnigrok: time to generalize ~ 1/gamma. Test larger gamma at 1e5, and gamma = 0.01
+  # out to 3e5 to see where it saturates. alpha = 1 control kept (late collapse case).
+  - base:
+      task: {name: mnist, params: {n_train: 1000}}
+      model: {depth: 3, width: 200, activation: relu, init_scale: 8.0}
+      optim: {name: adamw, lr: 1.0e-3, weight_decay: 0.01}
+      loss: mse
+      steps: 100000
+      seed: 0
+      batch_size: 200
+    variants:
+      - {optim.weight_decay: 0.03}
+      - {optim.weight_decay: 0.1}
+      - {steps: 300000}
+      - {model.init_scale: 1.0, steps: 300000}
+
+  # Deep Grokking two-stage generalization, closer to the paper: 12 layers (their main
+  # case), and |D| = 5000 with gamma = 0.05 (their Fig. 6c / 7c two-stage setting).
+  - base:
+      task: {name: mnist, params: {n_train: 7000}}
+      model: {depth: 12, width: 400, activation: relu, init_scale: 8.0}
+      optim: {name: adamw, lr: 1.0e-3, weight_decay: 0.01}
+      loss: mse
+      steps: 100000
+      seed: 0
+      batch_size: 200
+    variants:
+      - {}
+      - {task.params.n_train: 5000, optim.weight_decay: 0.05}
+      - {model.depth: 8, task.params.n_train: 5000, optim.weight_decay: 0.05}

@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
 
+from .. import cpu_env
 from ..config import RunConfig
 from ..storage import layout
 
@@ -31,13 +32,13 @@ class LaunchResult:
 
 
 def child_env(device: str, workers: int) -> dict:
-    """Give each CPU worker an equal share of cores; N workers that each grab every core
-    oversubscribe the machine and run far slower than one process would."""
-    env = dict(os.environ)
-    if device == "cpu":
-        n = str(max(1, (os.cpu_count() or 1) // workers))
-        env.update(OMP_NUM_THREADS=n, MKL_NUM_THREADS=n, TFS_NUM_THREADS=n)
-    return env
+    """Environment for child runs: CPU numerics pinned for reproducibility (tfs.cpu_env),
+    and on CPU each worker gets an equal share of the CPUs actually available to this
+    container. N workers that each grab every core oversubscribe the machine, which is
+    slower and, with dynamic threading, non-reproducible."""
+    cpus = (os.cpu_count() or 1) if cpu_env.unpinned() else cpu_env.available_cpus()
+    threads = max(1, cpus // workers) if device == "cpu" else None
+    return cpu_env.pin(dict(os.environ), threads)
 
 
 def run_parallel(configs: list[RunConfig], runs_root: Path, device: str = "cpu", workers: int = 4,

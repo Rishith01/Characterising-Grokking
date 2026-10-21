@@ -215,10 +215,11 @@ Totals over layers are derived on read, not stored.
 
 ### Dense summaries (`summaries.safetensors`)
 
-Recorded every `summary_every` steps. These are the weight-derived quantities that the
-cheap signals need at high time resolution without replay:
+Recorded every `summary_every` steps, stored as float32. Only O(width) numbers per layer
+(Phase 1 also stored W_lᵀW_l here: O(width²) per layer, 85–93% of every run's size). These
+are the weight-derived quantities the cheap signals need at high time resolution without
+replay:
 - per-layer singular values of W_l
-- per-layer W_lᵀW_l, only for layers whose input width is ≤ 512
 - per-layer singular values of the training-set activation covariance
 - gradient-noise statistics (per-layer mean and variance of minibatch gradients over a
   fixed set of `n_probe` minibatches, drawn from a dedicated RNG stream)
@@ -407,6 +408,14 @@ def launch(configs: list[RunConfig], workers: int, device: str, upload: bool): .
   `torch.backends.cudnn.allow_tf32 = False`
 - full-batch losses use a fixed reduction order. No atomics-based ops (e.g. `index_add`
   on CUDA) are used in the training step.
+- **CPU numerics are pinned** (`tfs/cpu_env.py`): `MKL_DYNAMIC=FALSE`, `OMP_DYNAMIC=FALSE`,
+  `MKL_CBWR=AUTO,STRICT`, oneDNN off, and thread shares computed from the CPUs the
+  container may actually use (affinity mask and cgroup quota), not `os.cpu_count()`.
+  Phase 1 found CPU runs on Molab that drifted under load while replaying bit-exactly
+  on an idle machine; dynamic threading lets MKL/OpenMP use fewer threads than asked
+  when the machine is busy, which re-splits reductions. Entry points pin before torch
+  loads; the launcher passes the same variables to every child. The CPU model and
+  these variables are recorded and checked on CPU replay.
 - CPU thread count is part of the environment: CPU reductions are partitioned by
   thread count, so it can change results. Parallel CPU workers each get an equal share
   of cores (`TFS_NUM_THREADS`), the count is recorded, and a CPU replay sets the same
@@ -548,7 +557,7 @@ Signal families and what each one needs:
 | R1 (cheap) | summary | summaries (activation spectra) | none |
 | R1 (dense), F3 | eval | replay + training data | one forward pass on the training set per eval step |
 | R2, B5 | summary | summaries (singular values) | power-law fit only |
-| F1 | summary | summaries (W_lᵀW_l), or eval via replay for wide layers | none |
+| F1 | eval | replay (W_lᵀW_l from the replayed weights) | none |
 | F2 | eval | replay + training data | input Jacobians: n × d_out backward passes, batched |
 | B1 | log | telemetry | none |
 | B3 | eval | replay + training data | two minibatch gradients per eval step, from a fixed RNG stream |

@@ -11,7 +11,11 @@ import argparse
 import random
 import sys
 
-from tfs.training import determinism
+from tfs import cpu_env
+
+cpu_env.pin()  # before torch loads: OpenMP reads its variables at load time
+
+from tfs.training import determinism  # noqa: E402
 
 determinism.apply()
 
