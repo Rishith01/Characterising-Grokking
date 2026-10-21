@@ -136,7 +136,7 @@ between the two.
 |---|---|
 | `advay333/tfs-phase1` | Phase 1 and 1b runs (`runs/`), reports and plots (`phase1/`, `phase1b/`), `manifest.json`. The six non-teacher–student Phase 1 runs from `configs/sweeps/phase1_repro.yaml` (about 5 GB, oversized summaries) are to be deleted in Phase 2 block 0. |
 | `advay333/tfs-g0-test` | Throwaway G0 runs |
-| `advay333/tfs-runs` | Planned home of the Phase 3 corpus |
+| `advay333/tfs` | Phase 2 onwards: one sub-folder per phase (`phase2/`, `phase3/`), each with `runs/` and `manifest.json` (`hub.PrefixRemote`) |
 
 ---
 

@@ -4,6 +4,8 @@
 Two interchangeable remotes:
     HfRemote     a Hugging Face dataset repo (production; used from Molab)
     LocalRemote  a plain directory with the same interface (tests)
+and PrefixRemote, which puts any remote's files under a sub-folder, so one repo can hold
+every phase (`advay333/tfs`: phase2/, phase3/, ...), each with its own runs/ and manifest.
 
 A local run directory is deleted only after every file is confirmed on the remote with
 a matching content hash. The token is passed in by the caller (a notebook password
@@ -35,8 +37,9 @@ class RemoteFile:
 
 class Remote(ABC):
     @abstractmethod
-    def commit(self, files: dict[str, Path], message: str) -> str:
-        """Upload {path_in_repo: local_path} atomically. Returns a commit id."""
+    def commit(self, files: dict[str, Path], message: str, deletes: Iterable[str] = ()) -> str:
+        """Upload {path_in_repo: local_path} and delete `deletes` in one atomic commit.
+        A delete path ending in "/" removes that whole folder. Returns a commit id."""
 
     @abstractmethod
     def list_files(self, prefix: str) -> dict[str, RemoteFile]: ...
@@ -59,7 +62,13 @@ class LocalRemote(Remote):
         self.root.mkdir(parents=True, exist_ok=True)
         self._n = 0
 
-    def commit(self, files: dict[str, Path], message: str) -> str:
+    def commit(self, files: dict[str, Path], message: str, deletes: Iterable[str] = ()) -> str:
+        for rel in deletes:
+            target = self.root / rel.rstrip("/")
+            if rel.endswith("/"):
+                shutil.rmtree(target, ignore_errors=True)
+            elif target.exists():
+                target.unlink()
         for rel, src in files.items():
             dst = self.root / rel
             dst.parent.mkdir(parents=True, exist_ok=True)
@@ -97,12 +106,18 @@ class HfRemote(Remote):
         if create:
             self.api.create_repo(repo_id, repo_type="dataset", private=private, exist_ok=True)
 
-    def commit(self, files: dict[str, Path], message: str) -> str:
-        from huggingface_hub import CommitOperationAdd
+    def commit(self, files: dict[str, Path], message: str, deletes: Iterable[str] = ()) -> str:
+        from huggingface_hub import CommitOperationAdd, CommitOperationDelete
 
-        ops = [CommitOperationAdd(path_in_repo=rel, path_or_fileobj=str(src)) for rel, src in files.items()]
+        ops = [CommitOperationDelete(path_in_repo=rel, is_folder=rel.endswith("/")) for rel in deletes]
+        ops += [CommitOperationAdd(path_in_repo=rel, path_or_fileobj=str(src)) for rel, src in files.items()]
         info = self.api.create_commit(self.repo_id, operations=ops, commit_message=message, repo_type="dataset")
         return info.oid
+
+    def squash_history(self, message: str) -> None:
+        """Collapse the repo's history into one commit. Deleted files keep using storage
+        while any commit still references them; this is what actually frees it."""
+        self.api.super_squash_history(self.repo_id, repo_type="dataset", commit_message=message)
 
     def list_files(self, prefix: str) -> dict[str, RemoteFile]:
         from huggingface_hub.errors import EntryNotFoundError
@@ -132,6 +147,30 @@ class HfRemote(Remote):
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(got, dest)
         return dest
+
+
+class PrefixRemote(Remote):
+    """Another remote, seen through a sub-folder: every path gets `prefix/` in front.
+    Run prefixes, the manifest and verification all work unchanged inside it."""
+
+    def __init__(self, inner: Remote, prefix: str):
+        self.inner = inner
+        self.prefix = prefix.strip("/")
+
+    def _p(self, rel: str) -> str:
+        return f"{self.prefix}/{rel}"
+
+    def commit(self, files: dict[str, Path], message: str, deletes: Iterable[str] = ()) -> str:
+        return self.inner.commit({self._p(k): v for k, v in files.items()}, message,
+                                 deletes=[self._p(d) for d in deletes])
+
+    def list_files(self, prefix: str) -> dict[str, RemoteFile]:
+        n = len(self.prefix) + 1
+        return {k[n:]: RemoteFile(k[n:], f.size, f.sha256, f.git_sha1)
+                for k, f in self.inner.list_files(self._p(prefix)).items()}
+
+    def download(self, path: str, dest: Path) -> Path:
+        return self.inner.download(self._p(path), dest)
 
 
 # ---- manifest --------------------------------------------------------------------------
@@ -247,6 +286,26 @@ def push_runs(remote: Remote, run_dirs: Iterable[Path], delete_local: bool = Tru
             else:
                 log(f"  {run_id}: verified on remote")
     return result
+
+
+def delete_runs(remote: Remote, run_ids: Iterable[str], log=print) -> list[str]:
+    """Delete whole run folders and their manifest entries in one commit. Every run must
+    be in the manifest (that is where its app comes from); unknown ids raise before
+    anything is deleted. Returns the folders deleted."""
+    run_ids = list(run_ids)
+    manifest = read_manifest(remote)
+    missing = [r for r in run_ids if r not in manifest]
+    if missing:
+        raise KeyError(f"not in the remote manifest: {missing}")
+    folders = [layout.remote_prefix(manifest[r]["app"], r) + "/" for r in run_ids]
+    for r in run_ids:
+        del manifest[r]
+    with tempfile.TemporaryDirectory() as tmp:
+        mpath = Path(tmp) / layout.MANIFEST
+        mpath.write_text(json.dumps(manifest, indent=2, sort_keys=True))
+        commit = remote.commit({layout.MANIFEST: mpath}, message=f"delete {len(run_ids)} run(s)", deletes=folders)
+    log(f"deleted {len(folders)} run folder(s) in {commit}")
+    return folders
 
 
 def pull_run(remote: Remote, app: str, run_id: str, runs_root: Path,

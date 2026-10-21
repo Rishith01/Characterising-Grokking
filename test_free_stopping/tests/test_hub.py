@@ -1,8 +1,11 @@
 import json
 import shutil
 
+import pytest
+
 from tfs.storage import layout
-from tfs.storage.hub import LocalRemote, pull_run, push_runs, read_manifest, update_replay_level, verify_remote
+from tfs.storage.hub import (LocalRemote, PrefixRemote, delete_runs, pull_run, push_runs, read_manifest,
+                             update_replay_level, verify_remote)
 from tfs.storage.reader import RunReader
 from tfs.training.replay import ReplayEngine
 
@@ -82,3 +85,38 @@ def test_verification_falls_back_to_download(dummy_run, tmp_path):
     data[-2] ^= 1  # same size, different content
     target.write_bytes(bytes(data))
     assert verify_remote(remote, local) == [f"{layout.remote_prefix(meta['app'], meta['run_id'])}/{layout.META}"]
+
+
+def test_delete_runs_removes_folder_and_manifest_entry(dummy_run, tmp_path):
+    local = _copy(dummy_run, tmp_path)
+    meta = RunReader(local).meta
+    remote = LocalRemote(tmp_path / "remote")
+    push_runs(remote, [local], delete_local=False, log=lambda *_: None)
+    (tmp_path / "remote" / "phase1").mkdir()
+    (tmp_path / "remote" / "phase1" / "report.json").write_text("{}")  # reports must survive
+
+    with pytest.raises(KeyError):  # unknown ids fail before anything is deleted
+        delete_runs(remote, [meta["run_id"], "nope"], log=lambda *_: None)
+    assert remote.list_files(layout.remote_prefix(meta["app"], meta["run_id"]))
+
+    delete_runs(remote, [meta["run_id"]], log=lambda *_: None)
+    assert remote.list_files(layout.remote_prefix(meta["app"], meta["run_id"])) == {}
+    assert meta["run_id"] not in read_manifest(remote)
+    assert (tmp_path / "remote" / "phase1" / "report.json").exists()
+
+
+def test_prefix_remote_keeps_phases_apart(dummy_run, tmp_path):
+    """One repo, one sub-folder per phase: each has its own runs/ and manifest."""
+    local = _copy(dummy_run, tmp_path)
+    meta = RunReader(local).meta
+    base = LocalRemote(tmp_path / "remote")
+    p2 = PrefixRemote(base, "phase2/")
+    res = push_runs(p2, [local], delete_local=True, log=lambda *_: None)
+    assert res["pushed"] == [meta["run_id"]] and not res["verify_failed"]
+    assert (tmp_path / "remote" / "phase2" / layout.MANIFEST).exists()
+    assert read_manifest(base) == {} and read_manifest(PrefixRemote(base, "phase3")) == {}
+
+    back = pull_run(p2, meta["app"], meta["run_id"], tmp_path / "pulled")
+    assert RunReader(back).verify_checksums() == []
+    delete_runs(p2, [meta["run_id"]], log=lambda *_: None)
+    assert not (tmp_path / "remote" / "phase2" / "runs" / meta["app"] / meta["run_id"]).exists()

@@ -52,11 +52,11 @@ test_free_stopping/
   configs/
     replay_tolerance.yaml           ✅ L1 tolerances (unchanged after Phase 1: no drift seen)
     runs/dummy.yaml                 ✅ tiny infrastructure run (G0, tests)
-    sweeps/                         ✅ phase1_det, phase1_repro, phase1b_repro, phase1b_lr_scan
-                                    ⏳ phase2_*.yaml (Phase 2), phase3_*.yaml (frozen grid)
-    env_lock.txt                    ⏳ pinned Molab environment (Phase 2)
+    sweeps/                         ✅ phase1_det, phase1_repro, phase1b_repro, phase1b_lr_scan, phase2_lr_scan
+                                    ⏳ phase2_gamma.yaml (2b), phase3_*.yaml (frozen grid)
+    env_lock.txt                    ⏳ pinned Molab environment (written by phase2a, committed by the user)
   molab/                            ✅ marimo notebooks the user runs on Molab:
-                                       phase0_g0.py, phase1.py, phase1b.py; ⏳ phase2_pilot.py
+                                       phase0_g0.py, phase1.py, phase1b.py, phase2a.py; ⏳ phase2b.py
   results/phase1/                   ✅ RESULTS.md + figures (versioned)
   tfs/                              # the package ("test-free stopping")
     config.py                       ✅ dataclass configs, YAML (de)serialisation, run_id / group_id
@@ -79,7 +79,7 @@ test_free_stopping/
       layout.py                     ✅ file names, paths, parts, sha256 helper
       writer.py                     ✅ RunWriter (buffers in memory, writes at the end, DONE last)
       reader.py                     ✅ RunReader (lazy, read-only; no oracle access)
-      hub.py                        ✅ Remote / HfRemote / LocalRemote, push/verify/pull, manifest
+      hub.py                        ✅ Remote / HfRemote / LocalRemote / PrefixRemote, push/verify/pull/delete, manifest
     causal/
       view.py                       ✅ TrainContext: training data + config, no test data
       stream.py                     ⏳ CausalStream / Observation (Phase 4)
@@ -89,15 +89,17 @@ test_free_stopping/
       oracle.py                     ✅ the only reader of oracle.parquet
       plots.py                      ✅ per-run accuracy / weight-norm plots (light style forced)
       report.py                     ✅ tables -> markdown (console + summary.md)
+      run_summary.py                ✅ per-run summary row, compact curves, provisional category (for G2)
       ground_truth.py  scoring.py  calibration.py  split.py   ⏳ (Phase 5)
     sweep/
       grid.py                       ✅ sweep YAML -> list[RunConfig]
-      launcher.py                   ✅ run_parallel / replay_parallel (one subprocess per run), child_env
+      launcher.py                   ✅ run_parallel (optional chained replay check, on_result) / replay_parallel, child_env
+      lr_select.py                  ✅ lr-scan stability per run, lr choice per (variant, optimizer)
       gpumon.py                     ✅ background nvidia-smi logger
   scripts/                          # thin CLIs over tfs.*  (python -m scripts.<name>)
-    train.py  replay_check.py  sync.py  det_check.py  throughput.py      ✅
-    sweep.py (Phase 2/3)  compute_signals.py (4)  calibrate.py  evaluate.py (5)   ⏳
-  tests/                            ✅ 64 tests: config, cpu_env, determinism, hub, quarantine,
+    train.py  replay_check.py  sync.py  det_check.py  throughput.py  sweep.py  env_lock.py   ✅
+    compute_signals.py (4)  calibrate.py  evaluate.py (5)   ⏳
+  tests/                            ✅ 75 tests: config, cpu_env, determinism, hub, lr_select, quarantine,
                                        replay, storage, sweep, tasks
                                     ⏳ test_causality, test_signals_math, test_scoring
   runs/  cache/                     (gitignored, anchored to the project root)
@@ -302,7 +304,7 @@ class RunReader:                       # lazy, read-only
 
 ```python
 class Remote(ABC):                     # HfRemote (production) and LocalRemote (tests) implement it
-    def commit(self, files: dict[str, Path], message: str) -> str: ...   # atomic multi-file upload
+    def commit(self, files: dict[str, Path], message: str, deletes=()) -> str: ...   # atomic; "x/" deletes a folder
     def list_files(self, prefix: str) -> dict[str, RemoteFile]: ...      # size + sha256 / git blob id
     def download(self, path: str, dest: Path) -> Path: ...
 
@@ -311,7 +313,16 @@ def verify_remote(remote, run_dir) -> list[str]           # remote paths missing
 def pull_run(remote, app, run_id, runs_root, parts=None) -> Path   # checks checksums after download
 def update_replay_level(remote, run_dir) -> str           # pushes replay_report.json + manifest entry
 def read_manifest(remote) -> dict
+def delete_runs(remote, run_ids) -> list[str]             # folders + manifest entries, one commit
+class PrefixRemote(Remote): ...                           # PrefixRemote(HfRemote("advay333/tfs"), "phase2")
+HfRemote.squash_history(message)                          # frees storage still held by old commits
 ```
+
+- **One repo, one folder per phase.** From Phase 2 on, everything goes to `advay333/tfs`:
+  `phase2/` (pilot reports under `phase2/2a/`, `phase2/2b/`; pilot runs under
+  `phase2/runs/` with `phase2/manifest.json`), `phase3/` for the corpus, and so on.
+  `PrefixRemote` makes a sub-folder look like a whole repo, so everything below works
+  unchanged inside it.
 
 - **Manifest** (`manifest.json` at the repo root): one entry per `run_id` with app,
   group_id, seed, status (complete / diverged), replay_level, n_files, size_bytes and
@@ -325,9 +336,9 @@ def read_manifest(remote) -> dict
 - **Download.** `pull_run(..., parts=[...])` downloads only the needed parts (e.g.
   telemetry without keyframes; see `layout.PARTS`), then checks sha256 against
   `checksums.json`.
-- **Deleting old runs** (needed in Phase 2 block 0) is not in `hub.py` yet; use
-  `HfApi.delete_folder` / `create_commit` with `CommitOperationDelete`. Deleting does
-  not free storage held in git history; `HfApi.super_squash_history` does.
+- **Deleting old runs:** `delete_runs` removes run folders and their manifest entries
+  in one commit. Deleting does not free storage still referenced by git history;
+  `HfRemote.squash_history` does (Phase 2a block 0 uses both on `advay333/tfs-phase1`).
 - **File count.** About 9 files per run, roughly 11k across the corpus. That is well
   within Hugging Face's comfortable range.
 - **Authentication.** The token comes from the `HF_TOKEN` environment variable only. It
@@ -462,8 +473,13 @@ class GpuMonitor: ...                                                   # tfs/sw
 - **Every worker, CPU or GPU, gets `available_cpus // workers` threads** via `child_env`.
   Phase 1b measured what happens without it: aggregate throughput fell from 488 steps/s
   at 8 GPU workers to 24 at 32, with the GPU mostly idle.
-- Not built yet: launching directly into an upload queue (Phase 2/3 `scripts/sweep.py`).
-  Notebooks currently call `run_parallel`, then `push_runs`.
+- **`run_parallel(..., replay_check=True, on_result=cb)`** follows each finished run, in
+  the same worker slot, with a one-keyframe-interval replay check in a fresh process
+  (the interval is chosen from a hash of the run id), and calls `cb` as each run is done.
+- **`scripts/sweep.py`** builds on that: it skips runs already in the remote manifest
+  (resume across Molab sessions), summarizes each run (`evaluation/run_summary.py`: one
+  row + compact curves, so tables and plots never need the runs downloaded), and pushes
+  finished runs in batches from a background thread while training continues.
 
 ### 6.5 Determinism and replay
 
@@ -796,7 +812,13 @@ On Molab, notebooks call the same functions directly (`det_check`, `run_parallel
 
 ## 12. What Phase 2 needs built
 
-See PLAN.md §6 (Phase 2) for the blocks and gate. Implementation notes:
+**Status (2026-10-21):** items 2–6 are built and tested, and item 1 is split into
+`molab/phase2a.py` (built) and `molab/phase2b.py` (written once 2a's learning rates are
+confirmed). Still to do for 2b: `configs/sweeps/phase2_gamma.yaml`, the notebook, and
+a check of the live environment against `configs/env_lock.txt` (`scripts/env_lock.py
+--check`).
+
+See PLAN.md §6 (Phase 2) for the blocks and gate. Original implementation notes:
 
 1. **`molab/phase2_pilot.py`.** Copy the structure of `molab/phase1b.py`: repo pull cell;
    token/repo/workers cell with a checkbox per block; one run cell that prints every

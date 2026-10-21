@@ -70,3 +70,50 @@ def _plot_runs(run_dirs: list[Path], out_path: Path, ncols: int) -> Path:
     fig.savefig(out_path, dpi=130, facecolor="white")
     plt.close(fig)
     return out_path
+
+
+def plot_lr_scan(rows: list[dict], curves: dict[str, dict], out_dir: Path) -> list[Path]:
+    """One figure per application variant: train loss vs step for every scanned lr, one
+    panel per (optimizer, alpha). Unstable runs (lr_select.scan_row) are dashed."""
+    with plt.style.context("default"):
+        return [_plot_lr_variant(v, [r for r in rows if r["variant"] == v], curves, Path(out_dir))
+                for v in sorted({r["variant"] for r in rows})]
+
+
+def _plot_lr_variant(variant: str, rows: list[dict], curves: dict, out_dir: Path) -> Path:
+    from matplotlib.colors import LogNorm
+
+    optims = [o for o in ("adamw", "adam_l2", "sgd_momentum", "sgd") if any(r["optim"] == o for r in rows)]
+    alphas = {o: sorted({r["alpha"] for r in rows if r["optim"] == o}) for o in optims}
+    ncols = max(len(a) for a in alphas.values())
+    lrs = [r["lr"] for r in rows]
+    norm = LogNorm(min(lrs), max(lrs)) if min(lrs) < max(lrs) else None
+    cmap = plt.get_cmap("viridis")
+    fig, axes = plt.subplots(len(optims), ncols, figsize=(4.2 * ncols, 3.0 * len(optims)), squeeze=False,
+                             facecolor="white")
+    for i, o in enumerate(optims):
+        for j in range(ncols):
+            ax = axes[i][j]
+            if j >= len(alphas[o]):
+                ax.axis("off")
+                continue
+            a = alphas[o][j]
+            for r in sorted((r for r in rows if r["optim"] == o and r["alpha"] == a), key=lambda r: r["lr"]):
+                c = curves.get(r["run_id"])
+                if not c:
+                    continue
+                color = cmap(norm(r["lr"])) if norm else cmap(0.5)
+                ax.plot(np.maximum(c["step"], 1), c["train_loss"], color=color, lw=1.2,
+                        ls="-" if r["stable"] else (0, (3, 2)), label=f"{r['lr']:g}")
+            ax.set_xscale("log")
+            ax.set_yscale("log")
+            ax.set_title(f"{o}, α={a:g}", fontsize=9)
+            ax.grid(alpha=0.3)
+            ax.legend(fontsize=6, ncol=2, title="lr (dashed: unstable)", title_fontsize=6)
+    fig.suptitle(f"lr scan: {variant} (train loss)", fontsize=11)
+    fig.tight_layout()
+    out = out_dir / f"lr_scan_{variant.replace(' ', '_').replace('^', '').replace('*', 'mul').replace('+', 'plus')}.png"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out, dpi=110, facecolor="white")
+    plt.close(fig)
+    return out

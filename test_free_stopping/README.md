@@ -11,8 +11,9 @@ why) and [DESIGN.md](DESIGN.md) (how the code works).
   CPU and on the Blackwell GPU.
 - **Phase 1** (tasks, recording, determinism, reproductions): done, after the Phase 1b
   clean-up run. See [results/phase1/RESULTS.md](results/phase1/RESULTS.md).
-- **Phase 2** (pilot sweep): next. What to build is in DESIGN.md §12; the blocks and
-  gate are in PLAN.md §6.
+- **Phase 2** (pilot sweep): in progress. `molab/phase2a.py` (HF clean-up, environment
+  lock, throughput, learning-rate scan) is ready to run; `phase2b.py` follows once the
+  learning rates are confirmed. Blocks and gate: PLAN.md §6.
 
 ## Local setup (development, CPU)
 
@@ -31,6 +32,8 @@ python -m venv .venv
 | `python -m scripts.replay_check <run_dir> [--full]` | Verify deterministic replay (L0 / L1 / failed) |
 | `python -m scripts.det_check <sweep.yaml> --device cuda --workers 8` | Gate G1-det: train each config twice, compare, replay |
 | `python -m scripts.throughput --workers 8 16 32 --mps-workers 16` | GPU throughput at several concurrency levels (and MPS), with a bit-identity check |
+| `HF_TOKEN=... python -m scripts.sweep <sweep.yaml> --workers 16 --repo advay333/tfs --prefix phase3` | Train, replay-check, summarize and upload a sweep; resumes from the remote manifest |
+| `python -m scripts.env_lock --out configs/env_lock.txt` / `--check configs/env_lock.txt` | Record the environment, or compare the live one with the lock |
 | `HF_TOKEN=... python -m scripts.sync push --repo advay333/<repo>` | Upload complete runs, verify remotely, delete local copies |
 | `python -m scripts.sync pull --repo ... --app <app> --run-id <id>` | Download one run and check its checksums |
 | `python -m scripts.sync status --repo ...` | Summarize the remote manifest |

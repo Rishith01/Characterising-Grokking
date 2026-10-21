@@ -69,7 +69,7 @@ test-accuracy creep.
 | Axis | Levels | Notes |
 |---|---|---|
 | optimizer | adamw, adam_l2, sgd_momentum, sgd | lr is fixed per (application, optimizer) and set in the pilot |
-| weight decay γ | 4 levels per application, always including 0 | Starting points from Phase 1: **MNIST depth 3: {0, 0.01, 0.03, 0.1}** (t_ε ≈ 88k / 52k / 23k steps at the non-zero levels). **Modular: around γ = 1** (groks at 2–13k steps). **Teacher–student: γ = 0.03 is too slow for 1e5** (still rising at the horizon), so shift its levels up, e.g. {0, 0.1, 0.3, 1}, or extend its horizon. The pilot fixes all of these. |
+| weight decay γ | 4 levels per **(application, optimizer)**, always including 0 (decided 2026-10-21: γ means different things across optimizers, e.g. Adam+L2's penalty is rescaled by Adam's normalization) | Starting points from Phase 1 (AdamW): **MNIST depth 3: {0, 0.01, 0.03, 0.1}** (t_ε ≈ 88k / 52k / 23k steps at the non-zero levels). **Modular: around γ = 1** (groks at 2–13k steps). **Teacher–student: γ = 0.03 is too slow for 1e5** (still rising at the horizon), so shift its levels up, e.g. {0, 0.1, 0.3, 1}, or extend its horizon. The pilot fixes all of these. |
 | init scale α | 3 levels per (application, optimizer family). Adam family: modular {1, 2, 4}; MNIST {1, 4, 8}; teacher–student {0.5, 1, 2}. **SGD family on MNIST: {1, 2, 4}** | **Decided 2026-10-21 (option a):** at α = 8 on MNIST depth 3, SGD diverges at every learning rate down to 1e-6 (initial loss ≈ 2.5e7), so the SGD family gets its own α levels on MNIST. The pilot confirms they train, and checks whether the SGD family also needs its own levels on modular and teacher–student. α = 1 is the no-grokking control. |
 | training size | 3 levels. Modular fraction {0.3, 0.5, 0.7}; MNIST n {500, 1k, 4k}; teacher–student N {50, 100, 400} | Straddles the critical data size, so some runs never generalize |
 | seed | 4 seeds: {0, 1} for calibration, {2, 3} held out | Decided 2026-10-20 |
@@ -243,7 +243,17 @@ Each phase ends at a gate. We don't start the next phase until the gate passes.
 
 ### Phase 2: pilot sweep (Molab, small) ← **next**
 
-One Molab notebook (`molab/phase2_pilot.py`, to be written) with these blocks, in order:
+Two Molab notebooks, because block 3 needs learning rates a human has confirmed:
+- **`molab/phase2a.py`** (written): blocks 0, 1 (environment lock only), 4, 2.
+  Throughput runs before the scan so the scan uses the best worker count.
+- **`molab/phase2b.py`** (written after 2a's results): block 3, then block 1's
+  determinism re-check on the final configs, a replay check of every pilot run, and
+  block 5.
+
+Pilot reports and runs go to the single repo **`advay333/tfs`**, under `phase2/`
+(Phase 3 will use `phase3/`; see §9).
+
+The blocks:
 
 0. **HF clean-up.** Delete the Phase 1 run directories that are no longer needed from
    `advay333/tfs-phase1`: the six non-teacher–student runs from
@@ -254,14 +264,20 @@ One Molab notebook (`molab/phase2_pilot.py`, to be written) with these blocks, i
 1. **Determinism re-check at production settings.** Run G1-det on the GPU with the
    final pilot configs. Record the exact environment (driver, CUDA, torch, GPU, CPU)
    to pin for the rest of the project.
-2. **Learning-rate scan** per (application, optimizer), at the middle α and size, γ at
-   its middle level, one seed, short horizon (e.g. 5k steps). Pick the largest lr that
-   trains stably. Include the SGD family at **α ∈ {1, 2, 4} on MNIST** (decision a) and
-   confirm they train.
-3. **γ placement.** With the chosen lrs: every optimizer × the 4 candidate γ levels ×
-   every application variant, at the middle α and size, one seed, full horizon. That is
-   about 4 × 4 × 6 = 96 runs. Fix the γ levels (`c_app`) and the teacher–student horizon
-   from these.
+2. **Learning-rate scan** (`configs/sweeps/phase2_lr_scan.yaml`, 516 runs): every
+   (application variant, optimizer) at the middle size, one seed, 5k steps. Adam family
+   at the middle α over {1e-4, 3e-4, 1e-3, 3e-3}; SGD family at **all three α levels**
+   over 13 half-decade lrs from 1 to 1e-6. Selection (`tfs/sweep/lr_select.py`): the
+   Adam family keeps the published lr (3e-4 teacher–student, 1e-3 otherwise) unless it
+   is unstable; the SGD family takes one grid step below the largest stable lr, the
+   smallest over α. α levels where SGD never trains are dropped for the SGD family.
+   The human confirms the table before block 3.
+3. **γ placement.** With the chosen lrs: every optimizer × about **6 log-spaced candidate
+   γ levels** (0 included) × every application variant, at the middle α and size, one
+   seed, full horizon: about 144 runs. Keep 4 levels per (application, optimizer).
+   Teacher–student also runs γ = 0.03 and 0.1 at a 3e5 horizon, to decide between
+   raising γ and extending the horizon. MNIST depth 8 runs at n = 1k; if that loses the
+   joint-plateau behaviour, fall back to n = 4k.
 4. **Throughput.** Re-run `scripts/throughput.py` at 4 / 8 / 12 / 16 workers, now that
    GPU workers get a CPU thread share and the minibatch order is cached on the GPU.
    Choose the worker count for Phase 3. Check that results stay bit-identical.
@@ -270,7 +286,8 @@ One Molab notebook (`molab/phase2_pilot.py`, to be written) with these blocks, i
 
 **G2:**
 - Every chosen lr trains without diverging in its intended cells.
-- Grok times spread over at least 1.5 decades across the γ levels in each application.
+- Grok times spread over at least 1.5 decades across the γ levels in each application
+  (pooled over optimizers).
 - Every application has at least some never-generalizing runs, and the categories in
   §3 all appear.
 - The projected corpus is ≤ 120 GB and fits the available Molab hours, counting training
@@ -357,6 +374,19 @@ batching); this needs determinism re-verified.
 
 ## 9. Decisions log
 
+- **Phase 2 design (2026-10-21, second session):**
+  - γ levels are chosen per (application, optimizer), not per application.
+  - Block 3 tries about 6 candidate γ per (application, optimizer) and keeps 4.
+  - Phase 2 is split into two notebooks (2a, 2b); a human confirms the lrs in between.
+  - Adam family keeps the published lrs unless the scan shows them unstable.
+  - SGD family is scanned at every α level; its own α levels follow from the scan.
+  - From Phase 2 on, one HF repo, `advay333/tfs`, with a sub-folder per phase
+    (`phase2/`, `phase3/`, ...), each with its own `runs/` and `manifest.json`
+    (`hub.PrefixRemote`). `advay333/tfs-runs` is no longer planned.
+  - Block 0 deletes the six Phase 1 runs **and** squashes `advay333/tfs-phase1`'s history.
+  - MNIST depth 8 pilot at n = 1k (fall back to 4k); teacher–student tries both higher γ
+    and a 3e5 horizon; G2's grok-time spread is checked per application.
+
 - **Phase 2 set-up (2026-10-21):**
   - SGD-family init scales on MNIST are {1, 2, 4} (option a), since SGD diverges at
     α = 8 for every learning rate down to 1e-6.
@@ -386,7 +416,8 @@ batching); this needs determinism re-verified.
   notebook (`molab/*.py`) that the user runs from a clone of this repo. Notebooks ask for
   the HF token in a password field and never store it.
 - **Hugging Face (2026-10-20):** account `advay333`, public dataset repos.
-  - `advay333/tfs-runs`: the Phase 3 corpus (planned)
+  - `advay333/tfs`: Phase 2 onwards, one sub-folder per phase (replaces the planned
+    `advay333/tfs-runs`; see the Phase 2 design entry above)
   - `advay333/tfs-phase1`: Phase 1 and 1b
   - `advay333/tfs-g0-test`: G0 (throwaway)
 
