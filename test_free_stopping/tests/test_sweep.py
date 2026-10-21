@@ -44,3 +44,11 @@ def test_launcher_runs_and_resumes(tmp_path):
     assert all(RunReader(r.run_dir).status == "complete" for r in res)
     again = run_parallel(cfgs, tmp_path, "cpu", workers=2, log=lambda *_: None)
     assert {r.status for r in again} == {"skipped"}
+
+
+def test_markdown_report():
+    from tfs.evaluation.report import rows_to_markdown, summary_markdown
+
+    md = rows_to_markdown([{"a": 1, "b": 0.123456}, {"a": "x|y", "c": [1, 2]}])
+    assert md.splitlines()[0] == "| a | b | c |" and "x/y" in md and "0.1235" in md
+    assert "## t" in summary_markdown("T", {"t": [{"a": 1}]})

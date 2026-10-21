@@ -1,16 +1,18 @@
 # test_free_stopping
 
-Causal, test-data-free stopping criteria that survive grokking. The plan is in
-[PLAN.md](PLAN.md) and the architecture is in [DESIGN.md](DESIGN.md).
+Causal, test-data-free stopping criteria that survive grokking.
+
+**New here? Start with [RAMPUP.md](RAMPUP.md)**, then [PLAN.md](PLAN.md) (what we run and
+why) and [DESIGN.md](DESIGN.md) (how the code works).
 
 ## Status
 
 - **Phase 0** (scaffold and infrastructure): done. G0 passed on Molab, bit-exact (L0) on
   CPU and on the Blackwell GPU.
-- **Phase 1** (tasks, recording, determinism, reproductions): run on Molab. GPU fully
-  deterministic; open items (CPU drift, teacher–student accuracy, summary size, SGD
-  learning rates, MNIST horizon, two-stage case) go to the Phase 1b clean-up run:
-  [`molab/phase1b.py`](molab/phase1b.py).
+- **Phase 1** (tasks, recording, determinism, reproductions): done, after the Phase 1b
+  clean-up run. See [results/phase1/RESULTS.md](results/phase1/RESULTS.md).
+- **Phase 2** (pilot sweep): next. What to build is in DESIGN.md §12; the blocks and
+  gate are in PLAN.md §6.
 
 ## Local setup (development, CPU)
 

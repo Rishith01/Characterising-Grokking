@@ -15,7 +15,7 @@ from ..config import RunConfig
 from ..losses import compute_loss
 from ..models import MLP
 from ..optim import build_optimizer, reg_spec
-from ..seeding import SeedStreams, batch_indices
+from ..seeding import SeedStreams, epoch_permutation
 from .state import TrainState
 
 
@@ -56,6 +56,7 @@ class TrainLoop:
         self.opt = build_optimizer(cfg.optim, self.model.parameters())
         self.reg = reg_spec(cfg.optim)
         self._order_seed = streams.int_seed("order")
+        self._perm_epoch, self._perm = None, None  # current epoch's permutation, on device
 
     # ---- one update ----------------------------------------------------------------
     def step(self, t: int, want_info: bool) -> Optional[StepInfo]:
@@ -72,7 +73,7 @@ class TrainLoop:
         if self.cfg.batch_size is None:
             xb, yb = self.x_train, self.y_train
         else:
-            idx = batch_indices(self._order_seed, t, self.n, self.cfg.batch_size).to(self.device)
+            idx = self._batch(t)
             xb, yb = self.x_train[idx], self.y_train[idx]
 
         self.opt.zero_grad(set_to_none=True)
@@ -110,6 +111,17 @@ class TrainLoop:
                     upd_t.append(float(tang))
             info = StepInfo(float(loss.detach()), g_norm, reg_g_norm, upd_n, upd_r, upd_t, cos_g_w)
         return info
+
+    def _batch(self, t: int) -> torch.Tensor:
+        """Minibatch indices for step t: identical to seeding.batch_indices, but the
+        epoch's permutation is built once per epoch and kept on the device, instead of
+        being regenerated on the CPU and copied every step."""
+        bs = self.cfg.batch_size
+        epoch, pos = divmod(t, -(-self.n // bs))
+        if epoch != self._perm_epoch:
+            self._perm = epoch_permutation(self._order_seed, epoch, self.n).to(self.device)
+            self._perm_epoch = epoch
+        return self._perm[pos * bs : (pos + 1) * bs]
 
     def advance(self, from_step: int, to_step: int,
                 want_info: Callable[[int], bool] = lambda t: False,

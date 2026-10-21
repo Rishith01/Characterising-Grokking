@@ -123,6 +123,7 @@ def _(Path, code_ready, do_cpu, do_cuda, do_lr, do_repro, do_tp, hf_repo, hf_tok
     from scripts.det_check import det_check as _det_check
     from scripts.throughput import throughput as _throughput
     from tfs.evaluation.plots import plot_runs as _plot_runs
+    from tfs.evaluation.report import rows_to_markdown as _md, summary_markdown as _summary_md
     from tfs.storage.hub import HfRemote as _HfRemote, push_runs as _push
     from tfs.storage.reader import RunReader as _RunReader
     from tfs.sweep.gpumon import GpuMonitor as _GpuMonitor
@@ -147,6 +148,7 @@ def _(Path, code_ready, do_cpu, do_cuda, do_lr, do_repro, do_tp, hf_repo, hf_tok
 
     def _save(name, rows):
         tables[name] = rows
+        print("\n## " + name + "\n" + _md(rows), flush=True)  # readable even if the UI is not
         _p = _work / f"{name}.json"
         _p.write_text(json.dumps(rows, indent=2, default=str))
         _uploads[f"phase1b/{name}.json"] = _p
@@ -245,6 +247,8 @@ def _(Path, code_ready, do_cpu, do_cuda, do_lr, do_repro, do_tp, hf_repo, hf_tok
         _save("machine", [{**_info, "gpu_summary": gpu_summary, "minutes": round((time.time() - _t0) / 60)}])
         if (_work / "gpu_util.csv").exists():
             _uploads["phase1b/gpu_util.csv"] = _work / "gpu_util.csv"
+        (_work / "summary.md").write_text(_summary_md("Phase 1b", tables, errors[-1:]))
+        _uploads["phase1b/summary.md"] = _work / "summary.md"
         try:
             _remote.commit(_uploads, message="phase 1b reports and plots")
             _log(f"uploaded {sorted(_uploads)}")

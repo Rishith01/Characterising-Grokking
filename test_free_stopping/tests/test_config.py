@@ -46,3 +46,13 @@ def test_batch_indices_cover_each_epoch():
     assert sorted(epoch0.tolist()) == list(range(n))
     assert torch.equal(batch_indices(7, 5, n, bs), batch_indices(7, 5, n, bs))
     assert not torch.equal(batch_indices(7, 0, n, bs), batch_indices(7, 4, n, bs))
+
+
+def test_cached_epoch_batches_match_batch_indices(dummy_cfg):
+    from tfs.causal.view import TrainContext
+    from tfs.training.loop import TrainLoop
+
+    ctx = TrainContext.from_config(dummy_cfg)
+    loop = TrainLoop(dummy_cfg, ctx.x_train, ctx.y_train, ctx.kind, ctx.d_in, ctx.d_out, "cpu")
+    for t in list(range(0, 30)) + [7, 100, 3]:  # includes going back to an earlier epoch
+        assert torch.equal(loop._batch(t), batch_indices(loop._order_seed, t, loop.n, dummy_cfg.batch_size))

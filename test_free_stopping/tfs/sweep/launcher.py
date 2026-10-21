@@ -33,12 +33,15 @@ class LaunchResult:
 
 def child_env(device: str, workers: int) -> dict:
     """Environment for child runs: CPU numerics pinned for reproducibility (tfs.cpu_env),
-    and on CPU each worker gets an equal share of the CPUs actually available to this
-    container. N workers that each grab every core oversubscribe the machine, which is
-    slower and, with dynamic threading, non-reproducible."""
+    and every worker, CPU or GPU, gets an equal share of the CPUs actually available.
+
+    GPU workers need a share too: the training math runs on the GPU, but each process
+    still does CPU work (Python, summaries, data indexing), and by default torch starts
+    one thread per core in every process. Phase 1b measured what that does at 20 CPUs:
+    aggregate throughput fell from 488 steps/s at 8 GPU workers to 109 at 16 and 24 at
+    32, with the GPU mostly idle."""
     cpus = (os.cpu_count() or 1) if cpu_env.unpinned() else cpu_env.available_cpus()
-    threads = max(1, cpus // workers) if device == "cpu" else None
-    return cpu_env.pin(dict(os.environ), threads)
+    return cpu_env.pin(dict(os.environ), max(1, cpus // workers))
 
 
 def run_parallel(configs: list[RunConfig], runs_root: Path, device: str = "cpu", workers: int = 4,

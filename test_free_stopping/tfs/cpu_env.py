@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import os
 import platform
+import subprocess
 
 PINNED = {
     "MKL_DYNAMIC": "FALSE",
@@ -59,14 +60,32 @@ def pin(env: dict | None = None, threads: int | None = None) -> dict:
 
 
 def cpu_model() -> str:
+    """Architecture plus model name. Phase 1b recorded "unknown" on Molab: its
+    /proc/cpuinfo had no "model name" line (ARM and some sandboxes omit it), and
+    platform.processor() returned "unknown". Try several sources, keep the first hit."""
+    fields = {}
     try:
         with open("/proc/cpuinfo") as f:
             for line in f:
-                if line.startswith("model name"):
-                    return line.split(":", 1)[1].strip()
+                if ":" in line:
+                    k, v = (x.strip() for x in line.split(":", 1))
+                    fields.setdefault(k, v)
     except OSError:
         pass
-    return platform.processor() or platform.machine()
+    name = next((fields[k] for k in ("model name", "Model name", "Hardware", "cpu model", "Processor")
+                 if fields.get(k)), None)
+    if name is None and fields.get("CPU implementer"):
+        name = f"implementer {fields['CPU implementer']} part {fields.get('CPU part', '?')}"
+    if name is None:
+        try:
+            out = subprocess.run(["lscpu"], capture_output=True, text=True, timeout=10).stdout
+            name = next((l.split(":", 1)[1].strip() for l in out.splitlines() if l.startswith("Model name")), None)
+        except (OSError, subprocess.SubprocessError):
+            pass
+    if name is None:
+        proc = platform.processor()
+        name = proc if proc and proc != "unknown" else "unknown"
+    return f"{platform.machine()}: {name}"
 
 
 def snapshot() -> dict:

@@ -39,12 +39,15 @@ def batch_indices(order_seed: int, step: int, n: int, batch_size: int) -> torch.
     carries no mutable RNG state: restoring a keyframe needs only the step number, and
     replay cannot drift through RNG bookkeeping.
     """
-    steps_per_epoch = -(-n // batch_size)
-    epoch, pos = divmod(step, steps_per_epoch)
+    epoch, pos = divmod(step, -(-n // batch_size))
+    return epoch_permutation(order_seed, epoch, n)[pos * batch_size : (pos + 1) * batch_size]
+
+
+def epoch_permutation(order_seed: int, epoch: int, n: int) -> torch.Tensor:
+    """The training-set permutation for one epoch (see batch_indices)."""
     g = torch.Generator(device="cpu")
     g.manual_seed(_to_int(np.random.SeedSequence([order_seed, epoch])))
-    perm = torch.randperm(n, generator=g)
-    return perm[pos * batch_size : (pos + 1) * batch_size]
+    return torch.randperm(n, generator=g)
 
 
 def _to_int(seq: np.random.SeedSequence) -> int:

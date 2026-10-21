@@ -1,4 +1,3 @@
-import os
 from dataclasses import replace
 
 from tfs import cpu_env
@@ -12,8 +11,8 @@ def test_child_env_pins_cpu_numerics(monkeypatch):
     for k, v in cpu_env.PINNED.items():
         assert env[k] == v
     assert int(env["TFS_NUM_THREADS"]) == max(1, cpu_env.available_cpus() // 4)
-    # GPU workers are not given a CPU thread share
-    assert child_env("cuda", workers=4).get("TFS_NUM_THREADS") == os.environ.get("TFS_NUM_THREADS")
+    # GPU workers get a CPU thread share too (Phase 1b: oversubscription killed throughput)
+    assert child_env("cuda", workers=4)["TFS_NUM_THREADS"] == env["TFS_NUM_THREADS"]
 
 
 def test_unpinned_switch_restores_phase1_env(monkeypatch):

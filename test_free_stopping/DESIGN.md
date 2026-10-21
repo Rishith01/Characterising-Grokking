@@ -1,8 +1,14 @@
 # Test-free stopping: design document
 
 This document describes the code flow, modules, classes, storage format and causality
-guarantees. [PLAN.md](PLAN.md) covers what is run and in what order. Signatures below
-are interface sketches, not final code.
+guarantees. [PLAN.md](PLAN.md) covers what is run and in what order; [RAMPUP.md](RAMPUP.md)
+is the starting point for a new contributor.
+
+**Status (2026-10-21).** The training, recording, storage, replay and sweep layers
+(§4–§6) are **built and tested**, and the signatures there match the code. The
+measurement and evaluation layers (§7–§8) are **designed but not built** (Phases 4–5),
+except the oracle reader, plotting and markdown reporting. Each section says which.
+§12 lists what Phase 2 needs built.
 
 ---
 
@@ -16,8 +22,8 @@ are interface sketches, not final code.
 2. **Causality is structural, not a matter of discipline.** Signals receive data as a
    time-ordered stream and never get a handle to the whole run. Every signal must also
    pass an automated test that perturbs the future (§7.4).
-3. **The test set is quarantined.** Test-side data lives in a separate stream and a
-   separate type (`OracleRecord`), which only the evaluation package may read. Nothing
+3. **The test set is quarantined.** Test-side data lives in a separate file
+   (`oracle.parquet`) that only `tfs/evaluation/oracle.py` reads. Nothing
    in `signals/` or `rules/` can import it (§10).
 4. **Three independent layers, each with a single interface:**
    - task (what is learned)
@@ -38,71 +44,63 @@ are interface sketches, not final code.
 
 ## 2. Package layout
 
+✅ = built and tested. ⏳ = planned (phase in brackets).
+
 ```
 test_free_stopping/
-  PLAN.md  DESIGN.md  README.md  pyproject.toml
+  RAMPUP.md  PLAN.md  DESIGN.md  README.md  pyproject.toml
   configs/
-    tasks/        modular.yaml  mnist.yaml  teacher_student.yaml
-    optimizers/   adamw.yaml  adam_l2.yaml  sgd_momentum.yaml  sgd.yaml
-    sweeps/       pilot.yaml  modular_xplusy.yaml  ...   (grid definitions)
-    rules/        templates and calibration search spaces
+    replay_tolerance.yaml           ✅ L1 tolerances (unchanged after Phase 1: no drift seen)
+    runs/dummy.yaml                 ✅ tiny infrastructure run (G0, tests)
+    sweeps/                         ✅ phase1_det, phase1_repro, phase1b_repro, phase1b_lr_scan
+                                    ⏳ phase2_*.yaml (Phase 2), phase3_*.yaml (frozen grid)
+    env_lock.txt                    ⏳ pinned Molab environment (Phase 2)
+  molab/                            ✅ marimo notebooks the user runs on Molab:
+                                       phase0_g0.py, phase1.py, phase1b.py; ⏳ phase2_pilot.py
+  results/phase1/                   ✅ RESULTS.md + figures (versioned)
   tfs/                              # the package ("test-free stopping")
-    config.py                       # dataclass configs, YAML (de)serialisation, run_id hashing
-    registry.py                     # generic name -> class registry used by every layer
-    tasks/
-      base.py                       # Task protocol, TaskData
-      modular.py  mnist.py  teacher_student.py
-    models/
-      mlp.py                        # MLP, init scaling, layer introspection
-    optim/
-      factory.py                    # adamw | adam_l2 | sgd_momentum | sgd
+    config.py                       ✅ dataclass configs, YAML (de)serialisation, run_id / group_id
+    registry.py                     ✅ generic name -> class registry
+    seeding.py                      ✅ named seed streams; stateless minibatch order
+    cpu_env.py                      ✅ CPU reproducibility env (pinning, available CPUs, CPU model)
+    losses.py                       ✅ ce | mse
+    tasks/                          ✅ base.py (Task, TaskData, get_task), dummy, modular, mnist, teacher_student
+    models/mlp.py                   ✅ MLP (biases, init_scale, features, param_list, layer_params)
+    optim/factory.py                ✅ adamw | adam_l2 | sgd_momentum | sgd, RegSpec
     training/
-      trainer.py                    # the training loop
-      schedule.py                   # log / summary / keyframe step schedules
-      telemetry.py                  # per-step raw quantities (norms, decompositions)
-      summaries.py                  # dense summaries + weight fingerprints
-      state.py                      # TrainState: weights + optimizer state + RNG states (keyframe payload)
-      determinism.py                # determinism flags, environment capture + compatibility check
-      replay.py                     # ReplayEngine: keyframe -> any step, with verification
+      loop.py                       ✅ TrainLoop: the ONE optimizer-step implementation (train + replay)
+      recorder.py                   ✅ telemetry, train predictions, fingerprints, summaries
+      trainer.py                    ✅ Trainer: config -> run directory (adds the oracle)
+      schedule.py                   ✅ nested log / summary / keyframe schedules
+      state.py                      ✅ TrainState (keyframe payload), tensor hashing
+      determinism.py                ✅ determinism flags, EnvRecord, code version
+      replay.py                     ✅ ReplayEngine, ReplayTolerance, ReplayReport, L0/L1 checks
     storage/
-      layout.py                     # paths and file naming, one source of truth
-      writer.py                     # RunWriter (streams to disk during training)
-      reader.py                     # RunReader (lazy, read-only)
-      hub.py                        # Hugging Face upload/download, manifest sync
-      manifest.py                   # corpus-level run status table
+      layout.py                     ✅ file names, paths, parts, sha256 helper
+      writer.py                     ✅ RunWriter (buffers in memory, writes at the end, DONE last)
+      reader.py                     ✅ RunReader (lazy, read-only; no oracle access)
+      hub.py                        ✅ Remote / HfRemote / LocalRemote, push/verify/pull, manifest
     causal/
-      stream.py                     # CausalStream / Observation  (the only door into run data; replay-backed)
-      view.py                       # TrainContext: training data + config, no test data
-    signals/
-      base.py                       # Signal ABC, SignalRegistry
-      stationarity.py               # S1, S1b, S1c
-      norms.py                      # N1
-      spectral.py                   # R1, R2
-      features.py                   # F1, F2, F3
-      baselines.py                  # B1 to B5
-      _linalg.py                    # shared math: eff. rank, CKA, per-example grads, AGOP
-    rules/
-      base.py                       # StoppingRule, RuleSpec
-      template.py                   # Smoother -> Threshold -> Patience
-      smoothing.py                  # causal EMA, causal median
+      view.py                       ✅ TrainContext: training data + config, no test data
+      stream.py                     ⏳ CausalStream / Observation (Phase 4)
+    signals/                        ⏳ base, stationarity, norms, spectral, features, baselines, _linalg (Phase 4)
+    rules/                          ⏳ base, template, smoothing (Phase 5)
     evaluation/
-      oracle.py                     # OracleRecord access (ONLY place test data is read)
-      ground_truth.py               # max_acc, t_eps, run category
-      scoring.py                    # regret, eps-pass, lag, premature, never-stopped
-      calibration.py                # hyperparameter search on calibration seeds
-      report.py                     # tables + plots
+      oracle.py                     ✅ the only reader of oracle.parquet
+      plots.py                      ✅ per-run accuracy / weight-norm plots (light style forced)
+      report.py                     ✅ tables -> markdown (console + summary.md)
+      ground_truth.py  scoring.py  calibration.py  split.py   ⏳ (Phase 5)
     sweep/
-      grid.py                       # sweep YAML -> list[RunConfig]
-      launcher.py                   # concurrent workers, resume, upload
+      grid.py                       ✅ sweep YAML -> list[RunConfig]
+      launcher.py                   ✅ run_parallel / replay_parallel (one subprocess per run), child_env
+      gpumon.py                     ✅ background nvidia-smi logger
   scripts/                          # thin CLIs over tfs.*  (python -m scripts.<name>)
-    train.py  sweep.py  sync.py  replay_check.py  compute_signals.py  calibrate.py  evaluate.py  plots.py
-  tests/
-    test_tasks.py  test_models.py  test_optim.py  test_storage_roundtrip.py
-    test_causality.py  test_signals_math.py  test_scoring.py
-    test_determinism.py  test_replay.py   test_quarantine.py
-  runs/          (gitignored; local working copy of run data)
-  cache/         (gitignored; local signal cache)
-  results/       (versioned; tables and figures only)
+    train.py  replay_check.py  sync.py  det_check.py  throughput.py      ✅
+    sweep.py (Phase 2/3)  compute_signals.py (4)  calibrate.py  evaluate.py (5)   ⏳
+  tests/                            ✅ 64 tests: config, cpu_env, determinism, hub, quarantine,
+                                       replay, storage, sweep, tasks
+                                    ⏳ test_causality, test_signals_math, test_scoring
+  runs/  cache/                     (gitignored, anchored to the project root)
 ```
 
 ---
@@ -152,7 +150,7 @@ class ModelConfig:     depth: int; width: int; activation: str; init_scale: floa
 class OptimConfig:     name: str; lr: float; weight_decay: float; momentum: float = 0.0; betas: tuple = (0.9, 0.98)
 @dataclass(frozen=True)
 class RecordConfig:    log_every: int = 50; summary_every: int = 500; keyframe_every: int = 10_000
-                       n_fingerprint_proj: int = 8
+                       n_fingerprint_proj: int = 8; n_probe: int = 8; probe_batch: int = 256
 @dataclass(frozen=True)
 class RunConfig:
     task: TaskConfig; model: ModelConfig; optim: OptimConfig; record: RecordConfig
@@ -164,7 +162,12 @@ class RunConfig:
 ```
 
 - `run_id` is deterministic. Rerunning a sweep YAML regenerates the same IDs, which is
-  what makes resuming work.
+  what makes resuming work. Format, e.g.
+  `mnist__n1000_d3w200_adamw_lr0.001_wd0.1_a8_s0__938cd26c`: app, task tag, depth/width,
+  optimizer, lr, γ, α, seed, then an 8-character hash of the full config. The hash is
+  what makes ids unique; the readable part is for humans.
+- `RunConfig.__post_init__` enforces the nesting of the schedules: `summary_every` must
+  be a multiple of `log_every`, and `keyframe_every` of `summary_every`.
 - **Seed handling** (`tfs/seeding.py`). One integer seed is split by
   `numpy.random.SeedSequence` into independent named streams: data, teacher, init,
   order, probe, fingerprint. Changing one never shifts the others.
@@ -242,14 +245,18 @@ A keyframe is the complete `TrainState` at a step:
 
 ```python
 @dataclass
-class TrainState:
+class TrainState:                         # tfs/training/state.py
     step: int
-    weights: list[Tensor]                 # fp32, MLP.weight_list() order (+ biases)
-    optim_state: dict[str, Tensor]        # flattened optimizer.state_dict() tensors (Adam m, v, step; momentum buffers)
+    params: dict[str, Tensor]             # name -> fp32 tensor, MLP.param_list() order
+    optim: dict[str, Tensor]              # "{param index}/{state key}": Adam exp_avg, exp_avg_sq, step; momentum buffers
     # no RNG state: minibatch order is a pure function of the step (§4)
-    def to_flat(self) -> dict[str, Tensor]: ...
+    @classmethod
+    def capture(cls, step, model, opt) -> "TrainState": ...
+    def restore(self, model, opt) -> None: ...
+    def to_flat(self) -> dict[str, Tensor]: ...     # keys "k{step}/p/<name>", "k{step}/o/<idx>/<key>"
     @classmethod
     def from_flat(cls, step: int, d: dict[str, Tensor]) -> "TrainState": ...
+    def hashes(self) -> dict[str, str]: ...         # sha256 per tensor (dtype + shape + bytes)
 ```
 
 - Keyframes are taken at step 0, every `keyframe_every` steps, and at the final step.
@@ -268,36 +275,59 @@ and every summary step.
 ### Writer and reader
 
 ```python
-class RunWriter:                       # used only by Trainer
-    def __init__(self, run_dir: Path, cfg: RunConfig, layer_shapes: list): ...
-    def log(self, step, telemetry: dict, train_preds: np.ndarray, fingerprint: dict, oracle: dict): ...
+class RunWriter:                       # used only by Trainer; buffers everything in memory
+    def __init__(self, run_dir: Path, cfg: RunConfig, overwrite: bool = False): ...
+    def log(self, telemetry: dict, train_preds: np.ndarray, fingerprint: dict, oracle: dict): ...
     def summary(self, step, summaries: dict[str, np.ndarray]): ...
-    def keyframe(self, state: TrainState): ...        # buffered; written with hashes
-    def finalize(self, status: str, env: EnvRecord): ...   # flush, meta.json, DONE
+    def keyframe(self, state: TrainState): ...        # buffered; hashed
+    def finalize(self, status: str, meta_extra: dict | None = None) -> Path: ...
+        # writes every file, then meta.json, checksums.json, and DONE last
 
 class RunReader:                       # lazy, read-only
     def __init__(self, run_dir: Path): ...
     config: RunConfig; status: str; env: EnvRecord
-    log_steps: np.ndarray; summary_steps: np.ndarray; keyframe_steps: np.ndarray
+    log_steps: np.ndarray; keyframe_steps: np.ndarray; opened_keyframes: list[int]
+    def summary_steps(self) -> list[int]: ...
     def telemetry(self) -> pd.DataFrame: ...
     def train_preds(self) -> np.ndarray: ...
     def summaries(self, step: int) -> dict[str, np.ndarray]: ...
     def keyframe(self, step: int) -> TrainState: ...
     def fingerprints(self) -> pd.DataFrame: ...       # used by ReplayEngine only
+    def keyframe_hashes(self) -> dict[int, dict[str, str]]: ...
+    def verify_checksums(self) -> list[str]: ...      # files whose sha256 differs (absent ones skipped)
     # NOTE: no oracle accessor here. See evaluation/oracle.py.
 ```
 
-### `hub.py` and `manifest.py`
+### Remote storage (`storage/hub.py`)
 
-- **Manifest.** A table with one row per `run_id`: status (planned, running, complete,
-  diverged, failed), size, upload commit and checksum. It is stored in the HF repo root
-  and is the source of truth for resuming.
-- **Upload.** Runs are grouped into batched commits through
-  `huggingface_hub.HfApi.create_commit` (about 10 runs per commit) to stay under rate
-  limits. A local run directory is deleted only after the upload is confirmed and the
-  checksums match.
-- **Download.** `hub.fetch(run_id, parts=...)` downloads only the parts needed. For
-  example, signals that use telemetry alone skip the keyframes.
+```python
+class Remote(ABC):                     # HfRemote (production) and LocalRemote (tests) implement it
+    def commit(self, files: dict[str, Path], message: str) -> str: ...   # atomic multi-file upload
+    def list_files(self, prefix: str) -> dict[str, RemoteFile]: ...      # size + sha256 / git blob id
+    def download(self, path: str, dest: Path) -> Path: ...
+
+def push_runs(remote, run_dirs, delete_local=True, batch_size=10, log=print) -> dict
+def verify_remote(remote, run_dir) -> list[str]           # remote paths missing or different
+def pull_run(remote, app, run_id, runs_root, parts=None) -> Path   # checks checksums after download
+def update_replay_level(remote, run_dir) -> str           # pushes replay_report.json + manifest entry
+def read_manifest(remote) -> dict
+```
+
+- **Manifest** (`manifest.json` at the repo root): one entry per `run_id` with app,
+  group_id, seed, status (complete / diverged), replay_level, n_files, size_bytes and
+  update time. It is committed **in the same commit** as the runs it lists, so it never
+  lists a run whose files are missing. It is the source of truth for resuming.
+- **Upload.** Batched commits (about 10 runs each) via `HfApi.create_commit`. After the
+  commit, every file is verified: by the LFS sha256 if HF reports one, else by the git
+  blob id, else by **downloading and hashing it** (HF's Xet storage may report neither).
+  A file is never accepted on size alone. The local run directory is deleted only after
+  every file verifies.
+- **Download.** `pull_run(..., parts=[...])` downloads only the needed parts (e.g.
+  telemetry without keyframes; see `layout.PARTS`), then checks sha256 against
+  `checksums.json`.
+- **Deleting old runs** (needed in Phase 2 block 0) is not in `hub.py` yet; use
+  `HfApi.delete_folder` / `create_commit` with `CommitOperationDelete`. Deleting does
+  not free storage held in git history; `HfApi.super_squash_history` does.
 - **File count.** About 9 files per run, roughly 11k across the corpus. That is well
   within Hugging Face's comfortable range.
 - **Authentication.** The token comes from the `HF_TOKEN` environment variable only. It
@@ -313,36 +343,48 @@ class RunReader:                       # lazy, read-only
 @dataclass
 class TaskData:
     x_train: Tensor; y_train: Tensor; x_test: Tensor; y_test: Tensor
-    n_classes: int | None     # None for regression
+    d_in: int; d_out: int; kind: Literal["classification", "regression"]; n_classes: int | None
 
 class Task(Protocol):
     name: str
-    def build(self, cfg: TaskConfig, rng: np.random.Generator) -> TaskData: ...
-    def accuracy(self, pred: Tensor, y: Tensor) -> Tensor: ...    # argmax or threshold-θ
+    def build(self, params: dict, streams: SeedStreams) -> TaskData: ...
+    def accuracy(self, pred: Tensor, y: Tensor) -> float: ...           # argmax, or RMS error < θ
     def train_pred_record(self, pred: Tensor, y: Tensor) -> np.ndarray: ...
+
+task = get_task(name)       # registry lookup; tasks register with @TASKS.register("name")
 ```
 
-- **Modular.** Builds every (a, b) pair and splits them at `train_frac`.
-- **MNIST.** Reads the raw IDX files (downloaded once into `$TFS_DATA_DIR/mnist` from
-  torchvision's official mirror, MD5-checked; no torchvision dependency), then takes a
-  seeded subset of the training set. Pixels are scaled to [0, 1]. The test set is the
-  full 10k images.
-- **Teacher–student.** Builds the teacher from its own seed stream, then draws
-  `N_train` and `N_test` Gaussian inputs.
+- **Modular** (`op`, `p`, `train_frac`). Builds every (a, b) pair (b ≠ 0 for division,
+  label a·b⁻¹), one-hot encodes both operands into 2p dims, and splits with the `data`
+  seed stream.
+- **MNIST** (`n_train`). Reads the raw IDX files (downloaded once into
+  `$TFS_DATA_DIR/mnist` from torchvision's official mirror, MD5-checked; no torchvision
+  dependency), then takes a seeded subset of the training set. Pixels are scaled to
+  [0, 1]. The test set is the full 10k images. Notebooks call `ensure_mnist()` once
+  before starting parallel workers, so the workers don't race to download.
+- **Teacher–student** (`n_train`, `n_test`, `theta`, teacher shape). Builds the teacher
+  from its own seed stream, draws Gaussian inputs from the `data` stream. A sample is
+  correct when its **RMS error over outputs** is below θ (Omnigrok's convention). Phase 1
+  used MSE < θ, about 100× looser in squared terms; it made a model that had not
+  generalized score ~88% test accuracy.
+- **Dummy** (Gaussian blobs). For infrastructure tests only.
 
 ### Model
 
 ```python
 class MLP(nn.Module):
-    def __init__(self, d_in, d_out, depth, width, activation, init_scale): ...
-    # PyTorch default init, then every weight multiplied by init_scale (Omnigrok's α).
+    def __init__(self, d_in, d_out, depth, width, activation, init_scale, generator): ...
+    # depth = number of Linear layers. PyTorch's default nn.Linear init (U(±1/sqrt(fan_in))
+    # for weight and bias), drawn from an explicit generator, then every parameter is
+    # multiplied by init_scale (Omnigrok's α). Activations: relu, tanh, quadratic, identity.
     def forward(self, x) -> Tensor: ...
-    def features(self, x) -> list[Tensor]: ...     # post-activation output of every hidden layer
-    def weight_list(self) -> list[Tensor]: ...     # fixed layer order, used everywhere
+    def features(self, x) -> list[Tensor]: ...            # post-activation output of every hidden layer
+    def param_list(self) -> list[tuple[str, Tensor]]: ... # (l0.weight, l0.bias, l1.weight, ...)
+    def layer_params(self) -> list[list[Tensor]]: ...     # [weight, bias] per Linear layer
 ```
 
-Biases are included, using the default PyTorch MLP convention. `features()` is used
-offline by the spectral and feature signals.
+`param_list()` fixes the order of every per-parameter record (fingerprints, keyframes).
+`layer_params()` defines "layer i" for every per-layer telemetry column `l{i}_*`.
 
 ### Optimizers
 
@@ -359,45 +401,69 @@ describing how weight decay enters:
 `RegSpec` is stored in `meta.json`. Signals read it to form the correct stationarity
 quantity for each optimizer.
 
-### Trainer
+### Training loop, recorder, trainer
 
 ```python
-class Trainer:
-    def __init__(self, cfg: RunConfig, writer: RunWriter, device: str): ...
-    def run(self) -> str:                    # returns final status
-        # for step in 0..steps:
-        #   if step in keyframe_steps: writer.keyframe(TrainState.capture(...))
-        #   if step in log_steps:      eval train (and test -> oracle), telemetry, fingerprint, writer.log(...)
-        #   if step in summary_steps:  writer.summary(step, summaries.compute(...))
-        #   take one optimizer step (record Δw for update telemetry)
-        #   on non-finite loss: writer.finalize("diverged"); return
-    def advance(self, state: TrainState, to_step: int, on_step=None) -> TrainState: ...
-        # the single training-step implementation, shared by run() and ReplayEngine
+class TrainLoop:                                  # tfs/training/loop.py
+    def __init__(self, cfg, x_train, y_train, kind, d_in, d_out, device): ...
+    def step(self, t: int, want_info: bool) -> StepInfo | None: ...   # update t -> t+1
+    def advance(self, from_step, to_step, want_info=..., on_step=None): ...
+    def capture(self, step) -> TrainState: ...
+    def restore(self, state: TrainState): ...
+
+class Recorder:                                   # tfs/training/recorder.py, train side only
+    def log(self, step, info: StepInfo | None) -> tuple[dict, np.ndarray, dict]  # telemetry, preds, fingerprint
+    def summaries(self) -> dict[str, np.ndarray]  # sv/l{i}, actspec/l{i}, gnoise/l{i}; float32
+
+class Trainer:                                    # tfs/training/trainer.py
+    def __init__(self, cfg: RunConfig, runs_root: Path, device="cpu", overwrite=False): ...
+    def run(self) -> Path:
+        # for t in 0..steps:
+        #   keyframe at keyframe steps; log row (+ oracle) at log steps; summaries at summary steps
+        #   info = loop.step(t, want_info=(t+1) is a log step)
+        #   NonFiniteLoss -> status "diverged", stop
 ```
 
-- Telemetry is computed in `training/telemetry.py` from the gradient and Δw of the step
-  just taken.
-- Train and test evaluations both run in `torch.no_grad()`. The test evaluation writes
-  only to the oracle stream.
-- **One code path.** `run()` and replay both call `advance()`, so replay cannot drift
-  from training through duplicated logic.
+- **One code path.** `TrainLoop.step` is the only implementation of an optimizer step.
+  The Trainer and the ReplayEngine both call it, so replay cannot drift from training
+  through duplicated logic.
+- **Step semantics.** "Step t" is the state after t updates. A telemetry row at step t
+  describes the update t−1 → t (gradient at w_{t−1}, Δw), so it uses nothing after t.
 - **Recording is side-effect-free.** Evaluation, telemetry, summaries and fingerprints
-  run under `torch.no_grad()`, never touch the training RNG streams, and draw any
-  randomness of their own (e.g. probe minibatches) from dedicated streams. Recording at
-  a different cadence therefore never changes the training trajectory. This is what lets
-  replay skip recording entirely.
+  run under `torch.no_grad()` (gradient-noise probes use `torch.autograd.grad`, never
+  `p.grad`) and draw randomness only from their own streams. Recording at a different
+  cadence never changes the trajectory, and a test asserts this.
+- **Divergence** is checked only on steps about to be logged: reading the loss forces a
+  GPU→CPU sync, which would otherwise stall the GPU every step. A diverging run is caught
+  up to `log_every` steps late and finalized with `status="diverged"` and `diverged_at`.
+- **Minibatches.** `TrainLoop` builds each epoch's permutation once and keeps it on the
+  device (identical to `seeding.batch_indices`, which a test checks). Phase 1b found that
+  regenerating it on the CPU every step was part of a throughput collapse.
+- The oracle (test evaluation) lives in the Trainer only. The Recorder and TrainLoop
+  never see test data, which is what lets replay run without loading it.
 
-### Launcher
+### Launcher and sweep tools
 
 ```python
-def launch(configs: list[RunConfig], workers: int, device: str, upload: bool): ...
+def expand(spec: Path | dict) -> list[RunConfig]                       # tfs/sweep/grid.py
+def run_parallel(configs, runs_root, device, workers, log) -> list[LaunchResult]
+def replay_parallel(run_dirs, device, workers, full=True, log) -> dict[str, int]
+def child_env(device, workers) -> dict                                  # pinned env + thread share
+class GpuMonitor: ...                                                   # tfs/sweep/gpumon.py
 ```
 
-- One process per run, up to `workers` concurrent processes.
-- Runs already marked `complete` in the manifest are skipped.
-- A finished run is handed to the upload queue.
-- A failed run records its traceback in `meta.json` with `status=failed`, and the batch
-  carries on.
+- **Sweep files**: a list of blocks, each a full `base` config plus optional `variants`
+  (one override set per run) and `product` (dotted path → list, crossed with every
+  variant). A dict value replaces the whole sub-tree. YAML anchors share bases.
+  Duplicate run ids are an error.
+- **One subprocess per run** (`python -m scripts.train`), up to `workers` at a time,
+  output to a log file (pipes can deadlock). A run whose directory already has `DONE`
+  is skipped, so re-launching resumes.
+- **Every worker, CPU or GPU, gets `available_cpus // workers` threads** via `child_env`.
+  Phase 1b measured what happens without it: aggregate throughput fell from 488 steps/s
+  at 8 GPU workers to 24 at 32, with the GPU mostly idle.
+- Not built yet: launching directly into an upload queue (Phase 2/3 `scripts/sweep.py`).
+  Notebooks currently call `run_parallel`, then `push_runs`.
 
 ### 6.5 Determinism and replay
 
@@ -420,19 +486,23 @@ def launch(configs: list[RunConfig], workers: int, device: str, upload: bool): .
   thread count, so it can change results. Parallel CPU workers each get an equal share
   of cores (`TFS_NUM_THREADS`), the count is recorded, and a CPU replay sets the same
   count before it starts.
-- `EnvRecord` captures torch, CUDA, cuDNN, driver, GPU name, Python and numpy versions,
-  and the flags above. It is stored in `meta.json`.
+- `EnvRecord` captures device type, torch, CUDA, cuDNN, driver, GPU name, Python, numpy,
+  platform, and the flags above (including the CPU snapshot: pinned variables, CPU
+  model, available CPUs). It is stored in `meta.json`.
 
 ```python
 @dataclass(frozen=True)
 class EnvRecord:
-    torch: str; cuda: str | None; cudnn: str | None; driver: str | None
-    gpu: str | None; python: str; numpy: str; flags: dict
-    def compatible_with(self, other: "EnvRecord") -> bool: ...   # same GPU model + same versions
+    device: str; torch: str; cuda: str | None; cudnn: int | None; gpu: str | None
+    driver: str | None; python: str; numpy: str; platform: str; flags: dict
+    def mismatches(self, other) -> list[str]: ...   # device, versions, GPU, driver, determinism;
+                                                    # on CPU also threads, oneDNN, CPU model, pinning
+    def compatible_with(self, other) -> bool: ...
 
 class ReplayEngine:
-    def __init__(self, reader: RunReader, ctx: TrainContext, tolerance: ReplayTolerance,
+    def __init__(self, run_dir, device="cpu", tolerance: ReplayTolerance | None = None,
                  allow_env_mismatch: bool = False): ...
+    # builds TrainContext (train data only) + TrainLoop + Recorder; checks checksums first
     def iterate(self, steps: Iterable[int]) -> Iterator[tuple[int, MLP]]:
         # steps must be increasing. Restores the latest keyframe <= first step, then
         # advances, yielding the model at each requested step. At every log step passed
@@ -458,8 +528,9 @@ class ReplayTolerance:                      # loaded from configs/replay_toleran
 | **L1 (minimum acceptable)** | Every check is within `ReplayTolerance`. The worst observed relative error is recorded per run. |
 | **failed** | Any check is out of tolerance. The run is excluded from the corpus and retrained. |
 
-The tolerances above are starting values. Phase 1 (G1-det) measures the actual drift
-and freezes them.
+**Phase 1 result:** every GPU check (32 configs, 20k steps, two separate runs) was L0
+with zero error, and so was every pinned CPU check. With no drift observed, the
+tolerances stay at these starting values.
 
 **Integrity before replay.** `ReplayEngine` first checks every present file against
 `checksums.json` and raises `CorruptRun` on a mismatch. Replay compares against the
@@ -475,7 +546,14 @@ stored keyframes and streams, so they must be the recorded bytes.
 **Environment.** Replay refuses to run when `EnvRecord.compatible_with` is false. It can
 be overridden with `allow_env_mismatch=True`, but the run must still pass L1.
 Practically, this means the corpus is trained and replayed on the same Molab GPU type
-with a pinned environment.
+with a pinned environment. A CPU replay sets the recorded thread count itself.
+
+**CPU drift, for the record.** Without pinning, 1–2 of 16 configs drifted on Molab's
+CPU under load (two trainings of one config differed, or a replay diverged by step 50).
+The same configs replayed bit-exactly on an idle local machine. Pinning removed it in
+the one 16-config check run under load. The cause was dynamic threading or oneDNN;
+which one was not isolated. `TFS_CPU_UNPINNED=1` restores the old behaviour, for
+diagnostics only.
 
 **Where drift can come from**, and how it is handled:
 - GPU kernel nondeterminism: prevented by the flags above.
@@ -487,7 +565,10 @@ with a pinned environment.
 
 ---
 
-## 7. Measurement layer
+## 7. Measurement layer (⏳ Phases 4–5: designed, not built)
+
+`TrainContext` (§7.1) and the oracle quarantine (§10) already exist; everything else in
+§7–§8 is the design to build against.
 
 ### 7.1 Causal stream
 
@@ -644,7 +725,7 @@ class Calibrator:
 def evaluate(rule_specs: dict[str, RuleSpec], runs: list[str]) -> pd.DataFrame: ...
 ```
 
-- **Split.** `seed ∈ {0, 1}` is calibration and `seed ∈ {2}` (or {2, 3}) is held out,
+- **Split.** `seed ∈ {0, 1}` is calibration and `seed ∈ {2, 3}` is held out,
   defined in one place: `evaluation/split.py`. `Calibrator.fit` asserts it never
   receives a held-out run.
 - **Calibration modes.**
@@ -663,16 +744,19 @@ def evaluate(rule_specs: dict[str, RuleSpec], runs: list[str]) -> pd.DataFrame: 
 
 ## 9. CLIs
 
-| Command | Does |
-|---|---|
-| `python -m scripts.train <run.yaml>` | One run, local, no upload (development) |
-| `python -m scripts.sweep <sweep.yaml> --workers 16 --upload` | Expand the grid, launch, resume, upload |
-| `python -m scripts.sync {push,pull,status}` | Manifest-driven HF synchronization |
-| `python -m scripts.replay_check <run_dir>... [--full]` | Verify replay (one random interval, or the full run) and write `replay_report.json`; `hub.update_replay_level` pushes it to the manifest |
-| `python -m scripts.compute_signals --signals all --runs <filter>` | Stream runs, fill the signal cache, optionally upload it |
-| `python -m scripts.calibrate --mode {per_app,global}` | Write `results/rule_specs.json` |
-| `python -m scripts.evaluate` | Score held-out seeds, write the tables |
-| `python -m scripts.plots ...` | Figures |
+| Command | Status | Does |
+|---|---|---|
+| `python -m scripts.train <run.yaml> [--device] [--runs-root] [--seed]` | ✅ | One run, no upload |
+| `python -m scripts.replay_check <run_dir>... [--full] [--device]` | ✅ | Verify replay (one random keyframe interval, or the whole run); writes `replay_report.json` |
+| `python -m scripts.det_check <sweep.yaml> --device cuda --workers N [--steps --keyframe-every]` | ✅ | G1-det: train each config twice, compare, replay |
+| `python -m scripts.throughput --workers 8 16 32 [--mps-workers 16]` | ✅ | Aggregate steps/s at several worker counts (and MPS), with a bit-identity check |
+| `python -m scripts.sync {push,pull,status} --repo advay333/<repo>` | ✅ | Manifest-driven HF sync; token from `HF_TOKEN` |
+| `python -m scripts.sweep <sweep.yaml> --workers N --upload` | ⏳ Phase 2/3 | Expand, launch, resume, upload as runs finish |
+| `python -m scripts.compute_signals ...` | ⏳ Phase 4 | Stream runs, fill the signal cache |
+| `python -m scripts.calibrate` / `evaluate` | ⏳ Phase 5 | Rule calibration and held-out scoring |
+
+On Molab, notebooks call the same functions directly (`det_check`, `run_parallel`,
+`push_runs`, `throughput`) rather than shelling out to these CLIs.
 
 ---
 
@@ -680,8 +764,10 @@ def evaluate(rule_specs: dict[str, RuleSpec], runs: list[str]) -> pd.DataFrame: 
 
 - `oracle.parquet` is read only in `tfs/evaluation/oracle.py`.
 - `tests/test_quarantine.py` enforces this statically. It parses every module under
-  `tfs/signals`, `tfs/rules`, `tfs/causal` and `tfs/storage/reader.py`, and fails if any
-  of them imports `tfs.evaluation` or mentions the `oracle` filename.
+  `tfs/signals`, `tfs/rules`, `tfs/causal`, plus `storage/reader.py`,
+  `training/replay.py`, `training/recorder.py` and `training/loop.py`. It fails if any of
+  them imports `tfs.evaluation`, references `layout.ORACLE` or the oracle filename, or
+  touches `x_test` / `y_test`. New signal and rule modules are covered automatically.
 - `TrainContext` is built from `Task.build(...)`, but **only the training tensors** are
   kept. The test tensors are dropped before the context object exists.
 
@@ -690,13 +776,44 @@ def evaluate(rule_specs: dict[str, RuleSpec], runs: list[str]) -> pd.DataFrame: 
 ## 11. Conventions
 
 - Python ≥ 3.11, torch, numpy, pandas/pyarrow, safetensors, huggingface_hub, pyyaml,
-  matplotlib, pytest.
-- All dependencies are pinned in `pyproject.toml`.
-- Layer order is fixed by `MLP.weight_list()`, and every per-layer column uses that
-  index.
+  matplotlib; pytest and marimo for development. `pyproject.toml` gives lower bounds
+  only. The exact environment of every run is recorded in its `meta.json`, and Phase 2
+  writes the pinned Molab environment to `configs/env_lock.txt`.
+- Layer order is fixed by `MLP.param_list()` / `MLP.layer_params()`, and every
+  per-layer column uses that index.
 - Time is always measured in optimizer **steps**, never epochs, across all applications.
-- Keyframes are always fp32. Offline math runs in float32 or float64.
-- The pinned environment (exact versions) lives in `pyproject.toml` plus
-  `configs/env_lock.txt`. Changing either invalidates replay compatibility for runs
-  recorded under the old environment.
-- Every figure in `results/` is regenerated by a script, never edited by hand.
+- Keyframes are always fp32. Summaries are float32. Offline math runs in float32 or
+  float64.
+- Every figure in `results/` is regenerated by a script, never edited by hand. Plots
+  force matplotlib's default light style (Molab's dark theme leaked into Phase 1's).
+- **Notebooks** (`molab/*.py`) are marimo apps: unique variable names across cells,
+  underscore-prefixed locals, imports in the first cell. Run `marimo check` on every
+  notebook before handing it over. Every result table is printed to the console as it
+  is produced, and a `summary.md` is uploaded with the JSON reports (Phase 1b's tables
+  failed to render after a 2.6-hour cell).
+
+---
+
+## 12. What Phase 2 needs built
+
+See PLAN.md §6 (Phase 2) for the blocks and gate. Implementation notes:
+
+1. **`molab/phase2_pilot.py`.** Copy the structure of `molab/phase1b.py`: repo pull cell;
+   token/repo/workers cell with a checkbox per block; one run cell that prints every
+   table and uploads JSON + `summary.md` + plots in a `finally:`.
+2. **HF clean-up block.** A small helper (e.g. `hub.delete_runs(remote, run_ids)`) that
+   deletes `runs/<app>/<run_id>/` folders in one commit and removes their manifest
+   entries. `HfRemote` needs a `delete(paths)` method (`CommitOperationDelete`) and a
+   no-op/real one in `LocalRemote` for tests. Optionally `super_squash_history`.
+3. **Sweep files** `configs/sweeps/phase2_lr_scan.yaml` and `phase2_gamma.yaml`. The
+   per-optimizer α levels (SGD family on MNIST: {1, 2, 4}) are expressed as separate
+   blocks, as in `phase1_det.yaml`.
+4. **Learning-rate selection.** A small function that reads the scan runs' telemetry
+   and picks, per (application, optimizer), the largest lr whose run neither diverged
+   nor ended with a higher train loss than it started with. Report the table; the human
+   confirms before freezing.
+5. **`scripts/sweep.py`** (needed by Phase 3): expand → `run_parallel` → `push_runs` in
+   batches as runs finish, plus a one-interval `replay_check` per run before upload.
+   Phase 3 runs it from a notebook.
+6. **Environment lock.** At the start of the pilot, write `pip freeze`, the driver, CUDA
+   and GPU to `configs/env_lock.txt` (committed by the user), and record the git commit.
