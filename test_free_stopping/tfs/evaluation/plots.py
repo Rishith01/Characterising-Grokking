@@ -137,7 +137,9 @@ def _plot_gamma_variant(variant: str, rows: list[dict], curves: dict, out_dir: P
     fig, axes = plt.subplots(nrows, ncols, figsize=(6.5 * ncols, 3.4 * nrows), squeeze=False, facecolor="white")
     cmap = plt.get_cmap("viridis")
     for ax, (o, long) in zip(axes.flat, keys):
-        rs = sorted((r for r in rows if r["optim"] == o and (r["steps"] > horizon) == long), key=lambda r: r["gamma"])
+        rs = sorted((r for r in rows if r["optim"] == o and (r["steps"] > horizon) == long),
+                    key=lambda r: (r["alpha"], str(r.get("size")), r["gamma"]))
+        mixed = len({(r["alpha"], r.get("size"), r["lr"]) for r in rs}) > 1  # e.g. Phase 2c checks
         for i, r in enumerate(rs):
             c = curves.get(r["run_id"])
             if not c:
@@ -145,13 +147,15 @@ def _plot_gamma_variant(variant: str, rows: list[dict], curves: dict, out_dir: P
             color = cmap(i / max(len(rs) - 1, 1))
             x = np.maximum(c["step"], 1)
             ax.plot(x, c["test_acc"], color=color, lw=1.6,
-                    label=f"γ={r['gamma']:g}  [{r.get('category', '?')}]")
+                    label=(f"α={r['alpha']:g} size={r.get('size')} lr={r['lr']:g} " if mixed else "")
+                    + f"γ={r['gamma']:g}  [{r.get('category', '?')}]")
             ax.plot(x, c["train_acc"], color=color, lw=1.0, ls=(0, (3, 2)))
         ax.set_xscale("log")
         ax.set_ylim(-0.03, 1.03)
         a = rs[0]["alpha"] if rs else ""
         lr = rs[0]["lr"] if rs else ""
-        ax.set_title(f"{o}, α={a:g}, lr={lr:g}" + (f", {rs[0]['steps']:,} steps" if long else ""), fontsize=9)
+        ax.set_title(o + ("" if mixed else f", α={a:g}, lr={lr:g}") + (f", {rs[0]['steps']:,} steps" if long else ""),
+                     fontsize=9)
         ax.grid(alpha=0.3)
         ax.legend(fontsize=6, loc="upper left")
     for ax in list(axes.flat)[len(keys):]:

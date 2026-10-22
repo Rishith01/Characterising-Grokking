@@ -13,8 +13,8 @@ covers *what* we run and *in what order*. A new contributor should start with
 [RAMPUP.md](RAMPUP.md).
 
 **Status (2026-10-22):** Phases 0 and 1 are done (including the Phase 1b clean-up run).
-Phase 2a ran (results: [results/phase2/RESULTS.md](results/phase2/RESULTS.md)); the Phase 2b
-notebook is written and waiting to run.
+Phases 2a and 2b ran (results: [results/phase2/RESULTS.md](results/phase2/RESULTS.md)). G2 passes
+except for three grid decisions (x²+xy+y², MNIST depth 8 SGD and n, teacher–student horizon).
 **Phase 2 (the pilot sweep) is next.** Phase 1 findings are in
 [results/phase1/RESULTS.md](results/phase1/RESULTS.md) and summarized in §9.
 
@@ -90,6 +90,49 @@ test-accuracy creep.
 
 If the pilot shows storage or compute is too tight, the first cut is teacher–student's
 training-size axis.
+
+### Phase 3 grid: locked values (2026-10-22)
+
+✅ locked by the Phase 2 pilot · 🔶 decided by Phase 2c (`configs/sweeps/phase2_check.yaml`).
+
+**Common to every run:**
+- seeds {0, 1, 2, 3}
+- recording every 50 / 500 / 10,000 steps (log / summary / keyframe)
+- trained under MPS with 16 workers, in the environment of `configs/env_lock.txt`
+- uploaded to `advay333/tfs` under `phase3/`
+
+**Variants:**
+
+| Variant | Grid | Model | Loss, batch | Horizon | Sizes | α, Adam family | α, SGD family | Runs |
+|---|---|---|---|---|---|---|---|---|
+| teacher–student | full | 3 × 100 tanh | MSE, full batch | 🔶 3e5 | N ∈ {50, 100, 400}; 1000 test samples | {0.5, 1, 2} | {0.5, 1, 2} | 576 |
+| modular x+y | full | 3 × 512 ReLU, p = 97 | CE, full batch | 1e5 | frac ∈ {0.3, 0.5, 0.7} | {1, 2, 4} | 🔶 {1, 2, 4} | 576 |
+| modular x\*y | reduced | 3 × 512 ReLU | CE, full batch | 1e5 | frac 0.5 | {1, 4} | 🔶 {1, 4} | 128 |
+| modular, third op | reduced | 3 × 512 ReLU | CE, full batch | 1e5 | 🔶 x²+xy+y² at 0.7, or x/y at 0.5 | {1, 4} | 🔶 {1, 4} | 128 |
+| MNIST depth 3 | reduced | 3 × 200 ReLU | MSE, batch 200 | 1e5 | n 1000 | {1, 8} | 🔶 {1, 4} | 128 |
+| MNIST depth 8 | reduced | 8 × 400 ReLU | MSE, batch 200 | 1e5 | 🔶 n 4000 | 🔶 {1, 8} | 🔶 {2, 4} | 128 |
+| **Total** | | | | | | | | **1,664** |
+
+"Reduced" = all 4 optimizers × 4 γ × 2 α × 1 size × 4 seeds.
+
+**Learning rates** (✅, from the Phase 2a scan):
+
+| | adamw | adam_l2 | sgd | sgd_momentum (μ = 0.9) |
+|---|---|---|---|---|
+| teacher–student | 3e-4 | 3e-4 | 0.1 | 0.1 |
+| modular (all ops) | 1e-3 | 1e-3 | 1.0 | 0.3 |
+| MNIST depth 3 | 1e-3 | 1e-3 | 0.03 | 0.01 |
+| MNIST depth 8 | 1e-3 | 1e-3 | α 2: 0.1 · α 4: 1e-4 | α 2: 0.1 · α 4: 1e-4 |
+
+**Weight decay γ, 4 levels per (variant, optimizer)** (from the Phase 2b sweep):
+
+| | adamw | adam_l2 | sgd | sgd_momentum |
+|---|---|---|---|---|
+| teacher–student | ✅ 0, 0.03, 0.1, 1 | ✅ 0, 1e-6, 1e-5, 1e-4 | 🔶 0, 1e-6, 1e-5, 1e-4 | ✅ 0, 1e-5, 3e-5, 1e-4 |
+| modular x+y, x\*y | ✅ 0, 0.1, 0.3, 1 | ✅ 0, 1e-6, 1e-4, 1e-3 | ✅ 0, 1e-4, 3e-4, 1e-3 | ✅ 0, 3e-5, 1e-4, 3e-4 |
+| modular, third op | 🔶 | 🔶 | 🔶 | 🔶 |
+| MNIST depth 3 | ✅ 0, 0.01, 0.03, 0.1 | ✅ 0, 1e-6, 1e-5, 1e-4 | ✅ 0, 3e-4, 1e-3, 3e-3 | ✅ 0, 1e-4, 1e-3, 3e-3 |
+| MNIST depth 8 | ✅ 0, 0.01, 0.03, 0.1 | ✅ 0, 1e-6, 1e-5, 1e-3 | 🔶 per α (lr differs 1000×) | 🔶 per α |
 
 ### Run categories the corpus must contain
 
@@ -248,7 +291,10 @@ Each phase ends at a gate. We don't start the next phase until the gate passes.
 Two Molab notebooks, because block 3 needs learning rates a human has confirmed:
 - **`molab/phase2a.py`** ✅ ran 2026-10-21: blocks 0, 1 (environment lock only), 4, 2.
   Results: [results/phase2/RESULTS.md](results/phase2/RESULTS.md).
-- **`molab/phase2b.py`** (written 2026-10-22, not yet run): environment check against
+- **`molab/phase2c.py`** (written 2026-10-22, not yet run): 43 check runs
+  (`configs/sweeps/phase2_check.yaml`) for the 🔶 items in §3's locked-grid table: the
+  third modular op, MNIST depth 8 at n = 4k, and α levels no full-horizon run had tried.
+- **`molab/phase2b.py`** ✅ ran 2026-10-22: environment check against
   the lock, MPS throughput at 16/24/32 workers, block 1's determinism re-check on the
   final configs (`phase2_det.yaml`, under MPS), block 3 (every run replay-checked and
   uploaded), and block 5 with the G2 tables.

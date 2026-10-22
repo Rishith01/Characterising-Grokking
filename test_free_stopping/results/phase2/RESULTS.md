@@ -68,6 +68,48 @@ Learning rates confirmed for Phase 2b and Phase 3 (PLAN.md §9):
 | MNIST d3 | 1e-3 | 0.03 | 0.01 |
 | MNIST d8 | 1e-3 | α 2: 0.1, α 4: 1e-4 | α 2: 0.1, α 4: 1e-4 |
 
-## Phase 2b
+## Phase 2b (2026-10-22, 64 min, MPS, 16 workers)
 
-Not run yet (`molab/phase2b.py`).
+Figures: [`gamma_modular_xplusy.png`](gamma_modular_xplusy.png),
+[`gamma_teacher_student.png`](gamma_teacher_student.png) (all six in `phase2/2b/plots/`).
+
+- **Environment** matched `configs/env_lock.txt`.
+- **Throughput under MPS:** 2452 / 2301 / 2442 steps/s at 16 / 24 / 32 workers, all
+  bit-identical. More workers do not help; the corpus uses 16.
+- **Determinism (G1-det on the final configs, under MPS):** 24/24 pairs bit-identical,
+  24/24 full replays L0 with zero error.
+- **γ placement:** 146/146 runs uploaded to `phase2/runs/`, every one replay-checked at L0.
+
+### What the γ sweep shows
+
+- **Modular x+y and x\*y behave exactly as the LU mechanism predicts.** AdamW: t_ε =
+  2.6k / 9.2k / 27k / 87k steps at γ = 1 / 0.3 / 0.1 / 0.03, i.e. t_ε ∝ 1/γ (×3.3 per ×3
+  in γ); γ = 0 never generalizes. SGD and SGD+momentum follow the same law in
+  λ = lr_eff·γ (λ = 1e-4 → ~30k steps for every optimizer). Adam+L2 generalizes fast
+  (≤ 1.1k steps) at any γ in [1e-6, 1e-3], never at γ = 0, and cannot fit at 1e-2.
+- **Modular x²+xy+y² never generalizes** (test ≤ 0.022 in all 24 runs at train
+  fraction 0.5), though every run fits the training set.
+- **MNIST depth 3 (α = 4)**: train fits by step 200; test reaches 0.90–0.93 in every
+  fitting run, so no never-generalizing runs. Grokking at α = 4 is mild (t_ε 5–16k for
+  AdamW γ ≤ 0.3). Coupled γ ≥ 3e-3 (SGD) or 1e-2 (Adam+L2) prevents fitting and gives
+  late collapses.
+- **MNIST depth 8 (α = 4)**: AdamW groks cleanly (t_ε 57k / 29k / 7k at γ = 0.01 / 0.03 /
+  0.1). The SGD family at α = 4, lr 1e-4 mostly fails: weight decay ≥ 0.03 pulls the
+  network to the constant-output solution (final test 0.114), and γ = 0 fits train but
+  never generalizes. No joint-plateau run at n = 1k.
+- **Teacher–student**: at α = 1, AdamW t_ε (21k–61k) barely depends on γ (α = 1 is not
+  the LU regime). At α = 2 (3e5 horizon), γ = 0.03 → t_ε 165k and γ = 0.1 → 43k: the
+  small-γ grokkers need the 3e5 horizon. Coupled weight decay at λ ≥ 1e-5 stops the
+  student from fitting below θ (MSE floor), giving never / late-collapse runs.
+
+### Gate G2
+
+| Criterion | Status |
+|---|---|
+| Chosen lrs train | ✅ except the SGD family on MNIST depth 8 at α = 4 (fails for γ ≥ 0.03) |
+| Grok-time spread ≥ 1.5 decades per application | ✅ modular 2.3–2.4, MNIST 1.9–2.1, TS 2.6; ❌ x²+xy+y² (nothing generalizes) |
+| Never-generalizing runs in every application | ✅ (MNIST only through depth 8) |
+| All §3 categories appear | ✅ grokker, fast, never, late collapse; joint plateau once only (MNIST d3 SGD γ = 0) |
+| Projected corpus ≤ 120 GB, fits Molab | ✅ 73 GB / 8 GPU-h training (77 GB / 10.5 h with TS at 3e5), same again for the Phase 4 replay: about one 12-h session each |
+| Every pilot run L0/L1 | ✅ 146/146 L0, det check 24/24 L0 |
+| Grid frozen, environment pinned | environment ✅; grid pending the decisions below |

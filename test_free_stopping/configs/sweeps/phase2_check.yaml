@@ -1,0 +1,101 @@
+# Phase 2c (PLAN.md §6): the last checks before the Phase 3 grid is frozen. One seed.
+# Every run differs from the Phase 2b runs (alpha, size, op or horizon), so none is
+# skipped as already uploaded.
+#
+# A  Modular x^2+xy+y^2 never generalized at train fraction 0.5 (2b). Try it at 0.7, and
+#    x/y (Power et al.'s classic grokking op) at 0.5 as the replacement candidate.
+# B  MNIST depth 8 at n = 4k (the agreed fallback: no joint plateau at n = 1k). AdamW at
+#    alpha 8 (the reduced grid's high alpha; Phase 1 saw the plateau there) and alpha 1
+#    (the control, never run at depth 8 with Adam); the SGD family at alpha 2 (lr 0.1,
+#    never run at full horizon) and alpha 4 (lr 1e-4) with smaller gamma.
+# C  Alpha levels the Phase 3 grid uses that no full-horizon run has tried: modular at
+#    alpha 1 and 4 (every optimizer), MNIST depth 3 SGD family at alpha 4, and
+#    teacher-student at alpha 0.5 / 2 beyond AdamW, plus coupled gamma below 1e-4.
+#    Teacher-student runs use the 3e5 horizon proposed for Phase 3.
+# gamma values follow the lambda = lr_eff * gamma rule of phase2_gamma.yaml.
+record: &record {log_every: 50, summary_every: 500, keyframe_every: 10000}
+ts: &ts
+  task: {name: teacher_student, params: {n_train: 100, n_test: 1000, theta: 0.01}}
+  model: {depth: 3, width: 100, activation: tanh, init_scale: 1.0}
+  optim: {name: adamw, lr: 3.0e-4, weight_decay: 0.1}
+  loss: mse
+  steps: 300000
+  seed: 0
+  record: *record
+mod: &mod
+  task: {name: modular, params: {op: x+y, p: 97, train_frac: 0.5}}
+  model: {depth: 3, width: 512, activation: relu, init_scale: 2.0}
+  optim: {name: adamw, lr: 1.0e-3, weight_decay: 1.0}
+  loss: ce
+  steps: 100000
+  seed: 0
+  record: *record
+mnist_d3: &mnist_d3
+  task: {name: mnist, params: {n_train: 1000}}
+  model: {depth: 3, width: 200, activation: relu, init_scale: 4.0}
+  optim: {name: adamw, lr: 1.0e-3, weight_decay: 0.03}
+  loss: mse
+  steps: 100000
+  seed: 0
+  batch_size: 200
+  record: *record
+mnist_d8: &mnist_d8
+  <<: *mnist_d3
+  task: {name: mnist, params: {n_train: 4000}}
+  model: {depth: 8, width: 400, activation: relu, init_scale: 8.0}
+
+blocks:
+  # ---- A: the third modular op ----
+  - base: *mod
+    variants:
+      - {task.params.op: x^2+xy+y^2, task.params.train_frac: 0.7}
+      - {task.params.op: x/y}
+    product:
+      optim:
+        - {name: adamw, lr: 1.0e-3, weight_decay: 0.1}
+        - {name: adamw, lr: 1.0e-3, weight_decay: 0.3}
+        - {name: adamw, lr: 1.0e-3, weight_decay: 1.0}
+        - {name: sgd_momentum, lr: 0.3, momentum: 0.9, weight_decay: 3.0e-5}
+        - {name: sgd_momentum, lr: 0.3, momentum: 0.9, weight_decay: 1.0e-4}
+        - {name: sgd_momentum, lr: 0.3, momentum: 0.9, weight_decay: 3.0e-4}
+
+  # ---- B: MNIST depth 8 at n = 4k ----
+  - base: *mnist_d8
+    variants:
+      - {model.init_scale: 8.0, optim: {name: adamw, lr: 1.0e-3, weight_decay: 0.01}}
+      - {model.init_scale: 8.0, optim: {name: adamw, lr: 1.0e-3, weight_decay: 0.03}}
+      - {model.init_scale: 8.0, optim: {name: adamw, lr: 1.0e-3, weight_decay: 0.1}}
+      - {model.init_scale: 1.0, optim: {name: adamw, lr: 1.0e-3, weight_decay: 0.0}}
+      - {model.init_scale: 1.0, optim: {name: adamw, lr: 1.0e-3, weight_decay: 0.03}}
+      - {model.init_scale: 2.0, optim: {name: sgd, lr: 0.1, weight_decay: 1.0e-4}}
+      - {model.init_scale: 2.0, optim: {name: sgd, lr: 0.1, weight_decay: 1.0e-3}}
+      - {model.init_scale: 2.0, optim: {name: sgd, lr: 0.1, weight_decay: 1.0e-2}}
+      - {model.init_scale: 2.0, optim: {name: sgd_momentum, lr: 0.1, momentum: 0.9, weight_decay: 1.0e-5}}
+      - {model.init_scale: 2.0, optim: {name: sgd_momentum, lr: 0.1, momentum: 0.9, weight_decay: 1.0e-4}}
+      - {model.init_scale: 2.0, optim: {name: sgd_momentum, lr: 0.1, momentum: 0.9, weight_decay: 1.0e-3}}
+      - {model.init_scale: 4.0, optim: {name: sgd, lr: 1.0e-4, weight_decay: 1.0e-2}}
+      - {model.init_scale: 4.0, optim: {name: sgd, lr: 1.0e-4, weight_decay: 3.0e-2}}
+      - {model.init_scale: 4.0, optim: {name: sgd_momentum, lr: 1.0e-4, momentum: 0.9, weight_decay: 3.0e-3}}
+      - {model.init_scale: 4.0, optim: {name: sgd_momentum, lr: 1.0e-4, momentum: 0.9, weight_decay: 1.0e-2}}
+
+  # ---- C: untested alpha levels, at the middle gamma (lambda = 1e-4) ----
+  - base: *mod
+    product:
+      model.init_scale: [1.0, 4.0]
+      optim:
+        - {name: adamw, lr: 1.0e-3, weight_decay: 0.1}
+        - {name: adam_l2, lr: 1.0e-3, weight_decay: 1.0e-4}
+        - {name: sgd, lr: 1.0, weight_decay: 1.0e-4}
+        - {name: sgd_momentum, lr: 0.3, momentum: 0.9, weight_decay: 3.0e-5}
+  - base: *mnist_d3
+    variants:
+      - {model.init_scale: 4.0, optim: {name: sgd, lr: 0.03, weight_decay: 3.0e-3}}
+      - {model.init_scale: 4.0, optim: {name: sgd_momentum, lr: 0.01, momentum: 0.9, weight_decay: 1.0e-3}}
+  - base: *ts
+    variants:
+      - {model.init_scale: 0.5, optim: {name: sgd_momentum, lr: 0.1, momentum: 0.9, weight_decay: 1.0e-5}}
+      - {model.init_scale: 2.0, optim: {name: sgd_momentum, lr: 0.1, momentum: 0.9, weight_decay: 1.0e-5}}
+      - {model.init_scale: 2.0, optim: {name: adam_l2, lr: 3.0e-4, weight_decay: 1.0e-5}}
+      - {model.init_scale: 1.0, optim: {name: sgd, lr: 0.1, weight_decay: 1.0e-6}}
+      - {model.init_scale: 1.0, optim: {name: sgd, lr: 0.1, weight_decay: 1.0e-5}}
+      - {model.init_scale: 2.0, optim: {name: adamw, lr: 3.0e-4, weight_decay: 1.0}}

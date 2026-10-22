@@ -27,3 +27,17 @@ def test_projection_scales_horizon_and_concurrency():
     assert out["TOTAL"]["size_ok"]
     long = {r["variant"]: r for r in project(rows, 16, runs={"teacher_student": 576}, ts_horizon=300_000)}
     assert long["teacher_student"]["wall_s_per_run"] == 1800
+
+
+def test_phase2_sweeps_expand_with_float_hyperparameters():
+    from tfs.sweep.grid import expand
+
+    sizes = {}
+    for name in ("phase2_gamma", "phase2_det", "phase2_check"):
+        cfgs = expand(f"configs/sweeps/{name}.yaml")
+        sizes[name] = len(cfgs)
+        # YAML reads 3e-4 as a string; ints would change the run-id hash
+        assert all(isinstance(c.optim.lr, float) and isinstance(c.optim.weight_decay, float) for c in cfgs)
+    assert sizes == {"phase2_gamma": 146, "phase2_det": 24, "phase2_check": 43}
+    old = {c.run_id for c in expand("configs/sweeps/phase2_gamma.yaml")}
+    assert not old & {c.run_id for c in expand("configs/sweeps/phase2_check.yaml")}
