@@ -11,10 +11,10 @@ why) and [DESIGN.md](DESIGN.md) (how the code works).
   CPU and on the Blackwell GPU.
 - **Phase 1** (tasks, recording, determinism, reproductions): done, after the Phase 1b
   clean-up run. See [results/phase1/RESULTS.md](results/phase1/RESULTS.md).
-- **Phase 2** (pilot sweep): in progress. `molab/phase2a.py` ran (clean-up, environment
-  lock, throughput, learning-rate scan; [results/phase2/RESULTS.md](results/phase2/RESULTS.md)).
-  `molab/phase2b.py` (determinism, γ placement, G2, projection) is ready to run.
-  Blocks and gate: PLAN.md §6.
+- **Phase 2** (pilot sweep): done (2a, 2b, 2c; [results/phase2/RESULTS.md](results/phase2/RESULTS.md)).
+  G2 passed and the Phase 3 grid is frozen (PLAN.md §3).
+- **Phase 3** (corpus, 1,664 runs): one notebook per dataset. `molab/phase3_mnist.py` is
+  ready to run; modular and teacher–student follow with `DATASET` changed.
 
 ## Local setup (development, CPU)
 

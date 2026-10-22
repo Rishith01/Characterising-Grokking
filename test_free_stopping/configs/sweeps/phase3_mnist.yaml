@@ -1,0 +1,70 @@
+# Phase 3 corpus: MNIST (depth 3 and depth 8). GENERATED from the frozen grid in PLAN.md §3 ("Phase 3 grid:
+# locked values", 2026-10-22); this file is the record, edit it directly.
+# Every (optimizer, alpha) block is crossed with its 4 gamma levels and seeds
+# {0, 1} (calibration) / {2, 3} (held out). 256 runs.
+record: &record {log_every: 50, summary_every: 500, keyframe_every: 10000}
+mnist_d3: &mnist_d3
+  task: {name: mnist, params: {n_train: 1000}}
+  model: {depth: 3, width: 200, activation: relu, init_scale: 1.0}
+  optim: {name: adamw, lr: 1.0e-3, weight_decay: 0.0}
+  loss: mse
+  steps: 100000
+  seed: 0
+  batch_size: 200
+  record: *record
+mnist_d8: &mnist_d8
+  <<: *mnist_d3
+  task: {name: mnist, params: {n_train: 4000}}
+  model: {depth: 8, width: 400, activation: relu, init_scale: 1.0}
+
+blocks:
+  # ---- MNIST depth 3: Adam family alpha {1, 8}, SGD family alpha {1, 4} ----
+  - base: *mnist_d3
+    variants: [{model.init_scale: 1.0, optim: {name: adamw, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 0.01, 0.03, 0.1], seed: [0, 1, 2, 3]}
+  - base: *mnist_d3
+    variants: [{model.init_scale: 1.0, optim: {name: adam_l2, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-5, 1.0e-4], seed: [0, 1, 2, 3]}
+  - base: *mnist_d3
+    variants: [{model.init_scale: 8.0, optim: {name: adamw, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 0.01, 0.03, 0.1], seed: [0, 1, 2, 3]}
+  - base: *mnist_d3
+    variants: [{model.init_scale: 8.0, optim: {name: adam_l2, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-5, 1.0e-4], seed: [0, 1, 2, 3]}
+  - base: *mnist_d3
+    variants: [{model.init_scale: 1.0, optim: {name: sgd, lr: 0.03}}]
+    product: {optim.weight_decay: [0.0, 3.0e-4, 1.0e-3, 3.0e-3], seed: [0, 1, 2, 3]}
+  - base: *mnist_d3
+    variants: [{model.init_scale: 1.0, optim: {name: sgd_momentum, lr: 0.01, momentum: 0.9}}]
+    product: {optim.weight_decay: [0.0, 1.0e-4, 1.0e-3, 3.0e-3], seed: [0, 1, 2, 3]}
+  - base: *mnist_d3
+    variants: [{model.init_scale: 4.0, optim: {name: sgd, lr: 0.03}}]
+    product: {optim.weight_decay: [0.0, 3.0e-4, 1.0e-3, 3.0e-3], seed: [0, 1, 2, 3]}
+  - base: *mnist_d3
+    variants: [{model.init_scale: 4.0, optim: {name: sgd_momentum, lr: 0.01, momentum: 0.9}}]
+    product: {optim.weight_decay: [0.0, 1.0e-4, 1.0e-3, 3.0e-3], seed: [0, 1, 2, 3]}
+  # ---- MNIST depth 8 (n = 4000): Adam family alpha {1, 8}; SGD family alpha {2, 4}, lr and gamma per alpha ----
+  - base: *mnist_d8
+    variants: [{model.init_scale: 1.0, optim: {name: adamw, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 0.01, 0.03, 0.1], seed: [0, 1, 2, 3]}
+  - base: *mnist_d8
+    variants: [{model.init_scale: 1.0, optim: {name: adam_l2, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-5, 1.0e-3], seed: [0, 1, 2, 3]}
+  - base: *mnist_d8
+    variants: [{model.init_scale: 8.0, optim: {name: adamw, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 0.01, 0.03, 0.1], seed: [0, 1, 2, 3]}
+  - base: *mnist_d8
+    variants: [{model.init_scale: 8.0, optim: {name: adam_l2, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-5, 1.0e-3], seed: [0, 1, 2, 3]}
+  - base: *mnist_d8
+    variants: [{model.init_scale: 2.0, optim: {name: sgd, lr: 0.1}}]
+    product: {optim.weight_decay: [0.0, 1.0e-4, 1.0e-3, 0.01], seed: [0, 1, 2, 3]}
+  - base: *mnist_d8
+    variants: [{model.init_scale: 2.0, optim: {name: sgd_momentum, lr: 0.1, momentum: 0.9}}]
+    product: {optim.weight_decay: [0.0, 1.0e-5, 1.0e-4, 1.0e-3], seed: [0, 1, 2, 3]}
+  - base: *mnist_d8
+    variants: [{model.init_scale: 4.0, optim: {name: sgd, lr: 1.0e-4}}]
+    product: {optim.weight_decay: [0.0, 0.01, 0.03, 0.1], seed: [0, 1, 2, 3]}
+  - base: *mnist_d8
+    variants: [{model.init_scale: 4.0, optim: {name: sgd_momentum, lr: 1.0e-4, momentum: 0.9}}]
+    product: {optim.weight_decay: [0.0, 3.0e-3, 0.01, 0.03], seed: [0, 1, 2, 3]}

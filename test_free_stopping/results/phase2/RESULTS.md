@@ -112,4 +112,40 @@ Figures: [`gamma_modular_xplusy.png`](gamma_modular_xplusy.png),
 | All §3 categories appear | ✅ grokker, fast, never, late collapse; joint plateau once only (MNIST d3 SGD γ = 0) |
 | Projected corpus ≤ 120 GB, fits Molab | ✅ 73 GB / 8 GPU-h training (77 GB / 10.5 h with TS at 3e5), same again for the Phase 4 replay: about one 12-h session each |
 | Every pilot run L0/L1 | ✅ 146/146 L0, det check 24/24 L0 |
-| Grid frozen, environment pinned | environment ✅; grid pending the decisions below |
+| Grid frozen, environment pinned | environment ✅; grid frozen after Phase 2c (PLAN.md §3) |
+
+## Phase 2c (2026-10-22, 19 min, MPS, 16 workers)
+
+43 check runs (`configs/sweeps/phase2_check.yaml`), all uploaded and replay-checked at L0.
+
+- **Third modular op:** x²+xy+y² still does not generalize at train fraction 0.7 (test
+  ≤ 0.02 for AdamW; SGD+momentum at γ = 3e-4 creeps to 0.40 by 1e5). **x/y groks cleanly
+  and follows the same 1/λ law as x+y** (AdamW t_ε 2.7k / 9.2k / 27k at γ = 1 / 0.3 / 0.1;
+  SGD+momentum 4.3k / 12k / 38k). x/y replaces x²+xy+y².
+- **MNIST depth 8 at n = 4k:** AdamW at α = 8 groks (t_ε 26k at γ = 0.01; 18k / 7.9k at
+  0.03 / 0.1); α = 1 is fast (t_ε ≈ 1.1–1.6k). Test accuracy reaches 0.95–0.96. **SGD at
+  α = 2, lr 0.1 produces the joint plateau** (train fits at 2.9k / 12k steps with test
+  rising alongside) at γ = 1e-4 / 1e-3, and collapses to the constant output at 1e-2.
+  SGD+momentum at α = 2 is fast. At α = 4, lr 1e-4 the SGD family is still slowly fitting
+  at 1e5 (train 0.78–0.97, test 0.58–0.85): slow learners, kept as a category.
+- **Modular at α = 1 and 4:** every optimizer groks at λ = 1e-4 (t_ε 23k–49k; α = 4 is
+  slower than α = 1, as the LU picture predicts).
+- **MNIST depth 3, SGD family at α = 4:** trains and generalizes (test 0.90–0.92).
+- **Teacher–student at 3e5:** coupled SGD at γ = 1e-6 / 1e-5 groks very late (t_ε 221k–
+  254k): the 3e5 horizon is required. SGD+momentum at α = 0.5 and 2 and Adam+L2 at α = 2
+  grok. AdamW at α = 2, γ = 1 is fast (3.5k).
+
+### Final projection (Phase 3 grid as frozen)
+
+| Variant | Runs | Horizon | Wall per run (s, 16 MPS workers) | MB per run | GPU-h | GB |
+|---|---|---|---|---|---|---|
+| teacher–student | 576 | 3e5 | 384 | 10.2 | 3.8 | 5.9 |
+| modular x+y | 576 | 1e5 | 355 | 60.7 | 3.6 | 35.0 |
+| modular x\*y | 128 | 1e5 | 437 | 60.7 | 1.0 | 7.8 |
+| modular x/y | 128 | 1e5 | 363 | 64.7 | 0.8 | 8.3 |
+| MNIST depth 3 | 128 | 1e5 | 156 | 25.1 | 0.3 | 3.2 |
+| MNIST depth 8 (n = 4k) | 128 | 1e5 | 442 | 132.5 | 1.0 | 17.0 |
+| **Total** | **1,664** | | | | **10.5** | **77.2** |
+
+Phase 4's replay pass costs about the same again: one 12-hour Molab session each.
+**Gate G2 passes.**

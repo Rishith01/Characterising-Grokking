@@ -1,0 +1,108 @@
+# Phase 3 corpus: modular arithmetic (x+y full grid; x*y and x/y reduced). GENERATED from the frozen grid in PLAN.md §3 ("Phase 3 grid:
+# locked values", 2026-10-22); this file is the record, edit it directly.
+# Every (optimizer, alpha) block is crossed with its 4 gamma levels (and, for x+y, the 3 train fractions) and seeds
+# {0, 1} (calibration) / {2, 3} (held out). 832 runs.
+record: &record {log_every: 50, summary_every: 500, keyframe_every: 10000}
+mod_add: &mod_add
+  task: {name: modular, params: {op: x+y, p: 97, train_frac: 0.5}}
+  model: {depth: 3, width: 512, activation: relu, init_scale: 1.0}
+  optim: {name: adamw, lr: 1.0e-3, weight_decay: 0.0}
+  loss: ce
+  steps: 100000
+  seed: 0
+  record: *record
+mod_mul: &mod_mul
+  <<: *mod_add
+  task: {name: modular, params: {op: x*y, p: 97, train_frac: 0.5}}
+mod_div: &mod_div
+  <<: *mod_add
+  task: {name: modular, params: {op: x/y, p: 97, train_frac: 0.5}}
+
+blocks:
+  # ---- x+y, full grid: alpha {1, 2, 4}, train fraction {0.3, 0.5, 0.7} ----
+  - base: *mod_add
+    variants: [{model.init_scale: 1.0, optim: {name: adamw, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 0.1, 0.3, 1.0], task.params.train_frac: [0.3, 0.5, 0.7], seed: [0, 1, 2, 3]}
+  - base: *mod_add
+    variants: [{model.init_scale: 2.0, optim: {name: adamw, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 0.1, 0.3, 1.0], task.params.train_frac: [0.3, 0.5, 0.7], seed: [0, 1, 2, 3]}
+  - base: *mod_add
+    variants: [{model.init_scale: 4.0, optim: {name: adamw, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 0.1, 0.3, 1.0], task.params.train_frac: [0.3, 0.5, 0.7], seed: [0, 1, 2, 3]}
+  - base: *mod_add
+    variants: [{model.init_scale: 1.0, optim: {name: adam_l2, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-4, 1.0e-3], task.params.train_frac: [0.3, 0.5, 0.7], seed: [0, 1, 2, 3]}
+  - base: *mod_add
+    variants: [{model.init_scale: 2.0, optim: {name: adam_l2, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-4, 1.0e-3], task.params.train_frac: [0.3, 0.5, 0.7], seed: [0, 1, 2, 3]}
+  - base: *mod_add
+    variants: [{model.init_scale: 4.0, optim: {name: adam_l2, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-4, 1.0e-3], task.params.train_frac: [0.3, 0.5, 0.7], seed: [0, 1, 2, 3]}
+  - base: *mod_add
+    variants: [{model.init_scale: 1.0, optim: {name: sgd, lr: 1.0}}]
+    product: {optim.weight_decay: [0.0, 1.0e-4, 3.0e-4, 1.0e-3], task.params.train_frac: [0.3, 0.5, 0.7], seed: [0, 1, 2, 3]}
+  - base: *mod_add
+    variants: [{model.init_scale: 2.0, optim: {name: sgd, lr: 1.0}}]
+    product: {optim.weight_decay: [0.0, 1.0e-4, 3.0e-4, 1.0e-3], task.params.train_frac: [0.3, 0.5, 0.7], seed: [0, 1, 2, 3]}
+  - base: *mod_add
+    variants: [{model.init_scale: 4.0, optim: {name: sgd, lr: 1.0}}]
+    product: {optim.weight_decay: [0.0, 1.0e-4, 3.0e-4, 1.0e-3], task.params.train_frac: [0.3, 0.5, 0.7], seed: [0, 1, 2, 3]}
+  - base: *mod_add
+    variants: [{model.init_scale: 1.0, optim: {name: sgd_momentum, lr: 0.3, momentum: 0.9}}]
+    product: {optim.weight_decay: [0.0, 3.0e-5, 1.0e-4, 3.0e-4], task.params.train_frac: [0.3, 0.5, 0.7], seed: [0, 1, 2, 3]}
+  - base: *mod_add
+    variants: [{model.init_scale: 2.0, optim: {name: sgd_momentum, lr: 0.3, momentum: 0.9}}]
+    product: {optim.weight_decay: [0.0, 3.0e-5, 1.0e-4, 3.0e-4], task.params.train_frac: [0.3, 0.5, 0.7], seed: [0, 1, 2, 3]}
+  - base: *mod_add
+    variants: [{model.init_scale: 4.0, optim: {name: sgd_momentum, lr: 0.3, momentum: 0.9}}]
+    product: {optim.weight_decay: [0.0, 3.0e-5, 1.0e-4, 3.0e-4], task.params.train_frac: [0.3, 0.5, 0.7], seed: [0, 1, 2, 3]}
+  # ---- x*y, reduced: alpha {1, 4}, train fraction 0.5 ----
+  - base: *mod_mul
+    variants: [{model.init_scale: 1.0, optim: {name: adamw, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 0.1, 0.3, 1.0], seed: [0, 1, 2, 3]}
+  - base: *mod_mul
+    variants: [{model.init_scale: 4.0, optim: {name: adamw, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 0.1, 0.3, 1.0], seed: [0, 1, 2, 3]}
+  - base: *mod_mul
+    variants: [{model.init_scale: 1.0, optim: {name: adam_l2, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-4, 1.0e-3], seed: [0, 1, 2, 3]}
+  - base: *mod_mul
+    variants: [{model.init_scale: 4.0, optim: {name: adam_l2, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-4, 1.0e-3], seed: [0, 1, 2, 3]}
+  - base: *mod_mul
+    variants: [{model.init_scale: 1.0, optim: {name: sgd, lr: 1.0}}]
+    product: {optim.weight_decay: [0.0, 1.0e-4, 3.0e-4, 1.0e-3], seed: [0, 1, 2, 3]}
+  - base: *mod_mul
+    variants: [{model.init_scale: 4.0, optim: {name: sgd, lr: 1.0}}]
+    product: {optim.weight_decay: [0.0, 1.0e-4, 3.0e-4, 1.0e-3], seed: [0, 1, 2, 3]}
+  - base: *mod_mul
+    variants: [{model.init_scale: 1.0, optim: {name: sgd_momentum, lr: 0.3, momentum: 0.9}}]
+    product: {optim.weight_decay: [0.0, 3.0e-5, 1.0e-4, 3.0e-4], seed: [0, 1, 2, 3]}
+  - base: *mod_mul
+    variants: [{model.init_scale: 4.0, optim: {name: sgd_momentum, lr: 0.3, momentum: 0.9}}]
+    product: {optim.weight_decay: [0.0, 3.0e-5, 1.0e-4, 3.0e-4], seed: [0, 1, 2, 3]}
+  # ---- x/y (replaces x^2+xy+y^2, which never generalized), reduced: alpha {1, 4}, train fraction 0.5 ----
+  - base: *mod_div
+    variants: [{model.init_scale: 1.0, optim: {name: adamw, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 0.1, 0.3, 1.0], seed: [0, 1, 2, 3]}
+  - base: *mod_div
+    variants: [{model.init_scale: 4.0, optim: {name: adamw, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 0.1, 0.3, 1.0], seed: [0, 1, 2, 3]}
+  - base: *mod_div
+    variants: [{model.init_scale: 1.0, optim: {name: adam_l2, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-4, 1.0e-3], seed: [0, 1, 2, 3]}
+  - base: *mod_div
+    variants: [{model.init_scale: 4.0, optim: {name: adam_l2, lr: 1.0e-3}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-4, 1.0e-3], seed: [0, 1, 2, 3]}
+  - base: *mod_div
+    variants: [{model.init_scale: 1.0, optim: {name: sgd, lr: 1.0}}]
+    product: {optim.weight_decay: [0.0, 1.0e-4, 3.0e-4, 1.0e-3], seed: [0, 1, 2, 3]}
+  - base: *mod_div
+    variants: [{model.init_scale: 4.0, optim: {name: sgd, lr: 1.0}}]
+    product: {optim.weight_decay: [0.0, 1.0e-4, 3.0e-4, 1.0e-3], seed: [0, 1, 2, 3]}
+  - base: *mod_div
+    variants: [{model.init_scale: 1.0, optim: {name: sgd_momentum, lr: 0.3, momentum: 0.9}}]
+    product: {optim.weight_decay: [0.0, 3.0e-5, 1.0e-4, 3.0e-4], seed: [0, 1, 2, 3]}
+  - base: *mod_div
+    variants: [{model.init_scale: 4.0, optim: {name: sgd_momentum, lr: 0.3, momentum: 0.9}}]
+    product: {optim.weight_decay: [0.0, 3.0e-5, 1.0e-4, 3.0e-4], seed: [0, 1, 2, 3]}

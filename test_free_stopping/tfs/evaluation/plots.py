@@ -16,6 +16,14 @@ from .oracle import Oracle  # noqa: E402
 C_TRAIN, C_TEST, C_NORM = "#eb6834", "#2a78d6", "#52514e"
 
 
+def slug(variant: str) -> str:
+    """A file-name-safe variant label: "modular x/y" -> "modular_xdivy". Phase 2c saved the
+    x/y plot as plots/y.png because the "/" became a directory."""
+    for a, b in (("+", "plus"), ("-", "minus"), ("*", "mul"), ("/", "div"), ("^", ""), (" ", "_")):
+        variant = variant.replace(a, b)
+    return "".join(ch if ch.isalnum() or ch in "_." else "_" for ch in variant)
+
+
 def run_label(reader: RunReader) -> str:
     c = reader.config
     t = c.task.params
@@ -112,7 +120,7 @@ def _plot_lr_variant(variant: str, rows: list[dict], curves: dict, out_dir: Path
             ax.legend(fontsize=6, ncol=2, title="lr (dashed: unstable)", title_fontsize=6)
     fig.suptitle(f"lr scan: {variant} (train loss)", fontsize=11)
     fig.tight_layout()
-    out = out_dir / f"lr_scan_{variant.replace(' ', '_').replace('^', '').replace('*', 'mul').replace('+', 'plus')}.png"
+    out = out_dir / f"lr_scan_{slug(variant)}.png"
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=110, facecolor="white")
     plt.close(fig)
@@ -162,7 +170,7 @@ def _plot_gamma_variant(variant: str, rows: list[dict], curves: dict, out_dir: P
         ax.axis("off")
     fig.suptitle(f"γ placement: {variant} (solid: test acc, dashed: train acc)", fontsize=11)
     fig.tight_layout()
-    out = out_dir / f"gamma_{variant.replace(' ', '_').replace('^', '').replace('*', 'mul').replace('+', 'plus')}.png"
+    out = out_dir / f"gamma_{slug(variant)}.png"
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=110, facecolor="white")
     plt.close(fig)

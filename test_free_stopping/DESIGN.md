@@ -53,11 +53,12 @@ test_free_stopping/
     replay_tolerance.yaml           ✅ L1 tolerances (unchanged after Phase 1: no drift seen)
     runs/dummy.yaml                 ✅ tiny infrastructure run (G0, tests)
     sweeps/                         ✅ phase1_det, phase1_repro, phase1b_repro, phase1b_lr_scan,
-                                       phase2_lr_scan, phase2_gamma, phase2_det
-                                    ⏳ phase3_*.yaml (frozen grid)
+                                       phase2_lr_scan, phase2_gamma, phase2_det, phase2_check,
+                                       phase3_mnist, phase3_modular, phase3_teacher_student (frozen grid)
     env_lock.txt                    ✅ pinned Molab environment (from phase2a; scripts/env_lock.py --check)
   molab/                            ✅ marimo notebooks the user runs on Molab:
-                                       phase0_g0.py, phase1.py, phase1b.py, phase2a.py, phase2b.py
+                                       phase0_g0.py, phase1.py, phase1b.py, phase2a.py, phase2b.py,
+                                       phase2c.py, phase3_mnist.py (one Phase 3 notebook per dataset)
   results/phase1/                   ✅ RESULTS.md + figures (versioned)
   tfs/                              # the package ("test-free stopping")
     config.py                       ✅ dataclass configs, YAML (de)serialisation, run_id / group_id
@@ -97,11 +98,13 @@ test_free_stopping/
       grid.py                       ✅ sweep YAML -> list[RunConfig]
       launcher.py                   ✅ run_parallel (optional chained replay check, on_result) / replay_parallel, child_env
       lr_select.py                  ✅ lr-scan stability per run, lr choice per (variant, optimizer)
+      corpus.py                     ✅ Phase 3: per-dataset sweep files and HF folders, run order,
+                                       manifest status, G3 audit (full replay of 5%), drop_failed
       gpumon.py                     ✅ background nvidia-smi logger
   scripts/                          # thin CLIs over tfs.*  (python -m scripts.<name>)
     train.py  replay_check.py  sync.py  det_check.py  throughput.py  sweep.py  env_lock.py   ✅
     compute_signals.py (4)  calibrate.py  evaluate.py (5)   ⏳
-  tests/                            ✅ 78 tests: config, cpu_env, determinism, hub, lr_select, pilot, quarantine,
+  tests/                            ✅ 83 tests: config, corpus, cpu_env, determinism, hub, lr_select, pilot, quarantine,
                                        replay, storage, sweep, tasks
                                     ⏳ test_causality, test_signals_math, test_scoring
   runs/  cache/                     (gitignored, anchored to the project root)
@@ -817,8 +820,9 @@ On Molab, notebooks call the same functions directly (`det_check`, `run_parallel
 **Status (2026-10-22):** all built. `molab/phase2a.py` ran; `molab/phase2b.py`,
 `configs/sweeps/phase2_gamma.yaml` / `phase2_det.yaml` (generated once from the
 confirmed lrs and the λ rule; the YAML is the record), `evaluation/pilot.py` and MPS mode
-in `scripts/throughput.py` are written. Phase 3 needs `configs/sweeps/phase3_*.yaml`
-and a notebook around `scripts/sweep.py` under MPS.
+in `scripts/throughput.py` are written. Phase 2c (`phase2c.py`, `phase2_check.yaml`) ran
+too. Phase 3 is built: `configs/sweeps/phase3_*.yaml`, `tfs/sweep/corpus.py` and
+`molab/phase3_mnist.py` (the template for the other two datasets' notebooks).
 
 See PLAN.md §6 (Phase 2) for the blocks and gate. Original implementation notes:
 

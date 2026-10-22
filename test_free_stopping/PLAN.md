@@ -13,8 +13,8 @@ covers *what* we run and *in what order*. A new contributor should start with
 [RAMPUP.md](RAMPUP.md).
 
 **Status (2026-10-22):** Phases 0 and 1 are done (including the Phase 1b clean-up run).
-Phases 2a and 2b ran (results: [results/phase2/RESULTS.md](results/phase2/RESULTS.md)). G2 passes
-except for three grid decisions (x²+xy+y², MNIST depth 8 SGD and n, teacher–student horizon).
+Phase 2 is done (2a, 2b, 2c; [results/phase2/RESULTS.md](results/phase2/RESULTS.md)). **G2 passes**
+and the Phase 3 grid is frozen (§3). Phase 3 is next.
 **Phase 2 (the pilot sweep) is next.** Phase 1 findings are in
 [results/phase1/RESULTS.md](results/phase1/RESULTS.md) and summarized in §9.
 
@@ -91,9 +91,9 @@ test-accuracy creep.
 If the pilot shows storage or compute is too tight, the first cut is teacher–student's
 training-size axis.
 
-### Phase 3 grid: locked values (2026-10-22)
+### Phase 3 grid: locked values (frozen 2026-10-22, after Phase 2c)
 
-✅ locked by the Phase 2 pilot · 🔶 decided by Phase 2c (`configs/sweeps/phase2_check.yaml`).
+Every value below was checked by a full-horizon pilot run (Phases 2b and 2c).
 
 **Common to every run:**
 - seeds {0, 1, 2, 3}
@@ -105,12 +105,12 @@ training-size axis.
 
 | Variant | Grid | Model | Loss, batch | Horizon | Sizes | α, Adam family | α, SGD family | Runs |
 |---|---|---|---|---|---|---|---|---|
-| teacher–student | full | 3 × 100 tanh | MSE, full batch | 🔶 3e5 | N ∈ {50, 100, 400}; 1000 test samples | {0.5, 1, 2} | {0.5, 1, 2} | 576 |
-| modular x+y | full | 3 × 512 ReLU, p = 97 | CE, full batch | 1e5 | frac ∈ {0.3, 0.5, 0.7} | {1, 2, 4} | 🔶 {1, 2, 4} | 576 |
-| modular x\*y | reduced | 3 × 512 ReLU | CE, full batch | 1e5 | frac 0.5 | {1, 4} | 🔶 {1, 4} | 128 |
-| modular, third op | reduced | 3 × 512 ReLU | CE, full batch | 1e5 | 🔶 x²+xy+y² at 0.7, or x/y at 0.5 | {1, 4} | 🔶 {1, 4} | 128 |
-| MNIST depth 3 | reduced | 3 × 200 ReLU | MSE, batch 200 | 1e5 | n 1000 | {1, 8} | 🔶 {1, 4} | 128 |
-| MNIST depth 8 | reduced | 8 × 400 ReLU | MSE, batch 200 | 1e5 | 🔶 n 4000 | 🔶 {1, 8} | 🔶 {2, 4} | 128 |
+| teacher–student | full | 3 × 100 tanh | MSE, full batch | 3e5 | N ∈ {50, 100, 400}; 1000 test samples | {0.5, 1, 2} | {0.5, 1, 2} | 576 |
+| modular x+y | full | 3 × 512 ReLU, p = 97 | CE, full batch | 1e5 | frac ∈ {0.3, 0.5, 0.7} | {1, 2, 4} | {1, 2, 4} | 576 |
+| modular x\*y | reduced | 3 × 512 ReLU | CE, full batch | 1e5 | frac 0.5 | {1, 4} | {1, 4} | 128 |
+| modular x/y (replaces x²+xy+y², which never generalized) | reduced | 3 × 512 ReLU | CE, full batch | 1e5 | frac 0.5 | {1, 4} | {1, 4} | 128 |
+| MNIST depth 3 | reduced | 3 × 200 ReLU | MSE, batch 200 | 1e5 | n 1000 | {1, 8} | {1, 4} | 128 |
+| MNIST depth 8 | reduced | 8 × 400 ReLU | MSE, batch 200 | 1e5 | n 4000 | {1, 8} | {2, 4} | 128 |
 | **Total** | | | | | | | | **1,664** |
 
 "Reduced" = all 4 optimizers × 4 γ × 2 α × 1 size × 4 seeds.
@@ -128,11 +128,10 @@ training-size axis.
 
 | | adamw | adam_l2 | sgd | sgd_momentum |
 |---|---|---|---|---|
-| teacher–student | ✅ 0, 0.03, 0.1, 1 | ✅ 0, 1e-6, 1e-5, 1e-4 | 🔶 0, 1e-6, 1e-5, 1e-4 | ✅ 0, 1e-5, 3e-5, 1e-4 |
-| modular x+y, x\*y | ✅ 0, 0.1, 0.3, 1 | ✅ 0, 1e-6, 1e-4, 1e-3 | ✅ 0, 1e-4, 3e-4, 1e-3 | ✅ 0, 3e-5, 1e-4, 3e-4 |
-| modular, third op | 🔶 | 🔶 | 🔶 | 🔶 |
-| MNIST depth 3 | ✅ 0, 0.01, 0.03, 0.1 | ✅ 0, 1e-6, 1e-5, 1e-4 | ✅ 0, 3e-4, 1e-3, 3e-3 | ✅ 0, 1e-4, 1e-3, 3e-3 |
-| MNIST depth 8 | ✅ 0, 0.01, 0.03, 0.1 | ✅ 0, 1e-6, 1e-5, 1e-3 | 🔶 per α (lr differs 1000×) | 🔶 per α |
+| teacher–student | 0, 0.03, 0.1, 1 | 0, 1e-6, 1e-5, 1e-4 | 0, 1e-6, 1e-5, 1e-4 | 0, 1e-5, 3e-5, 1e-4 |
+| modular x+y, x\*y, x/y | 0, 0.1, 0.3, 1 | 0, 1e-6, 1e-4, 1e-3 | 0, 1e-4, 3e-4, 1e-3 | 0, 3e-5, 1e-4, 3e-4 |
+| MNIST depth 3 | 0, 0.01, 0.03, 0.1 | 0, 1e-6, 1e-5, 1e-4 | 0, 3e-4, 1e-3, 3e-3 | 0, 1e-4, 1e-3, 3e-3 |
+| MNIST depth 8 | 0, 0.01, 0.03, 0.1 | 0, 1e-6, 1e-5, 1e-3 | α 2: 0, 1e-4, 1e-3, 1e-2 · α 4: 0, 0.01, 0.03, 0.1 | α 2: 0, 1e-5, 1e-4, 1e-3 · α 4: 0, 3e-3, 0.01, 0.03 |
 
 ### Run categories the corpus must contain
 
@@ -286,12 +285,12 @@ Each phase ends at a gate. We don't start the next phase until the gate passes.
   3). Deep Grokking's two-stage case did not reproduce and is dropped (§2).
 - Details: [results/phase1/RESULTS.md](results/phase1/RESULTS.md).
 
-### Phase 2: pilot sweep (Molab, small) ← **in progress**
+### Phase 2: pilot sweep ✅ (2026-10-22)
 
 Two Molab notebooks, because block 3 needs learning rates a human has confirmed:
 - **`molab/phase2a.py`** ✅ ran 2026-10-21: blocks 0, 1 (environment lock only), 4, 2.
   Results: [results/phase2/RESULTS.md](results/phase2/RESULTS.md).
-- **`molab/phase2c.py`** (written 2026-10-22, not yet run): 43 check runs
+- **`molab/phase2c.py`** ✅ ran 2026-10-22: 43 check runs
   (`configs/sweeps/phase2_check.yaml`) for the 🔶 items in §3's locked-grid table: the
   third modular op, MNIST depth 8 at n = 4k, and α levels no full-horizon run had tried.
 - **`molab/phase2b.py`** ✅ ran 2026-10-22: environment check against
@@ -349,14 +348,24 @@ The blocks:
 - The final grid is frozen in `configs/sweeps/phase3_*.yaml`, and the environment is
   pinned in `configs/env_lock.txt`.
 
-### Phase 3: full sweep (Molab)
-- Launch in batches by application. Each run uploads to Hugging Face when it finishes.
-  A manifest tracks status, so an interrupted session resumes by skipping completed runs.
+### Phase 3: full sweep (Molab) ← **in progress**
+- **One notebook per dataset** (decided 2026-10-22), so no single run has to be tracked
+  across all 1,664 runs: `molab/phase3_mnist.py` (256 runs, ~1.3 GPU-h) is written; the
+  modular (832 runs, ~5.4 h) and teacher–student (576 runs, ~3.8 h) notebooks are the
+  same file with `DATASET` changed. Sweep files: `configs/sweeps/phase3_{mnist,modular,
+  teacher_student}.yaml`, generated from §3's locked-values tables.
+- Each dataset has its own HF sub-folder with its own `runs/` and `manifest.json`
+  (`advay333/tfs` under `phase3/mnist/`, `phase3/modular/`, `phase3/teacher_student/`),
+  so sessions for different datasets never write the same manifest.
+- Calibration seeds {0, 1} run first. Each run uploads to Hugging Face when it finishes,
+  and an interrupted session resumes by skipping runs already in the manifest.
 - **G3:** The manifest shows every run `complete`. A random 5% of runs are
   re-downloaded, pass integrity checks, and are **fully replayed** end to end at L0 or L1.
   Every other run gets a cheap replay check: one randomly chosen keyframe interval.
   Any run at `failed` is retrained. The corpus summary is generated: max accuracy per
   run, t_ε, and a category for each run (§3 categories).
+  (`tfs/sweep/corpus.py`: `manifest_status`, `audit`, `drop_failed`; the notebook's
+  blocks A–D.) G3 is checked per dataset and passes when all three pass.
 
 ### Phase 4: signals
 - Implement every signal (S, N, R, F, B families) against the causal stream API. Signals

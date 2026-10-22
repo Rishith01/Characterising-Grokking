@@ -1,0 +1,52 @@
+# Phase 3 corpus: teacher-student (full grid, 3e5 steps). GENERATED from the frozen grid in PLAN.md §3 ("Phase 3 grid:
+# locked values", 2026-10-22); this file is the record, edit it directly.
+# Every (optimizer, alpha) block is crossed with its 4 gamma levels and the 3 training-set sizes and seeds
+# {0, 1} (calibration) / {2, 3} (held out). 576 runs.
+record: &record {log_every: 50, summary_every: 500, keyframe_every: 10000}
+ts: &ts
+  task: {name: teacher_student, params: {n_train: 100, n_test: 1000, theta: 0.01}}
+  model: {depth: 3, width: 100, activation: tanh, init_scale: 1.0}
+  optim: {name: adamw, lr: 3.0e-4, weight_decay: 0.0}
+  loss: mse
+  steps: 300000
+  seed: 0
+  record: *record
+
+blocks:
+  # ---- alpha {0.5, 1, 2} for every optimizer, N {50, 100, 400} ----
+  - base: *ts
+    variants: [{model.init_scale: 0.5, optim: {name: adamw, lr: 3.0e-4}}]
+    product: {optim.weight_decay: [0.0, 0.03, 0.1, 1.0], task.params.n_train: [50, 100, 400], seed: [0, 1, 2, 3]}
+  - base: *ts
+    variants: [{model.init_scale: 1.0, optim: {name: adamw, lr: 3.0e-4}}]
+    product: {optim.weight_decay: [0.0, 0.03, 0.1, 1.0], task.params.n_train: [50, 100, 400], seed: [0, 1, 2, 3]}
+  - base: *ts
+    variants: [{model.init_scale: 2.0, optim: {name: adamw, lr: 3.0e-4}}]
+    product: {optim.weight_decay: [0.0, 0.03, 0.1, 1.0], task.params.n_train: [50, 100, 400], seed: [0, 1, 2, 3]}
+  - base: *ts
+    variants: [{model.init_scale: 0.5, optim: {name: adam_l2, lr: 3.0e-4}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-5, 1.0e-4], task.params.n_train: [50, 100, 400], seed: [0, 1, 2, 3]}
+  - base: *ts
+    variants: [{model.init_scale: 1.0, optim: {name: adam_l2, lr: 3.0e-4}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-5, 1.0e-4], task.params.n_train: [50, 100, 400], seed: [0, 1, 2, 3]}
+  - base: *ts
+    variants: [{model.init_scale: 2.0, optim: {name: adam_l2, lr: 3.0e-4}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-5, 1.0e-4], task.params.n_train: [50, 100, 400], seed: [0, 1, 2, 3]}
+  - base: *ts
+    variants: [{model.init_scale: 0.5, optim: {name: sgd, lr: 0.1}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-5, 1.0e-4], task.params.n_train: [50, 100, 400], seed: [0, 1, 2, 3]}
+  - base: *ts
+    variants: [{model.init_scale: 1.0, optim: {name: sgd, lr: 0.1}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-5, 1.0e-4], task.params.n_train: [50, 100, 400], seed: [0, 1, 2, 3]}
+  - base: *ts
+    variants: [{model.init_scale: 2.0, optim: {name: sgd, lr: 0.1}}]
+    product: {optim.weight_decay: [0.0, 1.0e-6, 1.0e-5, 1.0e-4], task.params.n_train: [50, 100, 400], seed: [0, 1, 2, 3]}
+  - base: *ts
+    variants: [{model.init_scale: 0.5, optim: {name: sgd_momentum, lr: 0.1, momentum: 0.9}}]
+    product: {optim.weight_decay: [0.0, 1.0e-5, 3.0e-5, 1.0e-4], task.params.n_train: [50, 100, 400], seed: [0, 1, 2, 3]}
+  - base: *ts
+    variants: [{model.init_scale: 1.0, optim: {name: sgd_momentum, lr: 0.1, momentum: 0.9}}]
+    product: {optim.weight_decay: [0.0, 1.0e-5, 3.0e-5, 1.0e-4], task.params.n_train: [50, 100, 400], seed: [0, 1, 2, 3]}
+  - base: *ts
+    variants: [{model.init_scale: 2.0, optim: {name: sgd_momentum, lr: 0.1, momentum: 0.9}}]
+    product: {optim.weight_decay: [0.0, 1.0e-5, 3.0e-5, 1.0e-4], task.params.n_train: [50, 100, 400], seed: [0, 1, 2, 3]}
