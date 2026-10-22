@@ -1,0 +1,86 @@
+# Phase 2b determinism re-check (PLAN.md §6 block 1) on the final pilot configs:
+# every (variant, optimizer) at its chosen lr, middle alpha, and the gamma for
+# lambda = 1e-4 (Adam+L2: 1e-4). 20k steps, keyframes every 10k: replay crosses two
+# full keyframe intervals. Trained twice and replayed by scripts.det_check, under MPS
+# like the corpus. GENERATED alongside phase2_gamma.yaml.
+#
+# Learning rates (confirmed 2026-10-22 from the Phase 2a scan; PLAN.md §9):
+#   variant              adamw / adam_l2   sgd     sgd_momentum   SGD-family alpha levels
+#   teacher_student      3e-4              0.1     0.1            {0.5, 1, 2}
+#   modular (all ops)    1e-3              1.0     0.3            {1, 2, 4}
+#   mnist d3             1e-3              0.03    0.01           {1, 2, 4}
+#   mnist d8             1e-3              alpha 2: 0.1, alpha 4: 1e-4 (both)   {2, 4} (alpha 1 never trains)
+
+record: &record {log_every: 50, summary_every: 500, keyframe_every: 10000}
+ts: &ts
+  task: {name: teacher_student, params: {n_train: 100, n_test: 1000, theta: 0.01}}
+  model: {depth: 3, width: 100, activation: tanh, init_scale: 1.0}
+  optim: {name: adamw, lr: 3.0e-4, weight_decay: 0.1}
+  loss: mse
+  steps: 20000
+  seed: 0
+  record: *record
+mod_add: &mod_add
+  task: {name: modular, params: {op: x+y, p: 97, train_frac: 0.5}}
+  model: {depth: 3, width: 512, activation: relu, init_scale: 2.0}
+  optim: {name: adamw, lr: 1.0e-3, weight_decay: 1.0}
+  loss: ce
+  steps: 20000
+  seed: 0
+  record: *record
+mod_mul: &mod_mul
+  <<: *mod_add
+  task: {name: modular, params: {op: x*y, p: 97, train_frac: 0.5}}
+mod_quad: &mod_quad
+  <<: *mod_add
+  task: {name: modular, params: {op: x^2+xy+y^2, p: 97, train_frac: 0.5}}
+mnist_d3: &mnist_d3
+  task: {name: mnist, params: {n_train: 1000}}
+  model: {depth: 3, width: 200, activation: relu, init_scale: 4.0}
+  optim: {name: adamw, lr: 1.0e-3, weight_decay: 0.03}
+  loss: mse
+  steps: 20000
+  seed: 0
+  batch_size: 200
+  record: *record
+mnist_d8: &mnist_d8
+  <<: *mnist_d3
+  model: {depth: 8, width: 400, activation: relu, init_scale: 4.0}
+
+blocks:
+  - base: *ts  # teacher_student
+    variants:
+      - {model.init_scale: 1.0, optim: {name: adamw, lr: 3.0e-4, weight_decay: 3.0e-1}}
+      - {model.init_scale: 1.0, optim: {name: adam_l2, lr: 3.0e-4, weight_decay: 1.0e-4}}
+      - {model.init_scale: 1.0, optim: {name: sgd_momentum, momentum: 0.9, lr: 1.0e-1, weight_decay: 1.0e-4}}
+      - {model.init_scale: 1.0, optim: {name: sgd, lr: 1.0e-1, weight_decay: 1.0e-3}}
+  - base: *mod_add  # modular x+y
+    variants:
+      - {model.init_scale: 2.0, optim: {name: adamw, lr: 1.0e-3, weight_decay: 1.0e-1}}
+      - {model.init_scale: 2.0, optim: {name: adam_l2, lr: 1.0e-3, weight_decay: 1.0e-4}}
+      - {model.init_scale: 2.0, optim: {name: sgd_momentum, momentum: 0.9, lr: 3.0e-1, weight_decay: 3.0e-5}}
+      - {model.init_scale: 2.0, optim: {name: sgd, lr: 1.0, weight_decay: 1.0e-4}}
+  - base: *mod_mul  # modular x*y
+    variants:
+      - {model.init_scale: 2.0, optim: {name: adamw, lr: 1.0e-3, weight_decay: 1.0e-1}}
+      - {model.init_scale: 2.0, optim: {name: adam_l2, lr: 1.0e-3, weight_decay: 1.0e-4}}
+      - {model.init_scale: 2.0, optim: {name: sgd_momentum, momentum: 0.9, lr: 3.0e-1, weight_decay: 3.0e-5}}
+      - {model.init_scale: 2.0, optim: {name: sgd, lr: 1.0, weight_decay: 1.0e-4}}
+  - base: *mod_quad  # modular x^2+xy+y^2
+    variants:
+      - {model.init_scale: 2.0, optim: {name: adamw, lr: 1.0e-3, weight_decay: 1.0e-1}}
+      - {model.init_scale: 2.0, optim: {name: adam_l2, lr: 1.0e-3, weight_decay: 1.0e-4}}
+      - {model.init_scale: 2.0, optim: {name: sgd_momentum, momentum: 0.9, lr: 3.0e-1, weight_decay: 3.0e-5}}
+      - {model.init_scale: 2.0, optim: {name: sgd, lr: 1.0, weight_decay: 1.0e-4}}
+  - base: *mnist_d3  # mnist d3
+    variants:
+      - {model.init_scale: 4.0, optim: {name: adamw, lr: 1.0e-3, weight_decay: 1.0e-1}}
+      - {model.init_scale: 4.0, optim: {name: adam_l2, lr: 1.0e-3, weight_decay: 1.0e-4}}
+      - {model.init_scale: 2.0, optim: {name: sgd_momentum, momentum: 0.9, lr: 1.0e-2, weight_decay: 1.0e-3}}
+      - {model.init_scale: 2.0, optim: {name: sgd, lr: 3.0e-2, weight_decay: 3.0e-3}}
+  - base: *mnist_d8  # mnist d8
+    variants:
+      - {model.init_scale: 4.0, optim: {name: adamw, lr: 1.0e-3, weight_decay: 1.0e-1}}
+      - {model.init_scale: 4.0, optim: {name: adam_l2, lr: 1.0e-3, weight_decay: 1.0e-4}}
+      - {model.init_scale: 4.0, optim: {name: sgd_momentum, momentum: 0.9, lr: 1.0e-4, weight_decay: 1.0e-1}}
+      - {model.init_scale: 4.0, optim: {name: sgd, lr: 1.0e-4, weight_decay: 1.0}}

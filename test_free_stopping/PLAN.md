@@ -12,7 +12,9 @@ The code structure, classes and data flow are in [DESIGN.md](DESIGN.md). This fi
 covers *what* we run and *in what order*. A new contributor should start with
 [RAMPUP.md](RAMPUP.md).
 
-**Status (2026-10-21):** Phases 0 and 1 are done (including the Phase 1b clean-up run).
+**Status (2026-10-22):** Phases 0 and 1 are done (including the Phase 1b clean-up run).
+Phase 2a ran (results: [results/phase2/RESULTS.md](results/phase2/RESULTS.md)); the Phase 2b
+notebook is written and waiting to run.
 **Phase 2 (the pilot sweep) is next.** Phase 1 findings are in
 [results/phase1/RESULTS.md](results/phase1/RESULTS.md) and summarized in §9.
 
@@ -68,9 +70,9 @@ test-accuracy creep.
 
 | Axis | Levels | Notes |
 |---|---|---|
-| optimizer | adamw, adam_l2, sgd_momentum, sgd | lr is fixed per (application, optimizer) and set in the pilot |
+| optimizer | adamw, adam_l2, sgd_momentum, sgd | lr is fixed per (application, optimizer), set by the Phase 2a scan (§9). Exception: MNIST depth 8, SGD family: lr 0.1 at α = 2, 1e-4 at α = 4 |
 | weight decay γ | 4 levels per **(application, optimizer)**, always including 0 (decided 2026-10-21: γ means different things across optimizers, e.g. Adam+L2's penalty is rescaled by Adam's normalization) | Starting points from Phase 1 (AdamW): **MNIST depth 3: {0, 0.01, 0.03, 0.1}** (t_ε ≈ 88k / 52k / 23k steps at the non-zero levels). **Modular: around γ = 1** (groks at 2–13k steps). **Teacher–student: γ = 0.03 is too slow for 1e5** (still rising at the horizon), so shift its levels up, e.g. {0, 0.1, 0.3, 1}, or extend its horizon. The pilot fixes all of these. |
-| init scale α | 3 levels per (application, optimizer family). Adam family: modular {1, 2, 4}; MNIST {1, 4, 8}; teacher–student {0.5, 1, 2}. **SGD family on MNIST: {1, 2, 4}** | **Decided 2026-10-21 (option a):** at α = 8 on MNIST depth 3, SGD diverges at every learning rate down to 1e-6 (initial loss ≈ 2.5e7), so the SGD family gets its own α levels on MNIST. The pilot confirms they train, and checks whether the SGD family also needs its own levels on modular and teacher–student. α = 1 is the no-grokking control. |
+| init scale α | 3 levels per (application, optimizer family). Adam family: modular {1, 2, 4}; MNIST {1, 4, 8}; teacher–student {0.5, 1, 2}. **SGD family on MNIST depth 3: {1, 2, 4}; MNIST depth 8: {2, 4}** (α = 1 never trains at depth 8, Phase 2a); modular and teacher–student as for Adam | **Decided 2026-10-21 (option a):** at α = 8 on MNIST depth 3, SGD diverges at every learning rate down to 1e-6 (initial loss ≈ 2.5e7), so the SGD family gets its own α levels on MNIST. The pilot confirms they train, and checks whether the SGD family also needs its own levels on modular and teacher–student. α = 1 is the no-grokking control. |
 | training size | 3 levels. Modular fraction {0.3, 0.5, 0.7}; MNIST n {500, 1k, 4k}; teacher–student N {50, 100, 400} | Straddles the critical data size, so some runs never generalize |
 | seed | 4 seeds: {0, 1} for calibration, {2, 3} held out | Decided 2026-10-20 |
 
@@ -241,14 +243,15 @@ Each phase ends at a gate. We don't start the next phase until the gate passes.
   3). Deep Grokking's two-stage case did not reproduce and is dropped (§2).
 - Details: [results/phase1/RESULTS.md](results/phase1/RESULTS.md).
 
-### Phase 2: pilot sweep (Molab, small) ← **next**
+### Phase 2: pilot sweep (Molab, small) ← **in progress**
 
 Two Molab notebooks, because block 3 needs learning rates a human has confirmed:
-- **`molab/phase2a.py`** (written): blocks 0, 1 (environment lock only), 4, 2.
-  Throughput runs before the scan so the scan uses the best worker count.
-- **`molab/phase2b.py`** (written after 2a's results): block 3, then block 1's
-  determinism re-check on the final configs, a replay check of every pilot run, and
-  block 5.
+- **`molab/phase2a.py`** ✅ ran 2026-10-21: blocks 0, 1 (environment lock only), 4, 2.
+  Results: [results/phase2/RESULTS.md](results/phase2/RESULTS.md).
+- **`molab/phase2b.py`** (written 2026-10-22, not yet run): environment check against
+  the lock, MPS throughput at 16/24/32 workers, block 1's determinism re-check on the
+  final configs (`phase2_det.yaml`, under MPS), block 3 (every run replay-checked and
+  uploaded), and block 5 with the G2 tables.
 
 Pilot reports and runs go to the single repo **`advay333/tfs`**, under `phase2/`
 (Phase 3 will use `phase3/`; see §9).
@@ -272,12 +275,16 @@ The blocks:
    is unstable; the SGD family takes one grid step below the largest stable lr, the
    smallest over α. α levels where SGD never trains are dropped for the SGD family.
    The human confirms the table before block 3.
-3. **γ placement.** With the chosen lrs: every optimizer × about **6 log-spaced candidate
-   γ levels** (0 included) × every application variant, at the middle α and size, one
-   seed, full horizon: about 144 runs. Keep 4 levels per (application, optimizer).
-   Teacher–student also runs γ = 0.03 and 0.1 at a 3e5 horizon, to decide between
-   raising γ and extending the horizon. MNIST depth 8 runs at n = 1k; if that loses the
-   joint-plateau behaviour, fall back to n = 4k.
+3. **γ placement** (`configs/sweeps/phase2_gamma.yaml`, 146 runs). With the chosen
+   lrs: every optimizer × **6 candidate γ levels** × every application variant, at the
+   middle α and size, one seed, 1e5 steps. Keep 4 levels per (application, optimizer).
+   AdamW and the SGD family: γ = λ / lr_eff for a per-step decay rate
+   λ ∈ {0, 1e-5, 3e-5, 1e-4, 3e-4, 1e-3} (lr_eff = lr / (1 − momentum)); under the LU
+   mechanism grok time ∝ 1/λ, so these target ~3e3 to ~1e5 steps. Adam+L2 does not
+   follow that law (Adam rescales the penalty): {0, 1e-6, …, 1e-2}. Teacher–student
+   (test set now 1000 samples) also runs AdamW at α = 2, γ = 0.03 and 0.1, to 3e5 steps,
+   to decide between raising γ and extending the horizon. MNIST depth 8 runs at n = 1k;
+   if that loses the joint-plateau behaviour, fall back to n = 4k.
 4. **Throughput.** Re-run `scripts/throughput.py` at 4 / 8 / 12 / 16 workers, now that
    GPU workers get a CPU thread share and the minibatch order is cached on the GPU.
    Choose the worker count for Phase 3. Check that results stay bit-identical.
@@ -348,6 +355,11 @@ The blocks:
   (MNIST depth 8).
 - Results were bit-identical at every concurrency level and under MPS.
 
+**Measured in Phase 2a (after the fix):** 819 / 1212 / 1329 / 1378 aggregate steps/s at
+4 / 8 / 12 / 16 time-sliced workers (GPU 98% busy), and **2547 under MPS at 16 workers**,
+bit-identical everywhere. The corpus therefore runs under MPS; Phase 2b measures 16 / 24 /
+32 MPS workers.
+
 **Projection (to be replaced by Phase 2 block 5):** about 1,660 runs at 1e5 steps is
 1.7e8 optimizer steps. At ~2,000 aggregate steps/s that is ~23 h of training. Plus one
 replay pass per run in Phase 4 (about the same again, plus signal math), that is 2–4
@@ -373,6 +385,28 @@ batching); this needs determinism re-verified.
 ---
 
 ## 9. Decisions log
+
+- **Phase 2a results and 2b set-up (2026-10-22)**, all recommended options accepted:
+  - **Learning rates** (Adam family: published; SGD family from the scan, one lr per
+    (variant, optimizer), the smallest usable over α):
+
+    | | adamw / adam_l2 | sgd | sgd_momentum |
+    |---|---|---|---|
+    | teacher–student | 3e-4 | 0.1 | 0.1 |
+    | modular (all ops) | 1e-3 | 1.0 | 0.3 |
+    | MNIST d3 | 1e-3 | 0.03 | 0.01 |
+    | MNIST d8 | 1e-3 | α 2: 0.1, α 4: 1e-4 | α 2: 0.1, α 4: 1e-4 |
+
+    MNIST depth 8 gets one lr per α: its stable range differs 1000× between α = 2 and 4.
+    Modular SGD uses lr = 1, the top of the scanned range.
+  - **SGD family on MNIST depth 8: α ∈ {2, 4}.** At α = 1 it never trains (loss stops
+    at 0.09, the mean-prediction loss; train accuracy 0.12).
+  - **lr selection now requires fitting** (`lr_select.classify`): the loss-only test
+    passed the depth-8 α = 1 runs.
+  - **Teacher–student test set: 1000 samples** (was 100, so one sample was ε). The
+    training set is unchanged: test points are drawn after the training points.
+  - **MPS** for 2b and the corpus (1.85× time-slicing at 16 workers, bit-identical).
+  - **γ candidates** via the per-step decay rate λ (Phase 2 block 3 above).
 
 - **Phase 2 design (2026-10-21, second session):**
   - γ levels are chosen per (application, optimizer), not per application.

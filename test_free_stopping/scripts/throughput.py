@@ -104,8 +104,22 @@ class Mps:
         shutil.rmtree(self.dir, ignore_errors=True)
 
 
-def throughput(workers_list: list[int], runs_root: Path, mps_workers: int | None = None, log=print) -> list[dict]:
+def throughput(workers_list: list[int], runs_root: Path, mps_workers: int | None = None, log=print,
+               mps: bool = False) -> list[dict]:
+    """mps=True runs the whole workers_list under one MPS daemon (Phase 2a: MPS at 16
+    workers was 1.85x time-slicing, bit-identical), instead of time-slicing."""
     configs = bench_configs()
+    if mps:
+        with Mps() as daemon:
+            if not daemon.started:
+                return [{"setting": "MPS", "error": daemon.error}]
+            rows, reference = [], None
+            for w in workers_list:
+                row, hashes = _one(configs, runs_root / f"mps{w}", w, f"MPS, {w} workers", log)
+                reference = reference or hashes
+                row["identical_to_first"] = hashes == reference
+                rows.append(row)
+            return rows
     rows, reference = [], None
     for w in workers_list:
         row, hashes = _one(configs, runs_root / f"w{w}", w, f"time-slicing, {w} workers", log)

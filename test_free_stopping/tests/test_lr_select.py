@@ -2,8 +2,9 @@ from tfs.sweep.grid import expand
 from tfs.sweep.lr_select import scan_row, select_lrs, variant_label
 
 
-def _row(variant, optim, alpha, lr, stable):
-    return {"variant": variant, "optim": optim, "alpha": alpha, "lr": lr, "stable": stable}
+def _row(variant, optim, alpha, lr, stable, reason=None):
+    return {"variant": variant, "optim": optim, "alpha": alpha, "lr": lr, "stable": stable,
+            "reason": reason if reason is not None else ("" if stable else "diverged")}
 
 
 def test_adam_keeps_published_lr_when_stable():
@@ -18,15 +19,26 @@ def test_adam_falls_back_below_unstable_published_lr():
     assert sel["chosen_lr"] == 3e-4
 
 
-def test_sgd_steps_below_and_takes_min_over_alpha():
+def test_sgd_margin_only_against_instability():
     grid = [1.0, 0.3, 0.1, 3e-2, 1e-2, 3e-3, 1e-3]
-    max_stable = {1.0: 0.3, 2.0: 3e-2, 4.0: None}
-    rows = [_row("modular x+y", "sgd", a, lr, m is not None and lr <= m)
-            for a, m in max_stable.items() for lr in grid]
+    rows = [_row("modular x+y", "sgd", 1.0, lr, True) for lr in grid]  # usable up to the grid top: keep it
+    rows += [_row("modular x+y", "sgd", 2.0, lr, lr <= 3e-2) for lr in grid]  # 0.1 diverged: step down
+    rows += [_row("modular x+y", "sgd", 4.0, lr, lr <= 3e-2, "not fitting") for lr in grid]  # 0.1 too slow: keep
+    rows += [_row("modular x+y", "sgd", 8.0, lr, False) for lr in grid]
     summary, *detail = select_lrs(rows)
-    assert [d["chosen_lr"] for d in detail] == [0.1, 1e-2, None]
+    assert [d["chosen_lr"] for d in detail] == [1.0, 1e-2, 3e-2, None]
     assert summary["chosen_lr"] == 1e-2
-    assert "drop" in detail[2]["note"]
+    assert "drop" in detail[3]["note"]
+
+
+def test_classify_rejects_mean_predictor():
+    """Phase 2a: MNIST depth 8 at alpha 1 reaches the mean-prediction loss and stops."""
+    from tfs.sweep.lr_select import classify
+
+    base = {"status": "complete", "loss_0": 0.13, "loss_min": 0.0899}
+    assert classify({**base, "loss_end": 0.09, "train_acc_end": 0.12})["reason"] == "not fitting"
+    assert classify({**base, "loss_end": 0.09, "train_acc_end": 0.99})["stable"]
+    assert classify({"status": "diverged", "loss_0": 1.0})["reason"] == "diverged"
 
 
 def test_scan_row_reads_training_telemetry_only(dummy_run):

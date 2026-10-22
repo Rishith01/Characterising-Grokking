@@ -11,9 +11,10 @@ why) and [DESIGN.md](DESIGN.md) (how the code works).
   CPU and on the Blackwell GPU.
 - **Phase 1** (tasks, recording, determinism, reproductions): done, after the Phase 1b
   clean-up run. See [results/phase1/RESULTS.md](results/phase1/RESULTS.md).
-- **Phase 2** (pilot sweep): in progress. `molab/phase2a.py` (HF clean-up, environment
-  lock, throughput, learning-rate scan) is ready to run; `phase2b.py` follows once the
-  learning rates are confirmed. Blocks and gate: PLAN.md §6.
+- **Phase 2** (pilot sweep): in progress. `molab/phase2a.py` ran (clean-up, environment
+  lock, throughput, learning-rate scan; [results/phase2/RESULTS.md](results/phase2/RESULTS.md)).
+  `molab/phase2b.py` (determinism, γ placement, G2, projection) is ready to run.
+  Blocks and gate: PLAN.md §6.
 
 ## Local setup (development, CPU)
 

@@ -70,8 +70,10 @@ class _Uploader:
 
 
 def sweep(configs, runs_root: Path, device: str, workers: int, remote: Optional[Remote] = None,
-          batch_size: int = 10, replay_check: bool = True, log=print) -> tuple[list[dict], dict, dict]:
-    """Returns (summary rows, {run_id: curves}, upload info)."""
+          batch_size: int = 10, replay_check: bool = True, log=print,
+          on_row=None) -> tuple[list[dict], dict, dict]:
+    """Returns (summary rows, {run_id: curves}, upload info). `on_row(row, curves)` is
+    called as each run is summarized (e.g. to checkpoint the tables)."""
     done = read_manifest(remote) if remote is not None else {}
     todo = [c for c in configs if c.run_id not in done]
     if len(todo) < len(configs):
@@ -89,6 +91,8 @@ def sweep(configs, runs_root: Path, device: str, workers: int, remote: Optional[
             row["replay_level"] = res.replay_level or row.get("replay_level")
             row["launch_wall_s"] = round(res.wall_s, 1)
             rows.append(row)
+            if on_row is not None:
+                on_row(row, curves.get(res.run_id))
             if uploader is not None:
                 uploader.put(res.run_dir)
         elif res.status == "failed":
