@@ -350,9 +350,9 @@ The blocks:
 
 ### Phase 3: full sweep (Molab) ← **in progress**
 - **One notebook per dataset** (decided 2026-10-22), so no single run has to be tracked
-  across all 1,664 runs: `molab/phase3_mnist.py` (256 runs, ~1.3 GPU-h) is written; the
-  modular (832 runs, ~5.4 h) and teacher–student (576 runs, ~3.8 h) notebooks are the
-  same file with `DATASET` changed. Sweep files: `configs/sweeps/phase3_{mnist,modular,
+  across all 1,664 runs: `molab/phase3_mnist.py` (256 runs, ~1.3 GPU-h) ran 2026-10-22 and
+  passed G3; `molab/phase3_teacher_student.py` (576 runs, ~3.8 h) is written; the modular
+  notebook (832 runs, ~5.4 h) is the same file with `DATASET` changed. Sweep files: `configs/sweeps/phase3_{mnist,modular,
   teacher_student}.yaml`, generated from §3's locked-values tables.
 - Each dataset has its own HF sub-folder with its own `runs/` and `manifest.json`
   (`advay333/tfs` under `phase3/mnist/`, `phase3/modular/`, `phase3/teacher_student/`),
