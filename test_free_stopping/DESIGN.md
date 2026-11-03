@@ -4,15 +4,17 @@ This document describes the code flow, modules, classes, storage format and caus
 guarantees. [PLAN.md](PLAN.md) covers what is run and in what order; [RAMPUP.md](RAMPUP.md)
 is the starting point for a new contributor.
 
-**Status (2026-10-28).**
-- **Built and tested** (83 tests): training, recording, storage, replay and sweep
-  layers (§4–§6), the Phase 2 pilot tools and the Phase 3 corpus tools (§12). The
+**Status (2026-11-03).**
+- **Built and tested** (123 tests): training, recording, storage, replay and sweep
+  layers (§4–§6), the Phase 2 pilot tools and the Phase 3 corpus tools (§12), and the
+  **Phase 4 core: the `stopping/` package (§13)** with signals N1, R1 and baselines
+  B0–B6, rules, methods, the runner and trace cache, and the pilot notebook. The
   signatures here match the code.
-- **Designed but not built:** the measurement and evaluation layers (§7–§8, Phases
-  4–5), except the oracle reader, plotting, reporting, run summaries and the G2/G3 tables.
-- **§7.2's signal list is under review.** PLAN.md §5 proposes a reduced, theory-backed
-  set (S1 with radial and tangential parts, S1b, F2, R1, N1, plus baselines). Build
-  against that once the user confirms it.
+- **§13 supersedes §7** (the measurement layer as first designed inside `tfs/`). §8
+  (scoring) is still the Phase 5 plan.
+- **Not built:** S1, S1b and F2 (held back by the user until their open decisions in
+  METRICS.md §6 are settled), Phase 5 (ground truth, scoring, calibration), and the
+  full Phase 4 notebook.
 - Each section says what is built and what is planned.
 
 ---
@@ -592,7 +594,11 @@ diagnostics only.
 
 ---
 
-## 7. Measurement layer (⏳ Phases 4–5: designed, not built)
+## 7. Measurement layer (superseded by §13)
+
+**Superseded 2026-11-03 by §13** (the `stopping/` package). Kept for the reasoning; the
+names map as CausalStream → RunHandle + `compute_run`, Signal and RuleSpec → §13.2 and
+§13.4.
 
 `TrainContext` (§7.1) and the oracle quarantine (§10) already exist; everything else in
 §7–§8 is the design to build against.
@@ -843,10 +849,7 @@ On Molab, notebooks call the same functions directly (`det_check`, `run_parallel
   Windows writes CRLF).
 - `tfs/evaluation/plots.slug`: file-name-safe variant labels (fixes `x/y`).
 
-**Phase 4 needs:** `tfs/causal/stream.py` (CausalStream, Observation),
-`tfs/signals/` (the confirmed set from PLAN.md §5, with `_linalg.py` and its tests),
-`scripts/compute_signals.py`, `tests/test_causality.py`, and a Molab notebook that pulls
-runs from `phase3/<dataset>/`, replays each once, and uploads the signal cache.
+**Phase 4:** built as the separate `stopping/` package instead; see §13.
 
 ### Phase 2 (built and run)
 
@@ -878,3 +881,171 @@ See PLAN.md §6 (Phase 2) for the blocks and gate. Original implementation notes
    Phase 3 runs it from a notebook.
 6. **Environment lock.** At the start of the pilot, write `pip freeze`, the driver, CUDA
    and GPU to `configs/env_lock.txt` (committed by the user), and record the git commit.
+
+---
+
+## 13. Phase 4–5 package `stopping/` (✅ Phase 4 core built 2026-11-03)
+
+Supersedes §7 for Phases 4–5; §8 (scoring) is still the plan for Phase 5. Agreed with the
+user 2026-11-03. The package sits next to `tfs/`, reads runs only through a data-source
+interface, and imports `tfs` in exactly one adapter file (plus the evaluation-side
+`heldout.py` and `pilot.py`).
+
+**Built:** source interface and the tfs/HF adapter, Signal/SignalConfig, the runner with
+a shared replay pass, the trace cache, Rule/RuleConfig, Method, signals N1, R1 and
+baselines B0–B6, the pilot driver, plots, tests (`tests/test_stopping.py`, quarantine
+extended to `stopping/`). **Not built (the user's call, 2026-11-03):** S1, S1b, F2 (their
+open decisions are in METRICS.md §6); Phase 5 (`ground_truth.py`, `score.py`,
+`calibrate.py`); the full Phase 4 notebook.
+
+### 13.0 Layout and flow
+
+```
+stopping/
+  source.py        RunSource / RunHandle (abstract), RunContext, Observation, TrainData
+  tfs_source.py    the one adapter onto tfs: TfsRunHandle, DirRunSource, HfRunSource
+  signal.py        SignalConfig (frozen dataclass, .hash()/.key), Signal (abstract), register, SIGNALS
+  signals/         _linalg.py (shared math), _common.py (aggregation, LogRate),
+                   basic.py (B0 step, B1 train_loss, N1 weight_norm),
+                   spectra.py (R1 erank, B5 htsr_alpha, htsr_traps),
+                   gradients.py (B2 eb, B3 grad_disparity), label_wave.py (B4)
+  heldout.py       B6 val_loss + read_heldout: the only reader of test data in the package
+  compute.py       eval_grid, compute_run (one run), compute (many runs, cached, resumable)
+  store.py         TraceStore: <signal>/<hash>/parts/<run_id>.parquet, pack, upload_files
+  rule.py          RuleConfig, Rule (trace, decide), StopDecision
+  method.py        Method = ((SignalConfig, RuleConfig), ...), any-of
+  methods.py       default_methods(): uncalibrated placeholder rules for the pilot
+  plotting.py      plot_run: signals under train/test accuracy, stops marked
+  pilot.py         pick_runs, run_pilot, stops_markdown (evaluation side)
+```
+
+```
+Phase 4:  RunSource.open(run_id, needs) -> RunHandle
+          compute_run: for each log step t (increasing): Observation(t) -> Signal.update -> row
+          -> SignalTrace (DataFrame) -> TraceStore -> HF phase4/<dataset>/signals/
+Phase 5:  traces -> Rule.decide -> StopDecision -> score (joined with GroundTruth from the oracle)
+```
+
+### 13.1 Data source (`source.py`, `tfs_source.py`)
+
+- `RunSource.run_ids()`, `RunSource.open(run_id, needs) -> RunHandle` (a context manager).
+- `RunHandle`: `context` (RunContext), `telemetry()`, `train_preds()`, `summaries(step)`,
+  `models(steps)` (iterator of (step, model), increasing), `heldout()`, `close()`.
+- `RunContext`: run id, app, the full config dict, optimizer, lr, `lr_eff`
+  (lr/(1−β) for SGD with momentum), γ, decay kind, loss, kind, d_in, d_out, n_train,
+  batch size, steps, log and summary steps, task params, device, and
+  `train_data() -> TrainData` (x, y, the loss target, `loss_fn`, and `batch(t)`: the
+  indices the update from step t uses, or None for full batch). Shapes come from
+  `meta.param_shapes` and the task params, so building the context never needs the
+  data (no MNIST download).
+- `needs ⊆ {telemetry, preds, summaries, train_data, models, heldout}`. `HfRunSource`
+  downloads only the matching parts (`parts_for`: models → keyframes + telemetry,
+  heldout → oracle), checks checksums (`pull_run`), and deletes the run on close
+  unless `keep=True`. `DirRunSource` serves runs on disk.
+- `models()` is `ReplayEngine.iterate(steps, verify=False)` by default (the corpus was
+  already verified in Phase 3); `allow_env_mismatch` must be set to replay off the
+  locked environment (results are then not bit-exact).
+
+### 13.2 Signals (`signal.py`, `signals/`)
+
+```python
+@dataclass(frozen=True)
+class SignalConfig:            # one subclass per signal; fields = settings that change the series
+    name: ClassVar[str]; version: ClassVar[int] = 1
+    def to_dict(self) -> dict; def hash(self) -> str; key -> f"{name}-{hash}"; def build(self) -> Signal
+
+class Signal(ABC):
+    uses_heldout: ClassVar[bool] = False
+    requires: frozenset[str]   # subset of REQUIREMENTS
+    cadence: str               # "log" | "summary" | "eval"
+    def reset(self, ctx: RunContext) -> None
+    def update(self, obs: Observation) -> dict[str, float] | None   # must include "value"
+```
+
+- Streaming: `update` is called once per step of its cadence, in increasing order;
+  history lives in the signal. Signals cannot reach the handle, so they cannot look
+  ahead.
+- `@register(ConfigClass)` adds a signal to `SIGNALS`; `config_from_dict` rebuilds a
+  config from a stored `config.json` and refuses a version mismatch.
+- Each signal returns its main `value` plus debug columns (per-layer values, rates).
+
+| Signal (`name`) | Metric | requires | cadence | value; other columns |
+|---|---|---|---|---|
+| `step` | B0 | telemetry | log | the step |
+| `train_loss` | B1 | telemetry | log | train loss; train_acc |
+| `weight_norm` | N1 | telemetry | log | ‖w‖; log_rate, abs_rate (LogRate, `window`, `normalize`), l{i} |
+| `erank` | R1 | summaries | summary | aggregated effective rank of actspec/l{i}; log_rate, abs_rate, l{i} |
+| `htsr_alpha` | B5 | summaries | summary | mean power-law α of sv/l{i}² over layers with ≥ `min_eigs`; ks, l{i}, ks_l{i} |
+| `htsr_traps` | B5 | models | eval | number of correlation traps; per layer |
+| `eb` | B2 | models, train_data | eval | Mahsereci EB over the batch of step t; per layer, batch, n_coords |
+| `grad_disparity` | B3 | summaries (`form="summary"`) or models + train_data (`"replay"`) | summary / eval | ‖g₁ − g₂‖ (expected, or measured); rel, per layer. Summary form is NaN when n_train ≤ the probe batch (teacher–student N = 50, 100) |
+| `label_wave` | B4 | preds | log | fraction of training predictions that changed (teacher–student: correctness flips, or mean \|Δ error\|) |
+| `val_loss` (`heldout.py`) | B6 | heldout | log | test loss; test_acc. `uses_heldout = True` |
+
+`LogRate` (`_common.py`) is the shared rate of change of log(value) over a window, in
+units of 1k steps (`"none"`), learning-rate time (`"lr"`), or weight-decay time
+(`"decay"`, NaN at γ = 0): the normalization question of METRICS.md §3.
+
+### 13.3 Runner and cache (`compute.py`, `store.py`)
+
+- `eval_grid(log_steps, n_log=200, n_uniform=400)`: log-spaced plus uniform steps,
+  snapped to log steps.
+- `compute_run(handle, configs, eval_steps=None, max_step=None)`: walks the log steps;
+  loads summaries only at summary steps, replays models only at eval steps, in one pass
+  shared by every signal that needs them; passes held-out rows only to `uses_heldout`
+  signals. Returns `{config.key: DataFrame}`.
+- `compute(source, run_ids, configs, store)`: per run, computes only the (signal, run)
+  pairs not cached, opens the run with only the needed parts, writes each trace
+  atomically, logs and skips a failing run.
+- `TraceStore`: `<root>/<signal>/<hash>/config.json`, `parts/<run_id>.parquet`;
+  `pack()` writes one long `traces.parquet` (with run_id); `upload_files()` maps both to
+  `signals/<signal>/<hash>/…` for upload under `phase4/<dataset>/`.
+
+### 13.4 Rules and methods (`rule.py`, `method.py`, `methods.py`)
+
+```python
+@dataclass(frozen=True)
+class RuleConfig:
+    column: str = "value"; mode: "threshold" | "plateau" = "threshold"
+    direction: "below" | "above" = "below"; threshold: float = 0.0; patience: int = 1
+    smoother: "none" | "ema" | "median" = "ema"; smooth_param: float = 0.1; min_step: int = 0
+```
+
+- Causal template: smooth, condition, stop at the first step where the condition has
+  held `patience` consecutive emitted rows and step ≥ min_step.
+- `threshold`: smoothed value below/above the threshold. `plateau`: no improvement by
+  more than `threshold`·|best| (best updated only on improvement), for B1, B3, B4, B6.
+- `Rule.trace(df)` returns every row's raw, smoothed, condition, run length and stop
+  flag, for debugging and plots. `Rule.decide(df) -> StopDecision(step, value, part, reason)`.
+- `Method(name, parts)`: stops at the earliest part (any-of), e.g. B5 = α below 2 or
+  traps present. `default_methods()` holds **uncalibrated** placeholder settings; Phase 5
+  calibrates them on seeds {0, 1}.
+- The signal/rule split means calibration re-runs rules on cached traces in
+  milliseconds; only signal settings require recomputation.
+
+### 13.5 Quarantine (§10, extended)
+
+`tests/test_quarantine.py` now also scans all of `stopping/` except `heldout.py` and
+`pilot.py`: no `tfs.evaluation` import, no oracle file name, no test tensors, and no
+import of `stopping.heldout` outside `tfs_source.py` (which implements
+`RunHandle.heldout()`). `tests/test_stopping.py` checks that only `uses_heldout` signals
+receive held-out rows, and that truncating a run leaves every earlier signal value
+unchanged.
+
+### 13.6 Pilot (`pilot.py`, `molab/phase4_pilot.py`)
+
+`pick_runs` takes up to N seed-0 runs per provisional category from
+`phase3/mnist/reports/corpus_runs.json`, spread over (variant, optimizer). `run_pilot`
+computes every default method's signals plus B6, then draws one figure per run (train
+and test accuracy on top, one panel per signal, every method's stop as a dashed line)
+and a stop table (step and test accuracy at the stop). The notebook uploads traces,
+plots, `stops.csv` and `summary.md` to `phase4/pilot/mnist/`. This is for checking the
+signals, not for scoring.
+
+### 13.7 What Phase 5 adds
+
+`ground_truth.py` (t_ε, max test, categories from curve shape, late collapse split into
+type A/B by whether train accuracy drops: METRICS.md §5), `score.py` (regret, ε-pass,
+premature rate, lag per method and run), `calibrate.py` (grid over RuleConfig on seeds
+{0, 1}, frozen, scored on {2, 3}), and the report plots/tables. S1, S1b and F2 slot in as
+new files under `signals/` once their open decisions are settled.

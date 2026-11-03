@@ -18,6 +18,11 @@ covers *what* we run and *in what order*. A new contributor should start with
 - **Phase 3 is in progress.** MNIST (256 runs) and teacher–student (576 runs) are trained
   and pass G3. **Modular (832 runs) is next**: `molab/phase3_modular.py` is written
   (2026-11-03) and waits for the user to run it on Molab.
+- **Phase 4 core is built** (2026-11-03): the `stopping/` package (DESIGN.md §13) with
+  N1, R1 and baselines B0–B6, rules, methods, a trace cache and
+  `molab/phase4_pilot.py` (a small MNIST pilot to look at the signals). S1, S1b and F2
+  are held back until their open decisions are settled; Phase 5 and the full Phase 4
+  notebook are not started.
 - §5's metric list is being cut down to theory-backed signals. The proposed set is in
   §5, "Proposed reduced set", detailed in [METRICS.md](METRICS.md); the user has not
   confirmed it yet. Six open decisions are listed in METRICS.md §6.

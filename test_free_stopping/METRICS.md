@@ -1,6 +1,8 @@
 # Metrics: candidates and baselines
 
-**Status (2026-10-28): proposed, not confirmed.** This document details the reduced
+**Status (2026-11-03): proposed, not confirmed; partly built.** Built in `stopping/`
+(DESIGN.md §13): N1, R1 and B0–B6 (B3 in both forms, B5 with traps). Held back: S1, S1b,
+F2. This document details the reduced
 metric set proposed in [PLAN.md](PLAN.md) §5 ("Proposed reduced set"). The user has not
 confirmed it yet. Phase 4 builds whatever is confirmed. Open decisions are collected in
 §5 of this document.

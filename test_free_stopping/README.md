@@ -17,7 +17,8 @@ why) and [DESIGN.md](DESIGN.md) (how the code works).
   teacher–student ✅ (576 runs) are trained and pass G3
   ([results/phase3/RESULTS.md](results/phase3/RESULTS.md)). Modular (832 runs) is next;
   `molab/phase3_modular.py` is ready to run. Metric definitions: [METRICS.md](METRICS.md).
-- **Phase 4** (signals): not started; the metric set is awaiting confirmation (PLAN.md §5).
+- **Phase 4** (signals): core built in `stopping/` (DESIGN.md §13): N1, R1 and baselines
+  B0–B6, plus `molab/phase4_pilot.py`. S1, S1b and F2 are not built yet.
 
 ## Local setup (development, CPU)
 

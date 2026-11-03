@@ -45,7 +45,7 @@ share no code or results.
 | 1 | This file | Rules, current state, lessons, what to do next | 15 min |
 | 2 | [README.md](README.md) | Setup and commands | 3 min |
 | 3 | [PLAN.md](PLAN.md) | What we run and why. **the status block at the top**, **§3 the frozen Phase 3 grid** (all values), **§5 metrics** (the proposed reduced set), **§6 phases and gates**, **§9 every decision with its reason** | 30 min |
-| 4 | [DESIGN.md](DESIGN.md) | How the code works. §2 marks built (✅) vs planned (⏳). §5–§6.5 storage, training and replay. §7 the measurement layer (to build in Phase 4). **§12 Phase 3 tooling and what Phase 4 needs** | 40 min |
+| 4 | [DESIGN.md](DESIGN.md) | How the code works. §2 marks built (✅) vs planned (⏳). §5–§6.5 storage, training and replay. **§13 the Phase 4–5 package `stopping/`** (§7 is its superseded first design). §12 Phase 2–3 tooling | 40 min |
 | 5 | [METRICS.md](METRICS.md) | Every proposed signal and baseline: computation down to shapes, derivations, intuition, caveats, sources; the late-collapse discussion; open decisions | 30 min |
 | 6 | `results/phase{1,2,3}/RESULTS.md` | What was actually measured: reproductions, lr scan, γ placement, the corpus so far | 20 min |
 | 7 | Papers (below) | The science behind the setups and the signals | 1–2 h |
@@ -123,7 +123,7 @@ the exact claim or arXiv number):
 | 1: tasks, recording, determinism, reproductions (G1) | ✅ 2026-10-21 |
 | 2: pilot (2a lr scan, 2b γ placement, 2c checks), G2 | ✅ 2026-10-22. Grid frozen in PLAN §3 |
 | 3: corpus, G3 per dataset | MNIST ✅ 256/256 · teacher–student ✅ 576/576 · **modular ⏳ 832 runs, `molab/phase3_modular.py` written, not run yet** |
-| 4: signals | not started; **metric set awaiting the user's confirmation** (PLAN §5) |
+| 4: signals | **core built 2026-11-03**: `stopping/` package (DESIGN §13), signals N1, R1, B0–B6, `molab/phase4_pilot.py` not run yet. S1, S1b, F2 held back (METRICS.md §6 decisions); full Phase 4 notebook not written |
 | 5–6: rules, calibration, evaluation, write-up | not started |
 
 **Next actions, in order (each only when the user asks):**
@@ -133,8 +133,11 @@ the exact claim or arXiv number):
 2. After the user runs it: download `phase3/modular/reports/`, check G3 (all uploaded, all
    L0, audit at full L0), compare with the Phase 2 pilot, and record it in
    `results/phase3/RESULTS.md`.
-3. Get the user's confirmation of the metric set and the six open decisions in
-   [METRICS.md](METRICS.md) §6, rewrite PLAN §5 accordingly, then plan Phase 4 (DESIGN §12 lists what to build).
+3. The user runs `molab/phase4_pilot.py`; download `phase4/pilot/mnist/` (plots,
+   stops.csv, summary.md) and check each signal against METRICS.md's predictions.
+4. Settle the open decisions in [METRICS.md](METRICS.md) §6, then build S1, S1b and F2
+   as new files under `stopping/signals/` (DESIGN §13.7), rewrite PLAN §5 to the final
+   set, then the full Phase 4 notebook, then Phase 5.
 
 ### HF layout (`advay333/tfs`, public)
 

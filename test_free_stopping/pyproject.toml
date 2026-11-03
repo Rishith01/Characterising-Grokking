@@ -22,7 +22,7 @@ dependencies = [
 dev = ["pytest>=8", "marimo>=0.9"]
 
 [tool.setuptools.packages.find]
-include = ["tfs*"]
+include = ["tfs*", "stopping*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
