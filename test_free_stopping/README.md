@@ -13,8 +13,11 @@ why) and [DESIGN.md](DESIGN.md) (how the code works).
   clean-up run. See [results/phase1/RESULTS.md](results/phase1/RESULTS.md).
 - **Phase 2** (pilot sweep): done (2a, 2b, 2c; [results/phase2/RESULTS.md](results/phase2/RESULTS.md)).
   G2 passed and the Phase 3 grid is frozen (PLAN.md §3).
-- **Phase 3** (corpus, 1,664 runs): one notebook per dataset. `molab/phase3_mnist.py` is
-  ready to run; modular and teacher–student follow with `DATASET` changed.
+- **Phase 3** (corpus, 1,664 runs; one notebook per dataset): MNIST ✅ (256 runs) and
+  teacher–student ✅ (576 runs) are trained and pass G3
+  ([results/phase3/RESULTS.md](results/phase3/RESULTS.md)). Modular (832 runs) is next;
+  `molab/phase3_modular.py` is ready to run. Metric definitions: [METRICS.md](METRICS.md).
+- **Phase 4** (signals): not started; the metric set is awaiting confirmation (PLAN.md §5).
 
 ## Local setup (development, CPU)
 

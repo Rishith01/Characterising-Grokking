@@ -12,11 +12,17 @@ The code structure, classes and data flow are in [DESIGN.md](DESIGN.md). This fi
 covers *what* we run and *in what order*. A new contributor should start with
 [RAMPUP.md](RAMPUP.md).
 
-**Status (2026-10-22):** Phases 0 and 1 are done (including the Phase 1b clean-up run).
-Phase 2 is done (2a, 2b, 2c; [results/phase2/RESULTS.md](results/phase2/RESULTS.md)). **G2 passes**
-and the Phase 3 grid is frozen (§3). Phase 3 is next.
-**Phase 2 (the pilot sweep) is next.** Phase 1 findings are in
-[results/phase1/RESULTS.md](results/phase1/RESULTS.md) and summarized in §9.
+**Status (2026-11-03):**
+- Phases 0, 1 (with 1b) and 2 (2a, 2b, 2c) are done. Gates G0, G1 and G2 passed, and the
+  Phase 3 grid is frozen (§3).
+- **Phase 3 is in progress.** MNIST (256 runs) and teacher–student (576 runs) are trained
+  and pass G3. **Modular (832 runs) is next**: `molab/phase3_modular.py` is written
+  (2026-11-03) and waits for the user to run it on Molab.
+- §5's metric list is being cut down to theory-backed signals. The proposed set is in
+  §5, "Proposed reduced set", detailed in [METRICS.md](METRICS.md); the user has not
+  confirmed it yet. Six open decisions are listed in METRICS.md §6.
+- Results: [phase 1](results/phase1/RESULTS.md), [phase 2](results/phase2/RESULTS.md),
+  [phase 3](results/phase3/RESULTS.md). Every decision and its reason is in §9.
 
 ---
 
@@ -227,7 +233,60 @@ shared **rule template** turns a signal into a stopping step: causal smoothing, 
 threshold (with direction), then a patience window. The rule's hyperparameters are
 calibrated on seeds {0, 1} and scored on seeds {2, 3}.
 
-### Candidates
+### Proposed reduced set (2026-10-22, awaiting the user's confirmation)
+
+The user asked to cut the original list (below) to a few metrics with real theoretical
+backing, plus simple references. Proposed:
+
+| Keep | What it measures | Basis | Data |
+|---|---|---|---|
+| **S1**, split into a **radial** part ρ and a **tangential** part | Residual of the optimizer's fixed-point equation. Coupled optimizers: ∇J = g + γw (J = L + γ/2‖w‖²). AdamW: Δw, whose fixed point is m̂/√v̂ = −γw | Optimizer fixed points (first-order stationarity). ρ = 1 + ⟨g,w⟩/(γ‖w‖²) is derived from the norm dynamics d log‖w‖/dt = −lr·γ·ρ, i.e. Omnigrok's LU mechanism: ρ ≈ 1 on the plateau, 0 when the norm settles | telemetry only (‖g‖, ‖γw‖, cos(g,w), ‖Δw‖) |
+| **S1b** | Mahsereci's evidence test applied to ∇J: is the regularized gradient distinguishable from minibatch noise? | Mahsereci et al. 2017 (Gaussian minibatch-noise model; EB = 1 − (B/D)Σ ĝ²/σ̂²) | replay, per-example gradients |
+| **F2** | Consecutive change / alignment of the input AGOP | Neural feature ansatz and the AGOP mechanism of grokking (Radhakrishnan et al. 2024; Mallinar et al.) | replay, input Jacobians |
+| **R1** | Effective rank of each layer's activation covariance | Low-rank bias of weight decay; Deep Grokking's rank–generalization link | dense summaries |
+| **N1** | Weight norm (basic reference) | Omnigrok | telemetry |
+
+Baselines kept: B0, B1, B2 (= S1b with γ = 0), B5 (HTSR α, the main competitor),
+B6 (oracle reference), and B3 / B4 in their cheap forms (B3 from the stored
+gradient-noise trace, B4 from the stored train predictions).
+Dropped: S1c (its useful part is S1's tangential component), R2 (except inside B5),
+F1 (a cheap proxy for F2; fallback only), F3 (no grokking-specific theory),
+participation ratio and spectral entropy.
+
+Normalizations (dividing by ‖γw‖ or lr·γ·‖w‖) are choices, not derivations. Open design
+points: S1 is undefined at γ = 0 (needs a fallback); minibatch noise floors on MNIST;
+layer aggregation; non-monotone signals; stationarity rules are late by construction on
+late-collapse runs. The paper list behind these metrics is in RAMPUP.md §2. **Full definitions, shapes,
+derivations, caveats and sources for every candidate and baseline: [METRICS.md](METRICS.md).**
+
+### Metric review with the user (2026-10-28): corrections to the proposal
+
+Recorded in full in METRICS.md; the points that change the proposal above:
+- **ρ:** the gradient form 1 + ⟨g,w⟩/(γ‖w‖²) is derived from gradient flow and holds
+  only for (momentum) SGD. Proposed: define ρ from the step taken,
+  −⟨Δw,w⟩/(lr_eff·γ·‖w‖²), for every optimizer (Adam's preconditioner and AdamW's
+  decoupled decay break the gradient form).
+- **τ is needed alongside ρ:** ⟨g,w⟩ sees only the radial part of g, so the norm can be
+  balanced (ρ = 0) while the direction still rotates (features still forming).
+- **S1b on full-batch tasks** (modular, teacher–student) is a heuristic, not
+  Mahsereci's statistical test: there is no minibatch noise, and B = n treats the
+  per-example spread as noise. Open: use it on MNIST only, or at a nominal batch size.
+- **F2 needs learning-rate normalization:** the raw change ‖ΔM‖/‖M‖ scales with the
+  step size, and our lrs span orders of magnitude. Proposed: divide by the relative
+  weight change ‖Δw‖/‖w‖ (independent of lr, optimizer and γ), with a floor.
+- **Provenance:** S1 has no single source paper; it is constructed from first-order
+  stationarity, Omnigrok's norm dynamics and the scale-invariance literature. S1b is
+  Mahsereci et al. 2017 applied to ∇J instead of g (the original is B2).
+- **MNIST uses MSE** on purpose, following Omnigrok (its Appendix E: cross-entropy groks
+  less cleanly on MNIST and needs α ≈ 100). Worth a sentence in the write-up.
+- **Late collapse comes in two types** (METRICS.md §5). Type A drifts out of the
+  Goldilocks zone on the right (train stays fitted, norm grows: ρ < 0). Type B collapses
+  out on the left (decay outpulls the data gradient; in deep nets w ≈ 0 is an attractor
+  at any init; train fit is lost). All candidates stop late on both. Proposed additions
+  for Phase 5: a ρ < 0 rule (Type A) and a train-accuracy guard (Type B); `GroundTruth`
+  should split the two.
+
+### Original candidate list (2026-10-20)
 
 | ID | Family | Signal |
 |---|---|---|
@@ -350,9 +409,15 @@ The blocks:
 
 ### Phase 3: full sweep (Molab) ← **in progress**
 - **One notebook per dataset** (decided 2026-10-22), so no single run has to be tracked
-  across all 1,664 runs: `molab/phase3_mnist.py` (256 runs, ~1.3 GPU-h) ran 2026-10-22 and
-  passed G3; `molab/phase3_teacher_student.py` (576 runs, ~3.8 h) is written; the modular
-  notebook (832 runs, ~5.4 h) is the same file with `DATASET` changed. Sweep files: `configs/sweeps/phase3_{mnist,modular,
+  across all 1,664 runs. Status:
+
+  | Dataset | Runs | Notebook | Status |
+  |---|---|---|---|
+  | MNIST | 256 | `molab/phase3_mnist.py` | ✅ 2026-10-22: 256/256 L0, audit 13/13 full L0, G3 passes |
+  | teacher–student | 576 | `molab/phase3_teacher_student.py` | ✅ 2026-10-28: 576/576 L0, audit 29/29 full L0, G3 passes |
+  | modular | 832 | `molab/phase3_modular.py` (written 2026-11-03) | ⏳ ready to run: ~5.4 GPU-h, ~51 GB |
+
+  Details: [results/phase3/RESULTS.md](results/phase3/RESULTS.md). Sweep files: `configs/sweeps/phase3_{mnist,modular,
   teacher_student}.yaml`, generated from §3's locked-values tables.
 - Each dataset has its own HF sub-folder with its own `runs/` and `manifest.json`
   (`advay333/tfs` under `phase3/mnist/`, `phase3/modular/`, `phase3/teacher_student/`),
@@ -366,6 +431,11 @@ The blocks:
   run, t_ε, and a category for each run (§3 categories).
   (`tfs/sweep/corpus.py`: `manifest_status`, `audit`, `drop_failed`; the notebook's
   blocks A–D.) G3 is checked per dataset and passes when all three pass.
+- **Notes from the finished datasets** (for Phase 5): the provisional run categories
+  (`run_summary.provisional_category`) mislabel slow creeps. MNIST depth-8 α = 8 joint
+  plateaus show as "fast", and many teacher–student slow creeps show as "grokker".
+  Phase 5's `GroundTruth` should classify from curve shape. Plain-SGD teacher–student
+  runs often peak in the last 10% of the 3e5 horizon.
 
 ### Phase 4: signals
 - Implement every signal (S, N, R, F, B families) against the causal stream API. Signals
@@ -415,12 +485,14 @@ The blocks:
 bit-identical everywhere. The corpus therefore runs under MPS; Phase 2b measures 16 / 24 /
 32 MPS workers.
 
-**Projection (to be replaced by Phase 2 block 5):** about 1,660 runs at 1e5 steps is
-1.7e8 optimizer steps. At ~2,000 aggregate steps/s that is ~23 h of training. Plus one
-replay pass per run in Phase 4 (about the same again, plus signal math), that is 2–4
-twelve-hour Molab sessions for each of Phases 3 and 4. If the re-measured throughput
-is poor, the next lever is training several runs in one process (`torch.func`
-batching); this needs determinism re-verified.
+**Measured in Phase 2b:** MPS gives ~2,450 steps/s at 16, 24 and 32 workers alike; the
+corpus uses 16.
+
+**Phase 3, measured so far** (16 MPS workers): MNIST 77 min for 256 runs (21.8 GB);
+teacher–student 255 min for 576 runs (6.3 GB). Both within ~10% of the Phase 2
+projection (10.5 GPU-h, 77 GB for all 1,664 runs). Modular is projected at ~5.4 GPU-h
+and ~51 GB. Phase 4's single replay pass per run costs about as much as training, plus
+the signal math.
 
 ---
 
@@ -440,6 +512,23 @@ batching); this needs determinism re-verified.
 ---
 
 ## 9. Decisions log
+
+- **Phase 3 (2026-10-22 to 2026-10-28):**
+  - One notebook per dataset, written and run one at a time (the user's choice: no
+    single run to track across all 1,664 runs). Order so far: MNIST, teacher–student;
+    modular is last.
+  - Each dataset gets its own HF sub-folder and manifest under `phase3/`, so sessions
+    never write the same manifest.
+  - Calibration seeds {0, 1} train first; the longest runs start first within that.
+  - The G3 audit replays a fixed random 5% of each dataset end to end.
+  - MNIST has few provisional "grokkers" at depth 8 (2/128): n = 4k (chosen for the
+    joint plateau) removes most grokking, and the 10× rule labels the creep as "fast".
+    Accepted; modular supplies the strong grokkers. Option kept in reserve: 32 extra
+    depth-8 runs at n = 1k, α = 8, Adam family.
+  - The user asked to cut §5's metric list to theory-backed signals; the proposal is
+    in §5 and awaits confirmation. The 2026-10-28 review (§5, "Metric review with the
+    user") changed the ρ definition, the F2 normalization and S1b's scope, and split
+    late collapse into two types; full write-up in METRICS.md.
 
 - **Phase 2a results and 2b set-up (2026-10-22)**, all recommended options accepted:
   - **Learning rates** (Adam family: published; SGD family from the scan, one lr per

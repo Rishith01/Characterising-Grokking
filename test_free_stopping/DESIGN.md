@@ -4,11 +4,16 @@ This document describes the code flow, modules, classes, storage format and caus
 guarantees. [PLAN.md](PLAN.md) covers what is run and in what order; [RAMPUP.md](RAMPUP.md)
 is the starting point for a new contributor.
 
-**Status (2026-10-21).** The training, recording, storage, replay and sweep layers
-(§4–§6) are **built and tested**, and the signatures there match the code. The
-measurement and evaluation layers (§7–§8) are **designed but not built** (Phases 4–5),
-except the oracle reader, plotting and markdown reporting. Each section says which.
-§12 lists what Phase 2 needs built.
+**Status (2026-10-28).**
+- **Built and tested** (83 tests): training, recording, storage, replay and sweep
+  layers (§4–§6), the Phase 2 pilot tools and the Phase 3 corpus tools (§12). The
+  signatures here match the code.
+- **Designed but not built:** the measurement and evaluation layers (§7–§8, Phases
+  4–5), except the oracle reader, plotting, reporting, run summaries and the G2/G3 tables.
+- **§7.2's signal list is under review.** PLAN.md §5 proposes a reduced, theory-backed
+  set (S1 with radial and tangential parts, S1b, F2, R1, N1, plus baselines). Build
+  against that once the user confirms it.
+- Each section says what is built and what is planned.
 
 ---
 
@@ -58,8 +63,9 @@ test_free_stopping/
     env_lock.txt                    ✅ pinned Molab environment (from phase2a; scripts/env_lock.py --check)
   molab/                            ✅ marimo notebooks the user runs on Molab:
                                        phase0_g0.py, phase1.py, phase1b.py, phase2a.py, phase2b.py,
-                                       phase2c.py, phase3_mnist.py (one Phase 3 notebook per dataset)
-  results/phase1/                   ✅ RESULTS.md + figures (versioned)
+                                       phase2c.py, phase3_mnist.py, phase3_teacher_student.py
+                                    ⏳ phase3_modular.py (one Phase 3 notebook per dataset)
+  results/phase1/ phase2/ phase3/   ✅ RESULTS.md + figures per phase (versioned)
   tfs/                              # the package ("test-free stopping")
     config.py                       ✅ dataclass configs, YAML (de)serialisation, run_id / group_id
     registry.py                     ✅ generic name -> class registry
@@ -665,6 +671,10 @@ Signal families and what each one needs:
 | B3 | eval | replay + training data | two minibatch gradients per eval step, from a fixed RNG stream |
 | B4 | log | preds | none |
 
+**Under review (2026-10-22):** PLAN.md §5 proposes keeping only S1 (radial ρ and
+tangential parts, both from telemetry), S1b/B2, F2, R1, N1, B0, B1, B5, B6 and the cheap
+B3/B4. Build those first. Definitions and open decisions: [METRICS.md](METRICS.md).
+
 Shared math lives in `signals/_linalg.py` and has its own unit tests against brute-force
 references: effective rank, participation ratio, spectral entropy, linear CKA,
 power-law α fit, per-example gradients, input AGOP.
@@ -772,7 +782,8 @@ def evaluate(rule_specs: dict[str, RuleSpec], runs: list[str]) -> pd.DataFrame: 
 | `python -m scripts.det_check <sweep.yaml> --device cuda --workers N [--steps --keyframe-every]` | ✅ | G1-det: train each config twice, compare, replay |
 | `python -m scripts.throughput --workers 8 16 32 [--mps-workers 16]` | ✅ | Aggregate steps/s at several worker counts (and MPS), with a bit-identity check |
 | `python -m scripts.sync {push,pull,status} --repo advay333/<repo>` | ✅ | Manifest-driven HF sync; token from `HF_TOKEN` |
-| `python -m scripts.sweep <sweep.yaml> --workers N --upload` | ⏳ Phase 2/3 | Expand, launch, resume, upload as runs finish |
+| `python -m scripts.sweep <sweep.yaml> --workers N --repo advay333/tfs --prefix phase3/<dataset>` | ✅ | Expand, train, replay-check, summarize, upload as runs finish; resumes from the remote manifest |
+| `python -m scripts.env_lock [--check configs/env_lock.txt]` | ✅ | Record the environment, or compare the live one with the lock |
 | `python -m scripts.compute_signals ...` | ⏳ Phase 4 | Stream runs, fill the signal cache |
 | `python -m scripts.calibrate` / `evaluate` | ⏳ Phase 5 | Rule calibration and held-out scoring |
 
@@ -815,7 +826,29 @@ On Molab, notebooks call the same functions directly (`det_check`, `run_parallel
 
 ---
 
-## 12. What Phase 2 needs built
+## 12. Phase 2–3 tooling (built), and what Phase 4 needs
+
+**Phase 3 (built 2026-10-22):**
+- `tfs/sweep/corpus.py`: per-dataset sweep files and HF folders (`phase3/<dataset>/`,
+  each with its own manifest), `corpus_order` (seeds {0, 1} first, longest first),
+  `manifest_status`, `audit` (full replay of a fixed random 5%, recorded in the
+  manifest), `drop_failed`.
+- `configs/sweeps/phase3_{mnist,modular,teacher_student}.yaml`: generated once from
+  PLAN.md §3's locked-values tables; `tests/test_corpus.py` checks them against those
+  tables.
+- `molab/phase3_<dataset>.py`: blocks A (train), B (audit), C (retrain failed),
+  D (summary). `phase3_mnist.py` and `phase3_teacher_student.py` ran;
+  `phase3_modular.py` (2026-11-03) is the same file with `DATASET = "modular"` and its
+  text updated. When copying a notebook, keep LF line endings (Python's text mode on
+  Windows writes CRLF).
+- `tfs/evaluation/plots.slug`: file-name-safe variant labels (fixes `x/y`).
+
+**Phase 4 needs:** `tfs/causal/stream.py` (CausalStream, Observation),
+`tfs/signals/` (the confirmed set from PLAN.md §5, with `_linalg.py` and its tests),
+`scripts/compute_signals.py`, `tests/test_causality.py`, and a Molab notebook that pulls
+runs from `phase3/<dataset>/`, replays each once, and uploads the signal cache.
+
+### Phase 2 (built and run)
 
 **Status (2026-10-22):** all built. `molab/phase2a.py` ran; `molab/phase2b.py`,
 `configs/sweeps/phase2_gamma.yaml` / `phase2_det.yaml` (generated once from the

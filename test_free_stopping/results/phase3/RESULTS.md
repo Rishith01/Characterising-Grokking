@@ -8,7 +8,7 @@ reports under `reports/`).
 |---|---|---|---|
 | MNIST | 256 | ✅ done 2026-10-22 | ✅ passes |
 | modular | 832 | not started | |
-| teacher–student | 576 | notebook ready (`molab/phase3_teacher_student.py`) | |
+| teacher–student | 576 | ✅ done 2026-10-28 | ✅ passes |
 
 ## MNIST (2026-10-22, 84 min incl. audit, MPS, 16 workers)
 
@@ -67,3 +67,54 @@ categories, so the corpus itself is unaffected.
 **Verdict: as expected.** Every configuration behaves as the pilot predicted, and the
 three traps a stopping rule must survive (grokking plateau, joint plateau, late
 collapse) are all present with consistent seeds.
+
+## Teacher–student (2026-10-28, 270 min incl. audit, MPS, 16 workers)
+
+Figure (seed 0): [`corpus_teacher_student_seed0.png`](corpus_teacher_student_seed0.png).
+
+### Infrastructure: G3 passes
+
+- Environment matched the lock. **576/576 runs uploaded, all `complete`, none diverged,
+  all replay-checked at L0.**
+- **Audit:** 29 random runs (5%) re-downloaded and **fully replayed at L0 with zero error**
+  (30 keyframe intervals, 6,001 log steps each).
+- **Cross-session reproducibility:** the 8 corpus runs whose configuration equals a pilot
+  run reproduce it exactly.
+- Cost: 255 min of training (projection ~3.8 h; mean 396 s per run vs 384 s projected);
+  6.3 GB (projection 5.9 GB).
+
+### What the corpus contains
+
+Seed spread is larger than on MNIST (median s.d. of max test accuracy 0.02, max 0.065),
+as expected with N = 50–400 training points.
+
+- **The LU picture holds.** At α = 2 with γ = 0, the student never generalizes at
+  N = 50 and 100 (test ≈ 0) for every optimizer, but does at N = 400 (late, ~260k
+  steps): more data moves the run past the critical data size. AdamW at α = 2 groks at
+  t_ε ≈ 135k / 40–46k / 3–12k for γ = 0.03 / 0.1 / 1 (∝ 1/γ, Omnigrok Fig. 2c).
+- **Training-set size sets the ceiling:** max test accuracy ≈ 0.55–0.6 at N = 50,
+  0.8–0.9 at N = 100, 0.95–1.0 at N = 400.
+- **Coupled weight decay at γ = 1e-4** (Adam+L2, SGD, SGD+momentum) stops the student
+  fitting below θ: never-generalizing or late-collapse runs in every (α, N) cell, as in
+  the pilot.
+- **Plain SGD is slow:** median t_ε 160k–295k in most cells.
+- **The 3e5 horizon was needed:** 203 of 576 runs reach their best test accuracy after
+  step 1e5.
+
+Provisional categories: grokker 244, never 144, fast 94, late collapse 51, joint
+plateau 25, no fit 18. Grok-time spread 2.8 decades. 122 runs end with train accuracy
+< 0.99 (the coupled-L2 floor and slow SGD).
+
+**Two notes.**
+- Many "grokkers" here are slow creeps rather than a plateau then a jump: the student
+  fits the training set by ~350–600 steps and test accuracy rises gradually for tens of
+  thousands of steps, which passes the provisional 10× rule. The clean plateau-then-jump
+  runs are AdamW/Adam+L2 at α = 2 (as in Omnigrok). Same labelling caveat as MNIST;
+  regret does not depend on it.
+- Plain SGD at γ ≤ 1e-5 often peaks in the last ~10% of the horizon (t_ε 258k–295k), so
+  some of those runs may still be improving at 3e5. For scoring this is harmless (the
+  best test accuracy is taken within the horizon), but a rule that never stops scores
+  well on them; this is worth keeping in mind in Phase 5.
+
+**Verdict: as expected.** Every pattern the pilot and Omnigrok predict appears, with
+consistent seeds and all three traps present.
