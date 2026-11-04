@@ -122,18 +122,18 @@ the exact claim or arXiv number):
 | 0: scaffold, G0 | ✅ 2026-10-20 |
 | 1: tasks, recording, determinism, reproductions (G1) | ✅ 2026-10-21 |
 | 2: pilot (2a lr scan, 2b γ placement, 2c checks), G2 | ✅ 2026-10-22. Grid frozen in PLAN §3 |
-| 3: corpus, G3 per dataset | MNIST ✅ 256/256 · teacher–student ✅ 576/576 · **modular ⏳ 832 runs, `molab/phase3_modular.py` written, not run yet** |
-| 4: signals | **core built 2026-11-03**: `stopping/` package (DESIGN §13), signals N1, R1, B0–B6, `molab/phase4_pilot.py` not run yet. S1, S1b, F2 held back (METRICS.md §6 decisions); full Phase 4 notebook not written |
+| 3: corpus, G3 per dataset | MNIST ✅ 256/256 · teacher–student ✅ 576/576 · modular ✅ 832/832 (2026-11-04). **Phase 3 complete: 1,664 runs** |
+| 4: signals | **core built 2026-11-03**: `stopping/` package (DESIGN §13), signals N1, R1, B0–B6, MNIST pilot run 2026-11-04: signals verified ([results](results/phase4/RESULTS.md)); B2 does not stop on Adam-family runs (argument for S1b). S1, S1b, F2 held back (METRICS.md §6 decisions); full Phase 4 notebook not written |
 | 5–6: rules, calibration, evaluation, write-up | not started |
 
 **Next actions, in order (each only when the user asks):**
 1. ✅ (2026-11-03) `molab/phase3_modular.py` written: the teacher–student notebook with
    `DATASET = "modular"` and its text updated (832 runs, ~5.4 GPU-h, ~51 GB, 1e5 steps);
    passes `marimo check`. The user runs it on Molab.
-2. After the user runs it: download `phase3/modular/reports/`, check G3 (all uploaded, all
+2. ✅ (2026-11-04, `results/phase3/RESULTS.md`) After the user runs it: download `phase3/modular/reports/`, check G3 (all uploaded, all
    L0, audit at full L0), compare with the Phase 2 pilot, and record it in
    `results/phase3/RESULTS.md`.
-3. The user runs `molab/phase4_pilot.py`; download `phase4/pilot/mnist/` (plots,
+3. ✅ (2026-11-04, see `results/phase4/RESULTS.md`) The user runs `molab/phase4_pilot.py`; download `phase4/pilot/mnist/` (plots,
    stops.csv, summary.md) and check each signal against METRICS.md's predictions.
 4. Settle the open decisions in [METRICS.md](METRICS.md) §6, then build S1, S1b and F2
    as new files under `stopping/signals/` (DESIGN §13.7), rewrite PLAN §5 to the final

@@ -355,7 +355,9 @@ loss is flat there by definition.
 ### B2: Mahsereci EB (original)
 Exactly S1b with γ = 0, i.e. the test on the data gradient g alone, with smoothing and
 stop at EB > 0. Same computation, cost and full-batch caveat as S1b.
-**Expected to stop on the plateau.** Source: arXiv:1703.09580.
+**Expected to stop on the plateau.** Pilot (2026-11-04): true under SGD, but on
+Adam-family runs EB stays negative and B2 never stops; the mean data gradient balances
+the decay and is not noise ([results](results/phase4/RESULTS.md)). Source: arXiv:1703.09580.
 
 ### B3: gradient disparity
 **Original.** Forouzesh & Thiran (arXiv:2107.06665): draw two minibatches, compute

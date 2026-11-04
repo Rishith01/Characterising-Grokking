@@ -106,7 +106,7 @@ def stops_markdown(stops: pd.DataFrame) -> str:
     rows = []
     for rid, g in stops.groupby("run_id", sort=False):
         first = g.iloc[0]
-        row = {"run": rid[:10], "category": first["category"], "max_test": first["max_test"],
+        row = {"run": rid.split("__")[1] if "__" in rid else rid, "category": first["category"], "max_test": first["max_test"],
                "t_eps": first["t_eps"]}
         for _, s in g.iterrows():
             row[s["method"]] = "never" if pd.isna(s["stop"]) else f"{int(s['stop'])} ({s['test_at_stop']:.2f})"

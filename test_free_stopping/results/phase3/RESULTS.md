@@ -7,7 +7,7 @@ reports under `reports/`).
 | Dataset | Runs | Status | G3 |
 |---|---|---|---|
 | MNIST | 256 | ✅ done 2026-10-22 | ✅ passes |
-| modular | 832 | not started | |
+| modular | 832 | ✅ done 2026-11-04 | ✅ passes |
 | teacher–student | 576 | ✅ done 2026-10-28 | ✅ passes |
 
 ## MNIST (2026-10-22, 84 min incl. audit, MPS, 16 workers)
@@ -118,3 +118,65 @@ plateau 25, no fit 18. Grok-time spread 2.8 decades. 122 runs end with train acc
 
 **Verdict: as expected.** Every pattern the pilot and Omnigrok predict appears, with
 consistent seeds and all three traps present.
+
+## Modular (2026-11-04, 458 min incl. audit, MPS, 16 workers)
+
+Figures (seed 0; x+y at train fraction 0.5): [`corpus_modular_xplusy_seed0.png`](corpus_modular_xplusy_seed0.png),
+[`corpus_modular_xmuly_seed0.png`](corpus_modular_xmuly_seed0.png),
+[`corpus_modular_xdivy_seed0.png`](corpus_modular_xdivy_seed0.png).
+
+### Infrastructure: G3 passes
+
+- Environment matched the lock. **832/832 runs uploaded, all `complete`, none diverged,
+  all replay-checked at L0.**
+- **Audit:** 42 random runs (5%) re-downloaded and **fully replayed at L0 with zero
+  error** (10 keyframe intervals, 2,001 log steps each).
+- **Cross-session reproducibility:** the 24 corpus runs whose configuration equals a
+  Phase 2b/2c pilot run reproduce its max test accuracy, t_ε, final test accuracy and
+  peak step exactly.
+- **Internal check:** at γ = 0, AdamW and Adam+L2 are both plain Adam, and all 52 such
+  pairs give identical results.
+- Cost: 428 min of training and upload (projection ~5.4 GPU-h; 440 s per run against
+  355–437 s projected, so x+y ran ~25% slower than its pilot estimate). 50.5 GB
+  (projection ~51 GB).
+
+### What the corpus contains
+
+Seeds agree exactly in most cells (median s.d. of max test 0.000). The spread is large
+only at the edges: train fraction 0.3 at the slowest decay (runs still rising at the
+horizon) and plain SGD at γ = 1e-3.
+
+| Configuration | Behaviour (4 seeds) | Matches the pilot / literature? |
+|---|---|---|
+| AdamW, γ = 0.1 / 0.3 / 1 (x+y, f 0.5, α = 1) | **grokking**, t_ε 23k / 8.1k / 2.4k: ∝ 1/γ. x/y 23k / 8.1k / 2.4k, x\*y 24k / 8.1k / 2.4k | ✅ Phase 2b/2c (27k / 9.2k / 2.6k), Omnigrok |
+| SGD and SGD+momentum | the same law in λ = lr_eff·γ: λ = 1e-4 → 26k (SGD) / 33k (momentum, λ = 9e-5); λ = 3e-4 → 10.2k / 10.7k | ✅ Phase 2b |
+| larger α | slower: AdamW γ = 0.1, f 0.5: t_ε 23k / 28k / 41k at α = 1 / 2 / 4 | ✅ the LU picture, Phase 2c |
+| smaller train fraction | slower, and past the horizon at the smallest decay: AdamW γ = 0.3: 49k / 8k / 3k at f 0.3 / 0.5 / 0.7. At f 0.3 the slowest decay of each optimizer (AdamW 0.1, SGD 1e-4, momentum 3e-5) is still rising at 1e5 (max test 0.07–0.54, seeds split between grokker and never) | ✅ critical data size (Power et al., Omnigrok) |
+| γ = 0, every optimizer | **never** generalizes (test ≈ 0.01, i.e. chance at p = 97), except a slow creep at f 0.7 (Adam: 0.36, SGD: 0.28 at α = 1) | ✅ Phase 2b |
+| Adam+L2, γ > 0 | **fast** (t_ε 0.35–1.7k) | ✅ Phase 2b |
+| coupled γ = 1e-3, f 0.7, α = 1 (Adam+L2 and SGD) | never fits the training set (train ≈ test ≈ 0.01): the decay wins from the start, the Type B attractor of METRICS.md §5. α ≥ 2 and smaller fractions fit fine | new, a plausible edge of the 2b result (Adam+L2 cannot fit at 1e-2) |
+| plain SGD, lr 1, γ = 1e-3 | fits and generalizes (max test ≈ 1), then **train and test accuracy oscillate violently** for the rest of the run (final train 0.06–0.99): an edge-of-stability regime. These are 20 of the 22 "late collapse" runs | not in the pilot; a real trap (it is Type B in the sense that train accuracy falls too), but the final values depend on where the oscillation is at step 1e5 |
+| AdamW γ ≥ 0.1, α ≥ 2 | sharp test-accuracy spikes after grokking (slingshot-like) | ✅ Thilak et al. (slingshot) |
+
+Provisional categories: grokker 349, never 243, fast 206, late collapse 22, joint
+plateau 11, no fit 1. Grokking time spans 2.0 decades (x\*y), 2.5 (x+y) and 2.2 (x/y).
+33 runs end with train accuracy < 0.99: 28 SGD at γ = 1e-3, 4 Adam+L2 at γ = 1e-3, and
+one AdamW at γ = 0.1 caught in a spike.
+
+**Notes.**
+- **Many "never" runs (243, 29%).** They are γ = 0 for every optimizer (208 runs; that
+  level is in the grid on purpose as the no-grokking control), plus the slowest-decay
+  cells at f 0.3 and the coupled γ = 1e-3, f 0.7, α = 1 no-fit cells.
+- **Duplicates:** the 52 γ = 0 AdamW/Adam+L2 pairs are the same trajectory, so it is
+  the same run counted twice. Phase 5 aggregates should count each such pair once, or
+  report that they are duplicates (MNIST and teacher–student have the same pairs).
+- **Labelling:** the 2 AdamW "late collapses" (γ = 0.1, f 0.3) are grokkers still
+  rising at the horizon, where a spike puts the max at step 99.75k above the final
+  value. Same provisional-category caveat as MNIST; regret does not depend on it.
+- **Absence:** there is no Type A (norm-growth) late collapse on modular, unlike MNIST.
+  The cross-entropy softmax-collapse version (Prieto et al.) does not show up within
+  1e5 steps at these learning rates.
+
+**Verdict: as expected.** G3 passes, every pilot prediction holds (1/λ law, α and data
+size effects, γ = 0 never generalizing), and the corpus adds two traps the pilot did not
+show: the no-fit decay attractor and the oscillating SGD regime.

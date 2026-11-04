@@ -15,9 +15,8 @@ covers *what* we run and *in what order*. A new contributor should start with
 **Status (2026-11-03):**
 - Phases 0, 1 (with 1b) and 2 (2a, 2b, 2c) are done. Gates G0, G1 and G2 passed, and the
   Phase 3 grid is frozen (§3).
-- **Phase 3 is in progress.** MNIST (256 runs) and teacher–student (576 runs) are trained
-  and pass G3. **Modular (832 runs) is next**: `molab/phase3_modular.py` is written
-  (2026-11-03) and waits for the user to run it on Molab.
+- **Phase 3 is done** (2026-11-04): MNIST (256), teacher–student (576) and modular (832)
+  are trained and pass G3; 1,664 runs on HF.
 - **Phase 4 core is built** (2026-11-03): the `stopping/` package (DESIGN.md §13) with
   N1, R1 and baselines B0–B6, rules, methods, a trace cache and
   `molab/phase4_pilot.py` (a small MNIST pilot to look at the signals). S1, S1b and F2
@@ -412,7 +411,7 @@ The blocks:
 - The final grid is frozen in `configs/sweeps/phase3_*.yaml`, and the environment is
   pinned in `configs/env_lock.txt`.
 
-### Phase 3: full sweep (Molab) ← **in progress**
+### Phase 3: full sweep (Molab) ✅ (2026-11-04)
 - **One notebook per dataset** (decided 2026-10-22), so no single run has to be tracked
   across all 1,664 runs. Status:
 
@@ -420,7 +419,7 @@ The blocks:
   |---|---|---|---|
   | MNIST | 256 | `molab/phase3_mnist.py` | ✅ 2026-10-22: 256/256 L0, audit 13/13 full L0, G3 passes |
   | teacher–student | 576 | `molab/phase3_teacher_student.py` | ✅ 2026-10-28: 576/576 L0, audit 29/29 full L0, G3 passes |
-  | modular | 832 | `molab/phase3_modular.py` (written 2026-11-03) | ⏳ ready to run: ~5.4 GPU-h, ~51 GB |
+  | modular | 832 | `molab/phase3_modular.py` | ✅ 2026-11-04: 832/832 L0, audit 42/42 L0, 458 min, 50.5 GB |
 
   Details: [results/phase3/RESULTS.md](results/phase3/RESULTS.md). Sweep files: `configs/sweeps/phase3_{mnist,modular,
   teacher_student}.yaml`, generated from §3's locked-values tables.
