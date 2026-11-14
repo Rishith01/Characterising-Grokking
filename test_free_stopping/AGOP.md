@@ -338,6 +338,17 @@ If the tail model holds, alignment with the final features is then at least cos 
 (ε_R = 0.1 rad gives ≥ 0.995). This fits the existing `RuleConfig` threshold template
 (DESIGN §13.4) on the column R.
 
+**Correction (2026-11-14): with lags proportional to t, use the discrete form.** ω̂ is
+measured over a lag Δ, so it is the *average* speed over that lag, which exceeds the
+current speed by (e^{κΔ} − 1)/(κΔ). That factor is ≈ 1 only when κΔ is small, but with
+Δ = t/k it grows with t, so ω̂/κ̂ overstates the remaining angle more and more late in a
+run (×1.9 at κΔ = 1.2 on an exponential test path). The exact remaining angle on an
+exponential tail is the Banach form R̂ = θ_Δ·q/(1 − q), with θ_Δ the angle over the last
+lag and q = e^{−κΔ}; ω/κ is its small-κΔ limit. Estimate q from the last two equal lags,
+q̂ = (θ_Δ/Δ)/(θ_{previous Δ}/Δ′) (the textbook contraction-factor estimate), or from a
+trailing regression of log speed. The F2 experiment (`stopping/agop_study.py`) uses
+this form and tests both estimators (unit test: exact to ~5% on an exponential path).
+
 **Worked example.**
 - ω̂ = 1e-4 rad/step, and the speed halved over the last 2,000 steps: κ̂ = ln 2/2000 =
   3.5e-4 per step, so R̂ = 0.29 rad (≈ 17°). Not done.

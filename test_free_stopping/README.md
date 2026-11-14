@@ -21,7 +21,9 @@ why) and [DESIGN.md](DESIGN.md) (how the code works). Metric definitions are in
 - **Phase 4** (signals): in progress. Core built in `stopping/` (DESIGN.md §13): N1, R1
   and baselines B0–B6, piloted on MNIST with `molab/phase4_pilot.py` on 2026-11-04
   ([results/phase4/RESULTS.md](results/phase4/RESULTS.md)). S1, S1b and F2 are not built
-  yet; their open decisions are in METRICS.md §6 and AGOP.md §6.
+  yet; their open decisions are in METRICS.md §6 and AGOP.md §6. The F2 experiment
+  (`molab/phase4_agop_study.py`, DESIGN.md §13.9) is ready to run on Molab. The theory
+  review of the metric set is in [THEORY.md](THEORY.md).
 - **Phases 5–6** (calibration, evaluation, write-up): not started.
 
 ## Local setup (development, CPU)

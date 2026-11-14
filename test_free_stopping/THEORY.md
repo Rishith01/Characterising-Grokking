@@ -210,7 +210,10 @@ future n (q < 1), the contraction-mapping theorem gives
 Proof: the triangle inequality along the remaining path and a geometric series. AGOP.md
 §4 rederives exactly this: the triangle inequality (step 4) plus a geometric tail
 (step 6). With q = e^{−κΔ} and d(x_n, x_{n−1}) = ωΔ, q/(1 − q)·ωΔ = ω/κ − ωΔ/2 + O(Δ²),
-so R̂ = ω/κ is the continuous-time version, slightly conservative. Estimating q from
+so R̂ = ω/κ is the continuous-time version, slightly conservative when κΔ is small.
+With lags proportional to t, κΔ is not small late in a run and ω/κ overstates the
+remaining angle a lot, so the implementation uses the discrete form θ_Δ·q/(1 − q)
+directly (AGOP.md §4, correction of 2026-11-14). Estimating q from
 successive differences and stopping when the bound is below tolerance is the standard
 termination test for fixed-point and Newton iterations:
 - Banach 1922 (any functional-analysis text states the a posteriori form).

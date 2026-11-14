@@ -10,6 +10,28 @@ import torch
 from torch.func import functional_call, grad, vmap
 
 
+# ---- AGOP -------------------------------------------------------------------------------
+
+def input_agop(model: torch.nn.Module, x: torch.Tensor, chunk: int = 4096) -> torch.Tensor:
+    """Average gradient outer product of the input Jacobian over the rows of x
+    (Mallinar et al. Def. 2.1): G = (1/n) sum_i J(x_i)^T J(x_i), d_in x d_in, float64.
+    One backward pass per output per chunk: example i's output depends only on x_i, so
+    the gradient of sum_i f_c(x_i) with respect to x gives every per-example input
+    gradient for output c at once."""
+    n = x.shape[0]
+    G = None
+    for i in range(0, n, chunk):
+        xb = x[i:i + chunk].detach().clone().requires_grad_(True)
+        with torch.enable_grad():
+            out = model(xb)
+            c = out.shape[1]
+            for k in range(c):
+                (g,) = torch.autograd.grad(out[:, k].sum(), xb, retain_graph=k < c - 1)
+                g = g.to(torch.float64)
+                G = g.T @ g if G is None else G + g.T @ g
+    return G / n
+
+
 # ---- spectra ----------------------------------------------------------------------------
 
 def effective_rank(eigs: np.ndarray) -> float:

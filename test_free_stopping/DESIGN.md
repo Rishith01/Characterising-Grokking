@@ -70,6 +70,7 @@ test_free_stopping/
                                        phase0_g0.py, phase1.py, phase1b.py, phase2a.py, phase2b.py,
                                        phase2c.py, phase3_mnist.py, phase3_teacher_student.py,
                                        phase3_modular.py (all run), phase4_pilot.py (run on MNIST)
+                                       phase4_agop_study.py (F2 experiment, §13.9; not run yet)
                                     ⏳ phase4 full notebook (all signals on the corpus)
   results/phase1/ … phase4/         ✅ RESULTS.md + figures per phase (versioned);
                                        phase4/agop_toy_sim.py (AGOP.md §5 toy check)
@@ -1083,3 +1084,32 @@ All three fit the existing interfaces; no change to the runner, store or rules.
   steps (which would reintroduce the lr timescale). The eval grid needs a few close steps
   per window for averaging; a config field on the signal sets them, and `compute_run`
   already accepts any eval step list.
+
+### 13.9 F2 experiment (`signals/agop.py`, `agop_study.py`, `molab/phase4_agop_study.py`)
+
+An experiment run, not the final F2 signal: it records enough to choose F2's settings
+offline, then the chosen form becomes `agop_angle` (§13.8).
+
+- **Signal `agop_path`** (eval cadence; requires models, train_data). At each eval step:
+  the AGOP G on the training set (`_linalg.input_agop`, constant input coordinates
+  masked), M = G^{1/2}, and each layer's flattened weights, each normalized to unit
+  Frobenius norm. Row t stores the **squared chord distances to every earlier eval
+  step** (list columns `d2_G`, `d2_M`, `d2_w{i}`), plus tr G, ‖G‖_F, purity, erank and
+  per-layer weight norms. Distances are computed directly, not as 1 − cos, so small
+  angles keep ~1e-7 rad precision. Causal by construction. The history of unit vectors is
+  held on the device (MNIST: ~1.5 GB for G and M over 300 eval steps; depth-8 weights add
+  ~1.5 GB).
+- **Offline analysis (`agop_study.py`, evaluation side, exempt from the quarantine
+  test like `pilot.py`).** The angle between any two window means is rebuilt from the
+  distances (`mean_chord2`), so every setting is evaluated from one replay: object
+  (M, G, W = max over layers), lag fraction, window and noise-floor correction, κ
+  estimator (ratio of the last two lags, or trailing fit), threshold, and a norm gate (the
+  same bound on log‖w‖, THEORY.md §4.3–4.4). The bound is R̂ = θ_Δ·q/(1 − q),
+  q = e^{−κΔ} (AGOP.md §4, correction of 2026-11-14). Scores per setting: premature,
+  never, regret, lag, and whether R̂ ≥ the true remaining angle at the stop (the true
+  angle to the last eval step is in the trace). Per-run answers to Q1–Q4 and Q8, and
+  plots.
+- **Notebook.** Picks one seed-0 run per (variant, optimizer, category) per application,
+  a γ = 0 run per (variant, optimizer), and seeds 1–2 of two grokkers per application
+  (~50 runs); uploads per-run traces every few runs to `phase4/agop_study/` and resumes
+  from them in a new session; "analysis only" re-scores uploaded traces without replay.
