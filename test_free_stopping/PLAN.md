@@ -12,21 +12,28 @@ The code structure, classes and data flow are in [DESIGN.md](DESIGN.md). This fi
 covers *what* we run and *in what order*. A new contributor should start with
 [RAMPUP.md](RAMPUP.md).
 
-**Status (2026-11-03):**
+**Status (2026-11-14):**
 - Phases 0, 1 (with 1b) and 2 (2a, 2b, 2c) are done. Gates G0, G1 and G2 passed, and the
   Phase 3 grid is frozen (§3).
 - **Phase 3 is done** (2026-11-04): MNIST (256), teacher–student (576) and modular (832)
-  are trained and pass G3; 1,664 runs on HF.
-- **Phase 4 core is built** (2026-11-03): the `stopping/` package (DESIGN.md §13) with
-  N1, R1 and baselines B0–B6, rules, methods, a trace cache and
-  `molab/phase4_pilot.py` (a small MNIST pilot to look at the signals). S1, S1b and F2
-  are held back until their open decisions are settled; Phase 5 and the full Phase 4
-  notebook are not started.
+  are trained and pass G3; 1,664 runs (78.6 GB) on HF.
+- **Phase 4 is in progress.**
+  - Core built 2026-11-03: the `stopping/` package (DESIGN.md §13) with N1, R1 and
+    baselines B0–B6, rules, methods, a trace cache and `molab/phase4_pilot.py`.
+  - MNIST pilot run 2026-11-04 (18 runs): every built signal behaves as predicted,
+    except B2, which never stops on Adam-family runs
+    ([results](results/phase4/RESULTS.md)).
+  - F2 redesigned on paper 2026-11-04 after reviewing the online-AGOP-alignment proposal
+    (`BTP_Proof_AGOP_online_variant.pdf`): the remaining-angle bound in
+    [AGOP.md](AGOP.md) §4, checked on a toy only.
+  - S1, S1b and F2 are not built: they wait on the decisions in METRICS.md §6 and
+    AGOP.md §6. The full Phase 4 notebook and Phase 5 are not started.
 - §5's metric list is being cut down to theory-backed signals. The proposed set is in
   §5, "Proposed reduced set", detailed in [METRICS.md](METRICS.md); the user has not
-  confirmed it yet. Six open decisions are listed in METRICS.md §6.
+  confirmed it yet.
 - Results: [phase 1](results/phase1/RESULTS.md), [phase 2](results/phase2/RESULTS.md),
-  [phase 3](results/phase3/RESULTS.md). Every decision and its reason is in §9.
+  [phase 3](results/phase3/RESULTS.md), [phase 4](results/phase4/RESULTS.md). Every
+  decision and its reason is in §9.
 
 ---
 
@@ -216,6 +223,9 @@ trusted if it reproduces the recorded run.
 
 ### Storage estimate (updated from measured Phase 1b run sizes)
 
+**Measured in Phase 3:** 78.6 GB in total (MNIST 21.8, teacher–student 6.3, modular
+50.5). The estimate below is kept as the record of the plan.
+
 Measured sizes per 1e5-step run after the summary fix: teacher–student 3.7 MB, MNIST
 depth 3 (n = 1000) 31 MB, MNIST depth 8 (n = 5000) 188 MB. Modular is estimated from
 Phase 1 components (keyframes 51 MB + predictions 11–19 MB + small streams).
@@ -246,7 +256,7 @@ backing, plus simple references. Proposed:
 |---|---|---|---|
 | **S1**, split into a **radial** part ρ and a **tangential** part | Residual of the optimizer's fixed-point equation. Coupled optimizers: ∇J = g + γw (J = L + γ/2‖w‖²). AdamW: Δw, whose fixed point is m̂/√v̂ = −γw | Optimizer fixed points (first-order stationarity). ρ = 1 + ⟨g,w⟩/(γ‖w‖²) is derived from the norm dynamics d log‖w‖/dt = −lr·γ·ρ, i.e. Omnigrok's LU mechanism: ρ ≈ 1 on the plateau, 0 when the norm settles | telemetry only (‖g‖, ‖γw‖, cos(g,w), ‖Δw‖) |
 | **S1b** | Mahsereci's evidence test applied to ∇J: is the regularized gradient distinguishable from minibatch noise? | Mahsereci et al. 2017 (Gaussian minibatch-noise model; EB = 1 − (B/D)Σ ĝ²/σ̂²) | replay, per-example gradients |
-| **F2** | Consecutive change / alignment of the input AGOP | Neural feature ansatz and the AGOP mechanism of grokking (Radhakrishnan et al. 2024; Mallinar et al.) | replay, input Jacobians |
+| **F2** | Consecutive change / alignment of the input AGOP. **Proposed 2026-11-04:** the remaining-angle bound R̂ = ω/κ on the normalized feature matrix G^{1/2} (AGOP.md §4) | Neural feature ansatz and the AGOP mechanism of grokking (Radhakrishnan et al. 2024; Mallinar et al.) | replay, input Jacobians |
 | **R1** | Effective rank of each layer's activation covariance | Low-rank bias of weight decay; Deep Grokking's rank–generalization link | dense summaries |
 | **N1** | Weight norm (basic reference) | Omnigrok | telemetry |
 
@@ -290,6 +300,31 @@ Recorded in full in METRICS.md; the points that change the proposal above:
   for Phase 5: a ρ < 0 rule (Type A) and a train-accuracy guard (Type B); `GroundTruth`
   should split the two.
 
+### Updates from the Phase 4 pilot and the AGOP review (2026-11-04)
+
+- **B2 does not stop on Adam-family runs** (MNIST pilot): with weight decay the mean data
+  gradient balances the decay instead of vanishing, so it never looks like noise. Under
+  SGD it does stop, on the plateau. This is the case for S1b.
+- **S1b and AdamW (raised, not decided):** ∇J = g + γw is the fixed-point condition only
+  for coupled decay. AdamW's fixed point is m̂/√v̂ = −γw, where g + γw ≠ 0, so S1b on
+  AdamW would never stop either. Option: test the step-based residual for AdamW.
+- **F2: proposed new definition**, the **remaining-angle bound**
+  ([AGOP.md](AGOP.md) §4).
+  - Normalize the feature matrix M = G^{1/2} to unit Frobenius norm. Measure its angular
+    speed ω (radians per step) between window-averaged eval steps, and the decay rate κ
+    of that speed from a trailing fit.
+  - The signal is R̂ = ω/κ: an upper bound, via the triangle inequality on the sphere, on
+    the angle still to travel to the final features, if the speed's tail decays
+    exponentially. R̂ = ∞ when the speed is not falling.
+  - Stop when R̂ < ε_R.
+  - It is dimensionless, so lr, optimizer, γ (including 0), init scale and input
+    dimension drop out. This replaces both F2 normalizations proposed on 2026-10-28.
+- **The online-AGOP-alignment proposal** (chord model + Aitken extrapolation, the
+  team's `BTP_Proof_AGOP_online_variant.pdf`): the algebra is correct, but the bare
+  estimator stops on grokking plateaus. On a toy it was premature in 10/10 seeds with 5%
+  noise; it is safe only with its D_chord gate. Proposed: record its ŝ_cal and D_chord
+  as extra F2 columns and compare both on real traces.
+
 ### Original candidate list (2026-10-20)
 
 | ID | Family | Signal |
@@ -301,7 +336,7 @@ Recorded in full in METRICS.md; the points that change the proposal above:
 | R1 | Rank / spectrum | Effective rank, participation ratio and spectral entropy of each layer's activation covariance on the training set |
 | R2 | Same family | The same three spectral measures on each weight matrix |
 | F1 | Feature stationarity | ‖ΔNFM_l‖ / ‖NFM_l‖ between consecutive evaluation steps, where NFM_l = W_lᵀW_l (from replay) |
-| F2 | Same family | Increment and consecutive alignment of the input AGOP, (1/n)Σ JJᵀ |
+| F2 | Same family | Increment and consecutive alignment of the input AGOP, (1/n)Σ JJᵀ (superseded proposal, 2026-11-04: the remaining-angle bound, AGOP.md §4) |
 | F3 | Same family | Linear CKA between consecutive training-set feature snapshots, per layer |
 
 ### Baselines
@@ -441,7 +476,19 @@ The blocks:
   Phase 5's `GroundTruth` should classify from curve shape. Plain-SGD teacher–student
   runs often peak in the last 10% of the 3e5 horizon.
 
-### Phase 4: signals
+### Phase 4: signals ← **in progress**
+
+**Status (2026-11-14):**
+
+| Step | Status |
+|---|---|
+| Core package `stopping/` (DESIGN §13): source adapter, signal/rule split, runner with one shared replay pass, trace cache, causality and quarantine tests | ✅ 2026-11-03 |
+| Signals N1, R1, B0–B6 | ✅ built and piloted on MNIST, 18 runs (2026-11-04, [results](results/phase4/RESULTS.md)) |
+| S1, S1b, F2 | ⏳ not built; decisions open (METRICS.md §6, AGOP.md §6) |
+| Pilots on teacher–student and modular | not run |
+| Full Phase 4 notebook (all signals on all 1,664 runs) | not written |
+
+The original plan for this phase:
 - Implement every signal (S, N, R, F, B families) against the causal stream API. Signals
   that need weights at arbitrary steps get them from the replay-backed stream: one replay
   pass per run feeds all such signals together. During that pass, replay is checked
@@ -492,11 +539,15 @@ bit-identical everywhere. The corpus therefore runs under MPS; Phase 2b measures
 **Measured in Phase 2b:** MPS gives ~2,450 steps/s at 16, 24 and 32 workers alike; the
 corpus uses 16.
 
-**Phase 3, measured so far** (16 MPS workers): MNIST 77 min for 256 runs (21.8 GB);
-teacher–student 255 min for 576 runs (6.3 GB). Both within ~10% of the Phase 2
-projection (10.5 GPU-h, 77 GB for all 1,664 runs). Modular is projected at ~5.4 GPU-h
-and ~51 GB. Phase 4's single replay pass per run costs about as much as training, plus
-the signal math.
+**Phase 3, measured** (16 MPS workers): MNIST 77 min for 256 runs (21.8 GB);
+teacher–student 255 min for 576 runs (6.3 GB); modular 428 min for 832 runs (50.5 GB;
+x+y ran ~25% slower per run than its pilot estimate). In total **12.7 GPU-h and
+78.6 GB**, against the Phase 2 projection of 10.5 GPU-h and 77 GB.
+
+**Phase 4, measured on the MNIST pilot** (cuda, one run at a time, replay signals on,
+200 eval steps): 118–355 s per run (depth 8 the slowest), 61 min for 18 runs. The replay
+pass costs about one training run per run, as projected. F2 (one AGOP per eval step,
+d_out backward passes over the training set) is not measured yet.
 
 ---
 
@@ -517,10 +568,27 @@ the signal math.
 
 ## 9. Decisions log
 
-- **Phase 3 (2026-10-22 to 2026-10-28):**
+- **Phase 4 (2026-11-03 to 2026-11-04):**
+  - Phase 4–5 code lives in a separate package, `stopping/`, next to `tfs/`. It reads
+    runs only through a data-source interface, and imports `tfs` in one adapter file
+    (DESIGN §13; agreed with the user 2026-11-03).
+  - Signals and rules are split: signal settings change the cached trace, rule settings
+    (threshold, patience, smoothing) do not, so calibration never recomputes a signal.
+  - The user held back S1, S1b and F2 until their open decisions are settled. No
+    Phase 5 yet; no full Phase 4 notebook; a small MNIST pilot first.
+  - The MNIST pilot (18 seed-0 runs, 3 per provisional category) verified the built
+    signals. B2's predicted behaviour was corrected in METRICS.md (it does not stop on
+    Adam-family runs).
+  - A team member's online-AGOP-alignment proposal was reviewed (AGOP.md). The
+    remaining-angle bound is proposed as F2; the user has not decided.
+
+- **Phase 3 (2026-10-22 to 2026-11-04):**
   - One notebook per dataset, written and run one at a time (the user's choice: no
-    single run to track across all 1,664 runs). Order so far: MNIST, teacher–student;
-    modular is last.
+    single run to track across all 1,664 runs). Order: MNIST, teacher–student, modular
+    (done 2026-11-04).
+  - Modular added two traps the pilot did not show: coupled γ = 1e-3 at f 0.7, α = 1
+    never fits (the decay attractor), and plain SGD at γ = 1e-3 oscillates violently
+    after generalizing (20 of the 22 "late collapse" runs).
   - Each dataset gets its own HF sub-folder and manifest under `phase3/`, so sessions
     never write the same manifest.
   - Calibration seeds {0, 1} train first; the longest runs start first within that.

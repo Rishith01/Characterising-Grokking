@@ -1,5 +1,8 @@
 # Phase 4 results
 
+Contents: the MNIST signal pilot (below), and a toy check of online AGOP estimators
+([last section](#agop-online-estimators-toy-check-2026-11-04)).
+
 ## Pilot: MNIST, 18 runs (2026-11-04)
 
 **Run.** `molab/phase4_pilot.py` on Molab (cuda), with the replay signals turned on and
@@ -67,3 +70,28 @@ Adam-family runs it tends not to stop at all".
 - `stopping/pilot.py` `stops_markdown` cut run ids to 10 characters, so every row read
   "mnist__n10". It now shows the run's config part. Only the stop table in `summary.md`
   was affected; `stops.csv` has the full ids.
+
+## AGOP online estimators: toy check (2026-11-04)
+
+Not a corpus run. [`agop_toy_sim.py`](agop_toy_sim.py) (numpy, ~1 min) compares two ways
+of estimating AGOP alignment online on synthetic trace-normalized AGOP paths
+(d = 30, full rank → rank 3, 10 seeds), where the true alignment is known:
+- the team's online-alignment proposal (`BTP_Proof_AGOP_online_variant.pdf`, chord model
+  + Aitken), bare and gated by its D_chord test;
+- the remaining-angle bound proposed for F2.
+
+Premature stops (true alignment < 0.95 at the stop), out of 10:
+
+| Path | Proposal, bare | Proposal + D_chord gate | Remaining-angle bound |
+|---|---|---|---|
+| exponential (the proposal's own model), 5% noise | 2 (at s = 0.947) | 2 (at s = 0.947) | 0 |
+| sigmoid (grokking-like), clean | 0 | 0 | 0 |
+| sigmoid, off-chord detour | **9** (s down to 0.51) | 0 | 0 |
+| sigmoid, 5% noise | **10** (s ≈ 0.15) | 0 | 0 |
+| sigmoid, 15% noise | **10** (s ≈ 0.15) | 0 | 0 |
+
+**Reading.** The bare proposal stops on the plateau: its three-point extrapolation is
+arbitrary when the signal is flat plus noise. With its own gate, it is safe in the toy.
+The bound is never premature, and stops 1.4k–5k steps after the true crossing.
+Full discussion: [AGOP.md](../../AGOP.md) §3–§5. Real AGOP traces are needed before
+choosing (AGOP.md §6).

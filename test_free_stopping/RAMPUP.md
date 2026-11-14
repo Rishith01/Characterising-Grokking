@@ -1,8 +1,9 @@
 # Ramp-up: taking over `test_free_stopping`
 
 This is the starting point for a new agent (or person) picking up the project. Read this
-file, then the documents in §2. Updated 2026-10-28, **in the middle of Phase 3**: MNIST
-and teacher–student are trained; modular is next.
+file, then the documents in §2. Updated 2026-11-14. **Phase 3 is done** (the full
+1,664-run corpus is on HF). **Phase 4 is in progress**: the signal package is built and
+piloted on MNIST, and three signals (S1, S1b, F2) wait on the user's metric decisions.
 
 ---
 
@@ -47,8 +48,9 @@ share no code or results.
 | 3 | [PLAN.md](PLAN.md) | What we run and why. **the status block at the top**, **§3 the frozen Phase 3 grid** (all values), **§5 metrics** (the proposed reduced set), **§6 phases and gates**, **§9 every decision with its reason** | 30 min |
 | 4 | [DESIGN.md](DESIGN.md) | How the code works. §2 marks built (✅) vs planned (⏳). §5–§6.5 storage, training and replay. **§13 the Phase 4–5 package `stopping/`** (§7 is its superseded first design). §12 Phase 2–3 tooling | 40 min |
 | 5 | [METRICS.md](METRICS.md) | Every proposed signal and baseline: computation down to shapes, derivations, intuition, caveats, sources; the late-collapse discussion; open decisions | 30 min |
-| 6 | `results/phase{1,2,3}/RESULTS.md` | What was actually measured: reproductions, lr scan, γ placement, the corpus so far | 20 min |
-| 7 | Papers (below) | The science behind the setups and the signals | 1–2 h |
+| 6 | [AGOP.md](AGOP.md) | The AGOP from first principles, a review of the online-AGOP-alignment proposal (`BTP_Proof_AGOP_online_variant.pdf`), and the proposed F2 signal: the remaining-angle bound, which also settles F2's lr normalization | 25 min |
+| 7 | `results/phase{1,2,3,4}/RESULTS.md` | What was actually measured: reproductions, lr scan, γ placement, the full corpus, the Phase 4 signal pilot | 25 min |
+| 8 | Papers (below) | The science behind the setups and the signals | 1–2 h |
 
 **Papers in the repo root (`BTP/*.pdf`):**
 - `Omnigrok.pdf` (Liu, Michaud, Tegmark, ICLR 2023). **Must read.** The LU mechanism:
@@ -60,6 +62,10 @@ share no code or results.
 - `Emergence in non-neural models.pdf` (Mallinar et al.). Background: the AGOP and RFM
   view of grokking (F2). Its progress measures need hindsight, which motivated this
   project.
+- `BTP_Proof_AGOP_online_variant.pdf` (added by a team member, 2026-11-04). A proposed
+  online estimate of AGOP alignment (chord model + Aitken extrapolation). Read it with
+  AGOP.md §2–3, which reviews it: the algebra holds, but the bare estimator is unsafe on
+  grokking plateaus.
 - Not needed: `Which LLM to play.pdf`, `EfficientFineTuning-draft.pdf`,
   `Linear Transformers.pdf`, `Symmetry Reveals Layer-wise Dynamics.pdf`,
   `Grok to Copy.pdf`, `Grokking in the Wild.pdf`, `Grokking of implicit reasoning.pdf`.
@@ -115,29 +121,33 @@ the exact claim or arXiv number):
 
 ---
 
-## 4. Current state (2026-11-03)
+## 4. Current state (2026-11-14)
 
 | Phase | Status |
 |---|---|
 | 0: scaffold, G0 | ✅ 2026-10-20 |
 | 1: tasks, recording, determinism, reproductions (G1) | ✅ 2026-10-21 |
 | 2: pilot (2a lr scan, 2b γ placement, 2c checks), G2 | ✅ 2026-10-22. Grid frozen in PLAN §3 |
-| 3: corpus, G3 per dataset | MNIST ✅ 256/256 · teacher–student ✅ 576/576 · modular ✅ 832/832 (2026-11-04). **Phase 3 complete: 1,664 runs** |
-| 4: signals | **core built 2026-11-03**: `stopping/` package (DESIGN §13), signals N1, R1, B0–B6, MNIST pilot run 2026-11-04: signals verified ([results](results/phase4/RESULTS.md)); B2 does not stop on Adam-family runs (argument for S1b). S1, S1b, F2 held back (METRICS.md §6 decisions); full Phase 4 notebook not written |
+| 3: corpus, G3 per dataset | ✅ 2026-11-04. MNIST 256/256 · teacher–student 576/576 · modular 832/832, all L0, every audit at full L0; 78.6 GB on HF ([results](results/phase3/RESULTS.md)) |
+| 4: signals | ⏳ **in progress.** Core built 2026-11-03: the `stopping/` package (DESIGN §13) with N1, R1 and B0–B6. MNIST pilot run 2026-11-04: signals verified; B2 never stops on Adam-family runs, which argues for S1b ([results](results/phase4/RESULTS.md)). F2 redesigned on paper 2026-11-04 as the remaining-angle bound ([AGOP.md](AGOP.md)), toy-checked only. **S1, S1b and F2 are not built**: they wait on the decisions in METRICS.md §6 and AGOP.md §6. The full Phase 4 notebook is not written |
 | 5–6: rules, calibration, evaluation, write-up | not started |
 
 **Next actions, in order (each only when the user asks):**
-1. ✅ (2026-11-03) `molab/phase3_modular.py` written: the teacher–student notebook with
-   `DATASET = "modular"` and its text updated (832 runs, ~5.4 GPU-h, ~51 GB, 1e5 steps);
-   passes `marimo check`. The user runs it on Molab.
-2. ✅ (2026-11-04, `results/phase3/RESULTS.md`) After the user runs it: download `phase3/modular/reports/`, check G3 (all uploaded, all
-   L0, audit at full L0), compare with the Phase 2 pilot, and record it in
-   `results/phase3/RESULTS.md`.
-3. ✅ (2026-11-04, see `results/phase4/RESULTS.md`) The user runs `molab/phase4_pilot.py`; download `phase4/pilot/mnist/` (plots,
-   stops.csv, summary.md) and check each signal against METRICS.md's predictions.
-4. Settle the open decisions in [METRICS.md](METRICS.md) §6, then build S1, S1b and F2
-   as new files under `stopping/signals/` (DESIGN §13.7), rewrite PLAN §5 to the final
-   set, then the full Phase 4 notebook, then Phase 5.
+1. **The user settles the open metric decisions**: METRICS.md §6 (the metric set, ρ's
+   definition, S1b on full-batch tasks, the γ = 0 fallback, layer aggregation) and
+   AGOP.md §6 (F2 = remaining-angle bound or not, G^{1/2} or G, lags proportional to t).
+   Raised but not yet decided: S1b's ∇J = g + γw is the wrong fixed point for AdamW
+   (decoupled decay), so S1b on AdamW would never stop.
+2. Build S1, S1b and F2 as new files under `stopping/signals/` (DESIGN §13.7), with tests.
+   F2 should record the paper's ŝ_cal and D_chord as extra columns, so both estimators
+   can be compared from one trace.
+3. Pilot them: rerun `molab/phase4_pilot.py` with the new signals on MNIST, and add
+   teacher–student and modular pilots (the notebook has a `DATASET` constant).
+4. Rewrite PLAN §5 to the final set, then write the full Phase 4 notebook (every signal
+   on all 1,664 runs, traces to `phase4/<dataset>/signals/`), then Phase 5.
+
+Done since the last handover: the modular corpus (2026-11-04), the MNIST signal pilot
+(2026-11-04), the AGOP review and F2 proposal (2026-11-04).
 
 ### HF layout (`advay333/tfs`, public)
 
@@ -147,6 +157,7 @@ the exact claim or arXiv number):
 | `phase2/2a/`, `2b/`, `2c/` | pilot reports, tables, curves, plots |
 | `phase3/<dataset>/runs/`, `phase3/<dataset>/manifest.json` | the corpus, one manifest per dataset |
 | `phase3/<dataset>/reports/` | `corpus_runs.json` (one summary row per run), `corpus_curves.json` (compact curves), `audit.json`, `status.json`, category tables, plots, `summary.md` |
+| `phase4/pilot/mnist/` | the MNIST signal pilot (18 runs): `signals/<signal>/<hash>/` traces, `plots/`, `stops.csv`, `status.json`, `summary.md` |
 
 Older repos: `advay333/tfs-phase1` (Phase 1/1b; oversized runs deleted, history squashed)
 and `advay333/tfs-g0-test` (throwaway).
@@ -169,8 +180,10 @@ These are the load-bearing design rules. Each one has a test.
    `TrainContext` carries no test tensors. `tests/test_quarantine.py` scans signal, rule,
    causal, reader and replay code. lr selection (`tfs/sweep/lr_select.py`) reads training
    telemetry only.
-5. **Causality.** Signals (Phase 4) see only a forward-only stream; every signal must
-   pass the perturb-the-future test (DESIGN §7.4).
+5. **Causality.** Signals (Phase 4) see only a forward-only stream of Observations
+   (`stopping/compute.py`); `tests/test_stopping.py` checks that truncating a run leaves
+   every earlier signal value unchanged (DESIGN §13.5). Only `stopping/heldout.py` (B6)
+   and `stopping/pilot.py` (evaluation side) may read test data.
 6. **Immutable run files.** Everything listed in `checksums.json` is never modified after
    training. Mutable state (the replay level) lives in `replay_report.json` and the
    manifest.
@@ -186,7 +199,8 @@ These are the load-bearing design rules. Each one has a test.
 ## 6. Lessons learned (so you don't repeat them)
 
 - **GPU determinism is solid.** Every replay so far is L0 with zero error: Phase 1,
-  24/24 final configs under MPS, 1,021 corpus and pilot runs, and the full-replay audits.
+  24/24 final configs under MPS, all 1,664 corpus runs plus the pilot runs, and the
+  full-replay audits (84 runs end to end).
   Identical configs reproduce exactly across Molab sessions.
 - **MPS roughly doubles throughput** (≈2,450 vs ≈1,380 steps/s at 16 workers) and stays
   bit-identical; more than 16 workers doesn't help.
@@ -208,6 +222,23 @@ These are the load-bearing design rules. Each one has a test.
   rule) mislabel slow creeps. Use them for counts only; regret does not depend on them.
   Phase 5's `GroundTruth` should classify from curve shape.
 - **`.gitignore` patterns must be anchored** (`/runs/`, not `runs/`).
+- **γ = 0 AdamW and Adam+L2 are the same run.** Both reduce to plain Adam, so every
+  dataset has identical pairs (52 on modular). Phase 5 aggregates must count each pair
+  once.
+- **Weight decay changes what "the gradient is noise" means.** At the decay fixed point
+  the mean data gradient balances the decay; it is not zero. So Mahsereci's EB (B2) never
+  stops on Adam-family runs (Phase 4 pilot). Test stationarity of the *regularized*
+  update, not of g.
+- **Trap counts are not a collapse signal on our models.** HTSR correlation traps appear
+  early and on healthy runs (Phase 4 pilot); treat them as a feature, not a stop
+  trigger.
+- **Extrapolating "where training will end" is ill-posed on a plateau.** The online-AGOP
+  proposal's three-point Aitken estimate is arbitrary when the signal is flat plus
+  noise; in a toy it stopped on the plateau in 10/10 seeds unless gated (AGOP.md §3, §5).
+  Prefer estimates that fail towards "keep training".
+- **MNIST has dead pixels.** Pixels that are 0 in every training image get no data
+  gradient, so under weight decay their first-layer weights decay on their own. Any
+  input-space signal (AGOP, F2) must mask zero-variance inputs, as B2 already does.
 
 ---
 
@@ -216,7 +247,7 @@ These are the load-bearing design rules. Each one has a test.
 - **Machine:** Windows 11, Python 3.13. Git Bash (POSIX syntax) and PowerShell. Work
   from `BTP/test_free_stopping/`.
 - **Local venv:** `.venv` (CPU-only torch). Run everything with `.venv/Scripts/python.exe`.
-  Tests: `.venv/Scripts/python.exe -m pytest -q` (83 tests, about 3–4 min). Lint
+  Tests: `.venv/Scripts/python.exe -m pytest -q` (123 tests, a few minutes). Lint
   notebooks with `.venv/Scripts/marimo.exe check molab/<file>.py`.
 - **No MNIST locally.** Tests use synthetic IDX files.
 - **Molab:** NVIDIA RTX PRO 6000 Blackwell (96 GB), 20 CPUs, sessions up to 12 h, files do

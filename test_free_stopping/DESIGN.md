@@ -4,17 +4,20 @@ This document describes the code flow, modules, classes, storage format and caus
 guarantees. [PLAN.md](PLAN.md) covers what is run and in what order; [RAMPUP.md](RAMPUP.md)
 is the starting point for a new contributor.
 
-**Status (2026-11-03).**
+**Status (2026-11-14).**
 - **Built and tested** (123 tests): training, recording, storage, replay and sweep
   layers (§4–§6), the Phase 2 pilot tools and the Phase 3 corpus tools (§12), and the
   **Phase 4 core: the `stopping/` package (§13)** with signals N1, R1 and baselines
   B0–B6, rules, methods, the runner and trace cache, and the pilot notebook. The
-  signatures here match the code.
+  signatures here match the code. Code unchanged since 2026-11-03 apart from the pilot's
+  stop-table label fix.
+- **Used in production:** the Phase 3 corpus tools trained all 1,664 runs; the
+  `stopping/` package ran the MNIST pilot on Molab (2026-11-04).
 - **§13 supersedes §7** (the measurement layer as first designed inside `tfs/`). §8
   (scoring) is still the Phase 5 plan.
 - **Not built:** S1, S1b and F2 (held back by the user until their open decisions in
-  METRICS.md §6 are settled), Phase 5 (ground truth, scoring, calibration), and the
-  full Phase 4 notebook.
+  METRICS.md §6 and AGOP.md §6 are settled; F2's proposed design is in §13.7), Phase 5
+  (ground truth, scoring, calibration), and the full Phase 4 notebook.
 - Each section says what is built and what is planned.
 
 ---
@@ -28,7 +31,7 @@ is the starting point for a new contributor.
    keyframe. Adding a metric never requires a new training run.
 2. **Causality is structural, not a matter of discipline.** Signals receive data as a
    time-ordered stream and never get a handle to the whole run. Every signal must also
-   pass an automated test that perturbs the future (§7.4).
+   pass an automated test that perturbs the future (§7.4; as built, §13.5).
 3. **The test set is quarantined.** Test-side data lives in a separate file
    (`oracle.parquet`) that only `tfs/evaluation/oracle.py` reads. Nothing
    in `signals/` or `rules/` can import it (§10).
@@ -55,7 +58,7 @@ is the starting point for a new contributor.
 
 ```
 test_free_stopping/
-  RAMPUP.md  PLAN.md  DESIGN.md  README.md  pyproject.toml
+  RAMPUP.md  PLAN.md  DESIGN.md  README.md  METRICS.md  AGOP.md  pyproject.toml
   configs/
     replay_tolerance.yaml           ✅ L1 tolerances (unchanged after Phase 1: no drift seen)
     runs/dummy.yaml                 ✅ tiny infrastructure run (G0, tests)
@@ -65,9 +68,11 @@ test_free_stopping/
     env_lock.txt                    ✅ pinned Molab environment (from phase2a; scripts/env_lock.py --check)
   molab/                            ✅ marimo notebooks the user runs on Molab:
                                        phase0_g0.py, phase1.py, phase1b.py, phase2a.py, phase2b.py,
-                                       phase2c.py, phase3_mnist.py, phase3_teacher_student.py
-                                    ⏳ phase3_modular.py (one Phase 3 notebook per dataset)
-  results/phase1/ phase2/ phase3/   ✅ RESULTS.md + figures per phase (versioned)
+                                       phase2c.py, phase3_mnist.py, phase3_teacher_student.py,
+                                       phase3_modular.py (all run), phase4_pilot.py (run on MNIST)
+                                    ⏳ phase4 full notebook (all signals on the corpus)
+  results/phase1/ … phase4/         ✅ RESULTS.md + figures per phase (versioned);
+                                       phase4/agop_toy_sim.py (AGOP.md §5 toy check)
   tfs/                              # the package ("test-free stopping")
     config.py                       ✅ dataclass configs, YAML (de)serialisation, run_id / group_id
     registry.py                     ✅ generic name -> class registry
@@ -92,16 +97,14 @@ test_free_stopping/
       hub.py                        ✅ Remote / HfRemote / LocalRemote / PrefixRemote, push/verify/pull/delete, manifest
     causal/
       view.py                       ✅ TrainContext: training data + config, no test data
-      stream.py                     ⏳ CausalStream / Observation (Phase 4)
-    signals/                        ⏳ base, stationarity, norms, spectral, features, baselines, _linalg (Phase 4)
-    rules/                          ⏳ base, template, smoothing (Phase 5)
+      stream.py  signals/  rules/   ✗ superseded: built as the separate stopping/ package below (§13)
     evaluation/
       oracle.py                     ✅ the only reader of oracle.parquet
       plots.py                      ✅ per-run accuracy / weight-norm plots (light style forced)
       report.py                     ✅ tables -> markdown (console + summary.md)
       run_summary.py                ✅ per-run summary row, compact curves, provisional category (for G2)
       pilot.py                      ✅ G2 checks and the Phase 3/4 projection from summary rows
-      ground_truth.py  scoring.py  calibration.py  split.py   ⏳ (Phase 5)
+      ground_truth.py  scoring.py  calibration.py  split.py   ⏳ (Phase 5; may move to stopping/, §13.7)
     sweep/
       grid.py                       ✅ sweep YAML -> list[RunConfig]
       launcher.py                   ✅ run_parallel (optional chained replay check, on_result) / replay_parallel, child_env
@@ -109,12 +112,17 @@ test_free_stopping/
       corpus.py                     ✅ Phase 3: per-dataset sweep files and HF folders, run order,
                                        manifest status, G3 audit (full replay of 5%), drop_failed
       gpumon.py                     ✅ background nvidia-smi logger
+  stopping/                         ✅ Phase 4–5 package (§13): source / tfs_source (adapter), signal, signals/
+                                       (N1, R1, B0–B5), heldout (B6), compute, store, rule, method,
+                                       methods, plotting, pilot
+                                    ⏳ signals S1, S1b, F2 (decisions open); ground_truth, score, calibrate (Phase 5)
   scripts/                          # thin CLIs over tfs.*  (python -m scripts.<name>)
     train.py  replay_check.py  sync.py  det_check.py  throughput.py  sweep.py  env_lock.py   ✅
-    compute_signals.py (4)  calibrate.py  evaluate.py (5)   ⏳
-  tests/                            ✅ 83 tests: config, corpus, cpu_env, determinism, hub, lr_select, pilot, quarantine,
-                                       replay, storage, sweep, tasks
-                                    ⏳ test_causality, test_signals_math, test_scoring
+    compute_signals.py  calibrate.py  evaluate.py   ⏳ (Phase 4–5; may be notebook cells instead)
+  tests/                            ✅ 123 tests: config, corpus, cpu_env, determinism, hub, lr_select, pilot, quarantine,
+                                       replay, stopping (rules, signal math, causality, held-out access), storage,
+                                       sweep, tasks
+                                    ⏳ test_scoring (Phase 5)
   runs/  cache/                     (gitignored, anchored to the project root)
 ```
 
@@ -843,9 +851,8 @@ On Molab, notebooks call the same functions directly (`det_check`, `run_parallel
   PLAN.md §3's locked-values tables; `tests/test_corpus.py` checks them against those
   tables.
 - `molab/phase3_<dataset>.py`: blocks A (train), B (audit), C (retrain failed),
-  D (summary). `phase3_mnist.py` and `phase3_teacher_student.py` ran;
-  `phase3_modular.py` (2026-11-03) is the same file with `DATASET = "modular"` and its
-  text updated. When copying a notebook, keep LF line endings (Python's text mode on
+  D (summary). All three ran (MNIST 2026-10-22, teacher–student 2026-10-28, modular
+  2026-11-04); they differ only in `DATASET` and their text. When copying a notebook, keep LF line endings (Python's text mode on
   Windows writes CRLF).
 - `tfs/evaluation/plots.slug`: file-name-safe variant labels (fixes `x/y`).
 
@@ -1042,6 +1049,12 @@ and a stop table (step and test accuracy at the stop). The notebook uploads trac
 plots, `stops.csv` and `summary.md` to `phase4/pilot/mnist/`. This is for checking the
 signals, not for scoring.
 
+**Ran 2026-11-04 on MNIST** (18 runs, 61 min on cuda, 200 eval steps):
+[results/phase4/RESULTS.md](results/phase4/RESULTS.md). `stops_markdown` now labels rows
+with the run's config part (it cut ids to 10 characters before). To pilot another
+dataset, change the notebook's `DATASET` constant; `pick_runs` reads that dataset's
+`corpus_runs.json`.
+
 ### 13.7 What Phase 5 adds
 
 `ground_truth.py` (t_ε, max test, categories from curve shape, late collapse split into
@@ -1049,3 +1062,24 @@ type A/B by whether train accuracy drops: METRICS.md §5), `score.py` (regret, �
 premature rate, lag per method and run), `calibrate.py` (grid over RuleConfig on seeds
 {0, 1}, frozen, scored on {2, 3}), and the report plots/tables. S1, S1b and F2 slot in as
 new files under `signals/` once their open decisions are settled.
+
+### 13.8 Planned signals S1, S1b, F2 (not built; designs pending the user's decisions)
+
+All three fit the existing interfaces; no change to the runner, store or rules.
+
+| Signal | File | requires | cadence | value; other columns |
+|---|---|---|---|---|
+| S1 `fixed_point` | `signals/stationarity.py` | telemetry | log | ρ and τ per layer from the step taken: ρ = −`update_radial` / (lr_eff·γ·`w_norm`), τ = `update_tangential` / (lr_eff·γ·`w_norm`) (METRICS §3); aggregation and the γ = 0 fallback are open |
+| S1b `eb_reg` | `signals/gradients.py` | models, train_data | eval | `Evidence` with γw added to the per-example mean (γ only for coupled decay; AdamW's fixed point is different, open: PLAN §5, 2026-11-04) |
+| F2 `agop_angle` | `signals/features.py` | models, train_data | eval | **R̂ = ω/κ** (the remaining-angle bound, AGOP.md §4): ω, κ, purity, erank of the AGOP, and the online-alignment proposal's v, D_chord, ŝ_cal as extra columns |
+
+**F2 implementation notes** (AGOP.md §4.5):
+- AGOP per eval step: d_out backward passes of Σᵢ f_c(xᵢ) with respect to the input matrix
+  (one per output). Mask input coordinates with zero training variance (MNIST dead
+  pixels). M = G^{1/2} by eigendecomposition (config option: G).
+- Streaming state: the last few window means of M/‖M‖_F and the anchor for ŝ_cal. Store
+  scalars only; full matrices would be ~1.5 GB per MNIST run.
+- Lags and fit windows proportional to the step (Δ = t/k), so no window is fixed in
+  steps (which would reintroduce the lr timescale). The eval grid needs a few close steps
+  per window for averaging; a config field on the signal sets them, and `compute_run`
+  already accepts any eval step list.

@@ -3,7 +3,9 @@
 Causal, test-data-free stopping criteria that survive grokking.
 
 **New here? Start with [RAMPUP.md](RAMPUP.md)**, then [PLAN.md](PLAN.md) (what we run and
-why) and [DESIGN.md](DESIGN.md) (how the code works).
+why) and [DESIGN.md](DESIGN.md) (how the code works). Metric definitions are in
+[METRICS.md](METRICS.md); the AGOP background and the proposed F2 signal are in
+[AGOP.md](AGOP.md).
 
 ## Status
 
@@ -15,9 +17,12 @@ why) and [DESIGN.md](DESIGN.md) (how the code works).
   G2 passed and the Phase 3 grid is frozen (PLAN.md §3).
 - **Phase 3** (corpus, 1,664 runs; one notebook per dataset): done: MNIST ✅ (256 runs),
   teacher–student ✅ (576 runs) and modular ✅ (832 runs) are trained and pass G3
-  ([results/phase3/RESULTS.md](results/phase3/RESULTS.md)). Metric definitions: [METRICS.md](METRICS.md).
-- **Phase 4** (signals): core built in `stopping/` (DESIGN.md §13): N1, R1 and baselines
-  B0–B6, plus `molab/phase4_pilot.py`. S1, S1b and F2 are not built yet.
+  ([results/phase3/RESULTS.md](results/phase3/RESULTS.md)).
+- **Phase 4** (signals): in progress. Core built in `stopping/` (DESIGN.md §13): N1, R1
+  and baselines B0–B6, piloted on MNIST with `molab/phase4_pilot.py` on 2026-11-04
+  ([results/phase4/RESULTS.md](results/phase4/RESULTS.md)). S1, S1b and F2 are not built
+  yet; their open decisions are in METRICS.md §6 and AGOP.md §6.
+- **Phases 5–6** (calibration, evaluation, write-up): not started.
 
 ## Local setup (development, CPU)
 

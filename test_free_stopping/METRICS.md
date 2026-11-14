@@ -1,11 +1,13 @@
 # Metrics: candidates and baselines
 
-**Status (2026-11-03): proposed, not confirmed; partly built.** Built in `stopping/`
-(DESIGN.md §13): N1, R1 and B0–B6 (B3 in both forms, B5 with traps). Held back: S1, S1b,
-F2. This document details the reduced
-metric set proposed in [PLAN.md](PLAN.md) §5 ("Proposed reduced set"). The user has not
-confirmed it yet. Phase 4 builds whatever is confirmed. Open decisions are collected in
-§5 of this document.
+**Status (2026-11-14): proposed, not confirmed; partly built.** Built in `stopping/`
+(DESIGN.md §13): N1, R1 and B0–B6 (B3 in both forms, B5 with traps), all verified on the
+MNIST pilot ([results](results/phase4/RESULTS.md)). Held back: S1, S1b, F2. This
+document details the reduced metric set proposed in [PLAN.md](PLAN.md) §5 ("Proposed
+reduced set"). The user has not confirmed it yet. Phase 4 builds whatever is confirmed.
+Open decisions are collected in §6 of this document. **F2 has a newer proposed
+definition, the remaining-angle bound, derived in [AGOP.md](AGOP.md) §4** (summary at
+the end of the F2 entry below).
 
 Each metric produces a **signal**: a time series computed causally from a run's stored
 data or from replay. A shared rule (causal smoothing, then a threshold with a direction,
@@ -235,6 +237,11 @@ the MNIST noise floor that S1 struggles with.
   not the paper's statistical test. Options (open): use S1b only on MNIST, or evaluate
   it at a nominal batch size.
 - At γ = 0, S1b is exactly B2.
+- **AdamW (raised 2026-11-04, open):** ∇J = g + γw is the fixed-point condition only for
+  coupled decay. AdamW decouples the decay, and its fixed point is m̂/√v̂ = −γw, where
+  g + γw ≠ 0. So S1b on AdamW would stay negative at convergence and never stop, just as
+  B2 does on Adam-family runs in the pilot. Option: test the step-based residual for
+  AdamW instead.
 - Diagonal covariance is an approximation; correlated coordinates make the χ²
   calibration off.
 - Cost: one per-example-gradient pass per eval step. The most expensive candidate after
@@ -286,6 +293,29 @@ instead of going through the norm.
 - The eval grid is not uniform, so Δ varies. Rules must use per-interval rates, not raw
   differences.
 - Only the input AGOP is proposed. Per-layer AGOPs are possible but cost more.
+- **MNIST dead pixels:** pixels that are 0 in every training image get no data gradient,
+  so their first-layer columns decay under weight decay for no learning reason. Mask
+  input coordinates with zero training variance (AGOP.md §1.3).
+
+**Proposed replacement (2026-11-04): the remaining-angle bound** ([AGOP.md](AGOP.md) §4).
+- Normalize the feature matrix M_t = G_t^{1/2} to unit Frobenius norm, a point on a
+  sphere. This removes the c^{2D} scale of the AGOP.
+- Measure its angular speed ω̂(t) = θ(M̂_t, M̂_{t−Δ})/Δ between window-averaged eval
+  steps, and the decay rate κ̂ = −d log ω̂/dt from a trailing fit.
+- **R̂ = ω̂/κ̂** (∞ when κ̂ ≤ 0). By the triangle inequality on the sphere, the angle to
+  the final features is at most the remaining path length. If the speed's tail decays
+  exponentially, that length is R̂, so s(t) ≥ cos R̂.
+- Stop when R̂ < ε_R.
+- **It is dimensionless**, so lr, optimizer, γ (including 0), init scale and input
+  dimension drop out. That settles the normalization question above without (a) or (b).
+- **It fails safe:** a constant or rising speed (plateau drift, a transition under way)
+  gives R̂ = ∞, so the rule keeps training.
+- Lags and windows proportional to t.
+- It is a lower bound on the alignment, so it stops late (toy: 1.4k–5k steps after the
+  true crossing, never premature).
+- It replaces the team's online-alignment proposal (chord model + Aitken extrapolation),
+  which AGOP.md §3 reviews: correct algebra, but premature on grokking plateaus unless
+  gated by its D_chord test.
 
 **Sources.**
 - Radhakrishnan, Beaglehole, Pandit, Belkin, *Mechanism for feature learning in neural
@@ -437,7 +467,11 @@ improved for k checks.
 
 Discussed with the user 2026-10-28. Provisional label: final test accuracy is more than
 0.1 below the run's best. Counts: MNIST 25 (16 at depth 3, 9 at depth 8), teacher–student
-51; modular not yet trained.
+51, modular 22. Modular has **no Type A** run within 1e5 steps. 20 of its 22 are plain
+SGD at γ = 1e-3, which generalizes and then oscillates violently in train and test
+accuracy (an edge-of-stability regime; Type B-like, since train accuracy falls too). The
+other 2 are mislabelled grokkers still rising at the horizon
+([phase 3 results](results/phase3/RESULTS.md)).
 
 ### The frame: Omnigrok's LU picture
 
@@ -506,9 +540,12 @@ is amplified per coordinate by the preconditioner.
 1. **Confirm the set:** N1, S1 (ρ, τ), S1b, F2, R1, plus B0–B6.
 2. **ρ definition:** use the step-based form for all optimizers (proposed), since the
    gradient form is wrong for Adam-type optimizers.
-3. **F2 normalization:** self-normalize by weight motion (proposed), or by
-   lr_eff·γ·Δ.
-4. **S1b on full-batch tasks:** MNIST only, or a nominal batch size.
+3. **F2 definition and normalization:** the remaining-angle bound R̂ = ω/κ
+   (proposed 2026-11-04, [AGOP.md](AGOP.md) §4 and §6; supersedes the two options
+   below), or self-normalize by weight motion, or by lr_eff·γ·Δ. Sub-choices for R̂:
+   G^{1/2} or G; lags proportional to t.
+4. **S1b on full-batch tasks:** MNIST only, or a nominal batch size. Also **S1b on
+   AdamW** (S1b caveats): keep g + γw, or use the step-based residual.
 5. **γ = 0 fallback** for S1 (normalize by ‖g‖ or ‖Δw‖).
 6. **Layer aggregation** for S1, S1b, R1 and B5 (all parameters, max over layers, or a
    single layer).
