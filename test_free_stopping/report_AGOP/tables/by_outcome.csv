@@ -1,0 +1,101 @@
+app,split,family,category,runs,score,acc_lost_pts,budget_wasted_pct,too_early_pct
+modular,seeds,horizon,fast,25,0.099,0.2085,96.938,0.0
+modular,seeds,horizon,grokker,30,0.0697,0.0003,69.6783,0.0
+modular,seeds,horizon,joint_plateau,2,0.1236,2.8091,95.525,0.0
+modular,seeds,horizon,late_collapse,4,0.9268,83.1867,94.9,0.0
+modular,seeds,horizon,never,19,0.0922,0.7923,84.2553,0.0
+modular,seeds,fixed_frac,fast,25,0.0506,0.1932,48.638,0.0
+modular,seeds,fixed_frac,grokker,30,0.0423,1.9163,23.125,10.0
+modular,seeds,fixed_frac,joint_plateau,2,0.4624,41.5126,47.225,0.0
+modular,seeds,fixed_frac,late_collapse,4,0.1822,13.5595,46.6,0.0
+modular,seeds,fixed_frac,never,19,0.1016,5.802,43.5316,15.7895
+modular,seeds,const_delta,fast,25,0.0664,2.5798,40.59,0.0
+modular,seeds,const_delta,grokker,30,0.0384,0.0003,38.4283,0.0
+modular,seeds,const_delta,joint_plateau,2,0.5915,53.893,52.575,0.0
+modular,seeds,const_delta,late_collapse,4,0.2513,20.7857,43.4,0.0
+modular,seeds,const_delta,never,19,0.0458,1.7991,27.8342,5.2632
+modular,seeds,F2 best,fast,25,0.0664,2.5798,40.59,0.0
+modular,seeds,F2 best,grokker,30,0.0384,0.0003,38.4283,0.0
+modular,seeds,F2 best,joint_plateau,2,0.5915,53.893,52.575,0.0
+modular,seeds,F2 best,late_collapse,4,0.2513,20.7857,43.4,0.0
+modular,seeds,F2 best,never,19,0.0458,1.7991,27.8342,5.2632
+modular,seeds,oracle_cos,fast,25,0.0405,0.1839,38.624,0.0
+modular,seeds,oracle_cos,grokker,30,0.0441,0.7438,36.655,3.3333
+modular,seeds,oracle_cos,joint_plateau,2,0.2539,20.0354,53.575,0.0
+modular,seeds,oracle_cos,late_collapse,4,0.77,67.8785,91.2125,0.0
+modular,seeds,oracle_cos,never,19,0.0366,2.6015,10.5368,15.7895
+modular,operation,horizon,fast,21,0.1016,0.479,96.8381,0.0
+modular,operation,horizon,grokker,31,0.0661,0.0,66.0806,0.0
+modular,operation,horizon,late_collapse,4,0.958,86.3139,94.8625,0.0
+modular,operation,horizon,never,8,0.1023,0.2365,99.975,0.0
+modular,operation,fixed_frac,fast,21,0.0427,0.4281,38.4381,0.0
+modular,operation,fixed_frac,grokker,31,0.0836,7.3492,10.0726,51.6129
+modular,operation,fixed_frac,late_collapse,4,0.4882,45.1746,36.4625,0.0
+modular,operation,fixed_frac,never,8,0.0439,0.2365,41.575,0.0
+modular,operation,const_delta,fast,21,0.0405,0.479,35.719,0.0
+modular,operation,const_delta,grokker,31,0.0341,0.0007,34.129,0.0
+modular,operation,const_delta,late_collapse,4,0.5575,48.1225,76.2375,0.0
+modular,operation,const_delta,never,8,0.0268,0.2365,24.4562,0.0
+modular,operation,F2 best,fast,21,0.0251,1.0698,14.3976,9.5238
+modular,operation,F2 best,grokker,31,0.0833,3.1518,51.8274,3.2258
+modular,operation,F2 best,late_collapse,4,0.536,46.8342,67.675,0.0
+modular,operation,F2 best,never,8,0.0327,0.2365,30.3375,0.0
+modular,operation,oracle_cos,fast,21,0.034,0.309,30.8643,0.0
+modular,operation,oracle_cos,grokker,31,0.0258,0.0007,25.7903,0.0
+modular,operation,oracle_cos,late_collapse,4,0.5254,44.6094,79.2625,0.0
+modular,operation,oracle_cos,never,8,0.0152,0.2365,12.7938,0.0
+mnist,seeds,horizon,fast,14,0.1033,0.9071,94.1821,0.0
+mnist,seeds,horizon,grokker,10,0.0627,0.461,58.115,0.0
+mnist,seeds,horizon,joint_plateau,1,0.0236,0.03,23.35,0.0
+mnist,seeds,horizon,never,6,0.1596,9.9517,60.125,0.0
+mnist,seeds,horizon,no_fit,1,0.0271,0.16,25.45,0.0
+mnist,seeds,fixed_frac,fast,14,0.0316,0.5979,25.5821,0.0
+mnist,seeds,fixed_frac,grokker,10,0.0284,2.576,2.635,70.0
+mnist,seeds,fixed_frac,joint_plateau,1,0.0671,6.71,0.0,100.0
+mnist,seeds,fixed_frac,never,6,0.0416,3.12,10.4417,66.6667
+mnist,seeds,fixed_frac,no_fit,1,0.0574,5.74,0.0,100.0
+mnist,seeds,const_delta,fast,14,0.0456,0.65,39.1393,7.1429
+mnist,seeds,const_delta,grokker,10,0.0523,2.93,23.01,50.0
+mnist,seeds,const_delta,joint_plateau,1,0.1521,15.21,0.0,100.0
+mnist,seeds,const_delta,never,6,0.1461,11.275,33.3083,66.6667
+mnist,seeds,const_delta,no_fit,1,0.1354,13.54,0.0,100.0
+mnist,seeds,F2 best,fast,14,0.0612,1.0529,50.7036,35.7143
+mnist,seeds,F2 best,grokker,10,0.0579,0.715,50.72,10.0
+mnist,seeds,F2 best,joint_plateau,1,0.0236,0.03,23.35,0.0
+mnist,seeds,F2 best,never,6,0.1265,9.9517,26.9417,0.0
+mnist,seeds,F2 best,no_fit,1,0.0271,0.16,25.45,0.0
+mnist,seeds,oracle_cos,fast,14,0.1007,0.9057,91.6857,0.0
+mnist,seeds,oracle_cos,grokker,10,0.0597,0.538,54.29,0.0
+mnist,seeds,oracle_cos,joint_plateau,1,0.0796,7.96,0.0,100.0
+mnist,seeds,oracle_cos,never,6,0.0726,3.7217,35.425,33.3333
+mnist,seeds,oracle_cos,no_fit,1,0.1074,10.74,0.0,100.0
+mnist,depth,horizon,fast,14,0.1015,1.0079,91.4536,0.0
+mnist,depth,horizon,grokker,2,0.0847,1.055,74.125,0.0
+mnist,depth,horizon,joint_plateau,1,0.0236,0.03,23.35,0.0
+mnist,depth,horizon,late_collapse,1,0.4632,39.71,66.1,0.0
+mnist,depth,horizon,never,12,0.1379,8.1483,56.4583,0.0
+mnist,depth,horizon,no_fit,2,0.0247,0.1,23.65,0.0
+mnist,depth,fixed_frac,fast,14,0.0397,0.6621,33.0536,0.0
+mnist,depth,fixed_frac,grokker,2,0.0253,0.96,15.725,0.0
+mnist,depth,fixed_frac,joint_plateau,1,0.0449,4.49,0.0,100.0
+mnist,depth,fixed_frac,late_collapse,1,0.0095,0.18,7.7,0.0
+mnist,depth,fixed_frac,never,12,0.0421,2.6442,15.7,41.6667
+mnist,depth,fixed_frac,no_fit,2,0.0447,4.465,0.0,100.0
+mnist,depth,const_delta,fast,14,0.0809,0.9107,71.8143,0.0
+mnist,depth,const_delta,grokker,2,0.0847,1.055,74.125,0.0
+mnist,depth,const_delta,joint_plateau,1,0.1521,15.21,0.0,100.0
+mnist,depth,const_delta,late_collapse,1,0.2399,23.99,0.0,100.0
+mnist,depth,const_delta,never,12,0.1491,11.5825,33.2917,66.6667
+mnist,depth,const_delta,no_fit,2,0.1548,15.475,0.0,100.0
+mnist,depth,F2 best,fast,14,0.0809,0.9107,71.8143,0.0
+mnist,depth,F2 best,grokker,2,0.0847,1.055,74.125,0.0
+mnist,depth,F2 best,joint_plateau,1,0.1521,15.21,0.0,100.0
+mnist,depth,F2 best,late_collapse,1,0.2399,23.99,0.0,100.0
+mnist,depth,F2 best,never,12,0.1491,11.5825,33.2917,66.6667
+mnist,depth,F2 best,no_fit,2,0.1548,15.475,0.0,100.0
+mnist,depth,oracle_cos,fast,14,0.0826,0.9107,73.475,0.0
+mnist,depth,oracle_cos,grokker,2,0.0847,1.055,74.125,0.0
+mnist,depth,oracle_cos,joint_plateau,1,0.5021,50.21,0.0,100.0
+mnist,depth,oracle_cos,late_collapse,1,0.3159,27.06,45.3,0.0
+mnist,depth,oracle_cos,never,12,0.2374,19.2983,44.3958,41.6667
+mnist,depth,oracle_cos,no_fit,2,0.6251,62.505,0.0,100.0

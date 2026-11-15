@@ -1,0 +1,2695 @@
+{
+  "device": "cuda",
+  "minutes": 132.1,
+  "config": {
+    "signal": "agop_path",
+    "version": 1,
+    "weights": true,
+    "mask_constant_inputs": true,
+    "chunk": 4096,
+    "block": 16
+  },
+  "workers": {
+    "replay": 14,
+    "analysis": 20
+  },
+  "verify": true,
+  "runs": {
+    "replay": [
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0_a2_s1__01055a57",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1086.6,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.0001_a2_s2__077c4ff3",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1062.1,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adamw_lr0.001_wd0.01_a8_s3__3c6a4d3b",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1795.2,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_momentum_lr0.0001_wd0_a4_s3__bc3618b2",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1399.0,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd1e-06_a4_s3__1f0dc57c",
+        "app": "modular",
+        "ok": true,
+        "seconds": 729.9,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_momentum_lr0.3_wd0.0003_a2_s3__a8e48d85",
+        "app": "modular",
+        "ok": true,
+        "seconds": 827.5,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adam_l2_lr0.001_wd0.0001_a1_s2__a18c7e15",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 606.2,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_lr0.03_wd0.001_a4_s3__3e5861ec",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 302.3,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0_a2_s3__17c49dde",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1085.7,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0_a2_s3__a6b236fe",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1045.6,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0_a2_s3__f150c1bd",
+        "app": "modular",
+        "ok": true,
+        "seconds": 843.9,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adamw_lr0.001_wd0.01_a8_s1__893391ae",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1631.2,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd1e-06_a2_s1__58bf77ec",
+        "app": "modular",
+        "ok": true,
+        "seconds": 603.2,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adamw_lr0.001_wd0.3_a2_s1__25733d43",
+        "app": "modular",
+        "ok": true,
+        "seconds": 699.2,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adamw_lr0.001_wd0.1_a4_s3__1f84903e",
+        "app": "modular",
+        "ok": true,
+        "seconds": 839.9,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_lr1_wd0.0001_a4_s2__348c3c7d",
+        "app": "modular",
+        "ok": true,
+        "seconds": 607.6,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_momentum_lr0.01_wd0.001_a4_s3__67fe026e",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 398.4,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adamw_lr0.001_wd0_a2_s1__b763cf7e",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1086.3,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_lr1_wd0.001_a4_s3__7320a2e7",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1045.8,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adam_l2_lr0.001_wd0.001_a1_s0__9d68f34d",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1757.3,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd3e-05_a4_s2__debfc0b1",
+        "app": "modular",
+        "ok": true,
+        "seconds": 666.5,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_lr0.0001_wd0.1_a4_s3__ec5d688e",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1485.7,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd0_a2_s1__1a664779",
+        "app": "modular",
+        "ok": true,
+        "seconds": 840.5,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adamw_lr0.001_wd0.1_a1_s3__b03c7aad",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 614.1,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_lr0.03_wd0.003_a4_s1__8a288872",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 310.0,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.0001_a2_s1__6b9d3dc0",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1086.9,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_lr1_wd0.001_a4_s3__89ce9e18",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1045.4,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_lr1_wd0.0001_a4_s3__e660a809",
+        "app": "modular",
+        "ok": true,
+        "seconds": 843.6,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adam_l2_lr0.001_wd0_a8_s3__90df3294",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1612.9,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_lr0.0001_wd0.1_a4_s1__e84c5c5e",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1500.5,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_lr1_wd0.0001_a4_s1__549814f9",
+        "app": "modular",
+        "ok": true,
+        "seconds": 818.8,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adam_l2_lr0.001_wd0.0001_a1_s1__aa5f86ac",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 605.3,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adamw_lr0.001_wd0_a4_s1__fc509bf2",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1086.7,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0.0003_a2_s2__163c1476",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1046.5,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0_a2_s1__13ca0edf",
+        "app": "modular",
+        "ok": true,
+        "seconds": 844.1,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_lr1_wd0.0001_a4_s2__020a719d",
+        "app": "modular",
+        "ok": true,
+        "seconds": 705.6,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd3e-05_a4_s3__209cd432",
+        "app": "modular",
+        "ok": true,
+        "seconds": 681.5,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_lr0.0001_wd0.1_a4_s2__88338f43",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1453.8,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adamw_lr0.001_wd0.3_a2_s2__285a90d3",
+        "app": "modular",
+        "ok": true,
+        "seconds": 819.6,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_lr1_wd0.0003_a2_s3__9f45bd89",
+        "app": "modular",
+        "ok": true,
+        "seconds": 649.5,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_momentum_lr0.01_wd0.001_a4_s2__9bfa808e",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 427.7,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.0001_a2_s0__020d9959",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1088.1,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0_a2_s2__13f8a2d3",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1044.8,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adamw_lr0.001_wd0.1_a1_s1__2de7919d",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1807.0,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_momentum_lr0.0001_wd0_a4_s2__729fdbc6",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1413.4,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adamw_lr0.001_wd0.3_a2_s0__dbf9eae8",
+        "app": "modular",
+        "ok": true,
+        "seconds": 732.7,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_momentum_lr0.3_wd0.0003_a2_s1__9bbf3c59",
+        "app": "modular",
+        "ok": true,
+        "seconds": 826.1,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adamw_lr0.001_wd0.03_a8_s3__7c07d167",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 604.3,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0_a2_s0__41f22ca2",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1086.4,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_lr1_wd0.001_a4_s2__3213b292",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1045.4,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd3e-05_a4_s3__85b2763d",
+        "app": "modular",
+        "ok": true,
+        "seconds": 850.4,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_lr1_wd0.0001_a4_s3__7a3b783f",
+        "app": "modular",
+        "ok": true,
+        "seconds": 698.4,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adam_l2_lr0.001_wd0_a8_s1__d498277f",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1510.6,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd1e-06_a2_s0__f07fc05b",
+        "app": "modular",
+        "ok": true,
+        "seconds": 708.5,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adamw_lr0.001_wd0.1_a4_s2__fb2672de",
+        "app": "modular",
+        "ok": true,
+        "seconds": 828.5,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_lr1_wd0.0001_a4_s3__2244efbc",
+        "app": "modular",
+        "ok": true,
+        "seconds": 614.8,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_momentum_lr0.01_wd0.0001_a4_s2__8f793d10",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 397.9,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_lr1_wd0.0001_a4_s1__972aa8ba",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1079.0,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0_a2_s2__a396154a",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1055.0,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_lr1_wd0.0001_a4_s2__fc955d00",
+        "app": "modular",
+        "ok": true,
+        "seconds": 843.1,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adamw_lr0.001_wd0.01_a8_s2__ffdf0e04",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1613.0,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_lr0.0001_wd0_a4_s1__4163f642",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1495.5,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd0_a2_s2__eb0478cd",
+        "app": "modular",
+        "ok": true,
+        "seconds": 834.6,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_momentum_lr0.01_wd0.0001_a4_s3__b81c1c18",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 592.8,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_lr0.03_wd0.001_a4_s1__4e399088",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 297.7,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s1__0775924d",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1083.5,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adamw_lr0.001_wd0_a4_s0__317510db",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1061.2,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adamw_lr0.001_wd0.1_a1_s2__3dbc76d7",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1801.1,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_momentum_lr0.0001_wd0_a4_s1__7821c58a",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1409.1,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adamw_lr0.001_wd0.3_a2_s3__1d6dc89a",
+        "app": "modular",
+        "ok": true,
+        "seconds": 751.4,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_lr1_wd0.0001_a4_s0__aa17b3e2",
+        "app": "modular",
+        "ok": true,
+        "seconds": 815.2,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_momentum_lr0.01_wd0.0001_a4_s1__13dd7094",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 591.4,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_lr0.03_wd0.003_a4_s2__5aa13ec1",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 298.7,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adamw_lr0.001_wd0_a4_s0__5e6e784a",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1086.7,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0.0003_a2_s3__66e7e234",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1052.3,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adam_l2_lr0.001_wd0.001_a1_s1__852b3c5e",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1769.4,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_momentum_lr0.1_wd0.0001_a2_s3__2ff15c75",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1423.8,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd1e-06_a2_s3__67b87fed",
+        "app": "modular",
+        "ok": true,
+        "seconds": 726.6,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_momentum_lr0.3_wd0.0003_a2_s2__0672b53c",
+        "app": "modular",
+        "ok": true,
+        "seconds": 827.6,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adam_l2_lr0.001_wd0.0001_a1_s3__aba0c2f3",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 613.0,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_lr0.03_wd0.001_a4_s2__90193cce",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 307.3,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adamw_lr0.001_wd0_a2_s3__ce71e428",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1085.2,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0_a2_s2__90894339",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1045.6,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_lr1_wd0.001_a4_s2__d7fa4fc2",
+        "app": "modular",
+        "ok": true,
+        "seconds": 843.9,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adamw_lr0.001_wd0.1_a1_s3__a93baf21",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1615.4,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_lr0.0001_wd0_a4_s2__2c7efdfb",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1509.1,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_lr1_wd0.0003_a2_s1__9ad72320",
+        "app": "modular",
+        "ok": true,
+        "seconds": 817.8,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adamw_lr0.001_wd0.1_a1_s1__5e7de5b2",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 602.5,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0.0003_a2_s1__3eb59b2c",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1085.1,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0_a2_s1__3290afef",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1046.5,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd3e-05_a4_s2__068df7e8",
+        "app": "modular",
+        "ok": true,
+        "seconds": 852.5,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adam_l2_lr0.001_wd0_a8_s2__eeb9b1f8",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1605.2,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_lr0.0001_wd0_a4_s3__f1ac927f",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1526.7,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_lr1_wd0.0003_a2_s2__2e54b295",
+        "app": "modular",
+        "ok": true,
+        "seconds": 818.3,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_momentum_lr0.01_wd0.001_a4_s1__26da83f6",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 590.3,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_lr1_wd0.0001_a4_s0__244ad5ed",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1084.9,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adamw_lr0.001_wd0_a4_s1__ab31897f",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1055.1,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adam_l2_lr0.001_wd0.001_a1_s3__8ef6433b",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1758.4,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_momentum_lr0.1_wd0.0001_a2_s2__e12b194d",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1432.5,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adamw_lr0.001_wd0.1_a4_s1__cbdf01c9",
+        "app": "modular",
+        "ok": true,
+        "seconds": 727.9,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd0_a2_s3__c8fd2d9a",
+        "app": "modular",
+        "ok": true,
+        "seconds": 850.5,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adam_l2_lr0.001_wd1e-06_a8_s3__2dd8625b",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 604.2,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adamw_lr0.001_wd0_a2_s2__f2a1c1cd",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1086.1,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.0001_a2_s3__776e749e",
+        "app": "modular",
+        "ok": true,
+        "seconds": 1064.5,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adam_l2_lr0.001_wd0.001_a1_s2__a8a78d1e",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1748.5,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_momentum_lr0.1_wd0.0001_a2_s1__defde029",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 1429.6,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd1e-06_a2_s2__7982e27f",
+        "app": "modular",
+        "ok": true,
+        "seconds": 727.2,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd0_a2_s0__931c4dd6",
+        "app": "modular",
+        "ok": true,
+        "seconds": 833.9,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adamw_lr0.001_wd0.1_a1_s2__c9edbbac",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 609.9,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_lr0.03_wd0.003_a4_s3__a8408fc4",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 307.2,
+        "error": "",
+        "worker": 9
+      }
+    ],
+    "analysis": [
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adamw_lr0.001_wd0.1_a4_s2__437d8c71",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd3e-05_a4_s3__209cd432",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0_a2_s3__17c49dde",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adamw_lr0.001_wd0_a2_s1__b763cf7e",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_lr1_wd0.0003_a2_s3__9f45bd89",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_lr1_wd0.0001_a4_s2__348c3c7d",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s1__41e1a544",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adamw_lr0.001_wd0_a4_s0__317510db",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adam_l2_lr0.001_wd0.0001_a1_s0__0c0f9b20",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_lr0.03_wd0.003_a4_s3__a8408fc4",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adamw_lr0.001_wd0.01_a8_s1__893391ae",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.6,
+        "error": "",
+        "worker": 0
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_lr1_wd0.0001_a4_s3__e660a809",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s0__65483d9f",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd1e-06_a2_s3__67b87fed",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adamw_lr0.001_wd0.1_a4_s3__1f84903e",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0_a2_s2__13f8a2d3",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s3__b9e9fbb0",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adam_l2_lr0.001_wd1e-06_a4_s1__28a71cdf",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_lr1_wd0.001_a4_s2__d7fa4fc2",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adamw_lr0.001_wd0.03_a8_s0__4cdd1ee9",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_momentum_lr0.01_wd0.001_a4_s1__26da83f6",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_lr0.0001_wd0_a4_s1__4163f642",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.6,
+        "error": "",
+        "worker": 1
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adam_l2_lr0.001_wd1e-06_a4_s0__154ee364",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_lr1_wd0.001_a4_s0__8eb76c16",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0_a2_s2__a396154a",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_adamw_lr0.001_wd1_a2_s2__030161d6",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0.0003_a2_s1__3eb59b2c",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.2,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_momentum_lr0.3_wd0_a2_s0__fb095518",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adam_l2_lr0.001_wd1e-06_a4_s3__ace5a164",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_lr1_wd0.001_a4_s0__50f72d1b",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adamw_lr0.001_wd0.03_a8_s2__a1f9cef4",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_momentum_lr0.01_wd0.001_a4_s2__9bfa808e",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_lr0.0001_wd0_a4_s3__f1ac927f",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 10
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.001_a1_s2__f49bba4c",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_lr1_wd0.001_a4_s1__4fd79d6f",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd1e-06_a2_s0__f07fc05b",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adamw_lr0.001_wd0_a2_s2__f2a1c1cd",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.2,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0.001_a2_s2__4b88e7d0",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_momentum_lr0.3_wd0_a2_s1__16bc85f0",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.001_a1_s2__6f0bae51",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_lr1_wd0.001_a4_s3__89ce9e18",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adamw_lr0.001_wd0.03_a8_s1__2bccf266",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_momentum_lr0.01_wd0.001_a4_s0__96167735",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_lr0.0001_wd0_a4_s0__611a8c1c",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.6,
+        "error": "",
+        "worker": 11
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.001_a1_s1__d67d99fe",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_lr1_wd0.001_a4_s2__3213b292",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd1e-06_a2_s2__7982e27f",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adamw_lr0.001_wd0.1_a4_s1__cbdf01c9",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0_a2_s3__f150c1bd",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s0__e7839ea9",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0_a2_s2__90894339",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_lr1_wd0.0001_a4_s2__020a719d",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adam_l2_lr0.001_wd0.0001_a1_s2__a18c7e15",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_momentum_lr0.01_wd0.0001_a4_s2__8f793d10",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adamw_lr0.001_wd0.1_a1_s2__3dbc76d7",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 12
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adamw_lr0.001_wd0.1_a4_s0__25161759",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.2,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s3__d65d631e",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd0_a2_s1__1a664779",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adamw_lr0.001_wd0.3_a2_s2__285a90d3",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0.001_a2_s3__66e89027",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.2,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_momentum_lr0.3_wd0.0001_a2_s2__b9ad4786",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adamw_lr0.001_wd0.1_a4_s2__fb896a1e",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s0__0ef1fd96",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_lr0.03_wd0.001_a4_s0__44f6a81a",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adam_l2_lr0.001_wd0_a8_s2__eeb9b1f8",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.6,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_lr0.0001_wd0.1_a4_s3__ec5d688e",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.6,
+        "error": "",
+        "worker": 13
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adam_l2_lr0.001_wd1e-06_a4_s3__1d99372d",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.2,
+        "error": "",
+        "worker": 14
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s2__2fb6e5a0",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 14
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.0001_a2_s1__6b9d3dc0",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 14
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adamw_lr0.001_wd0.1_a4_s0__9830bd17",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 14
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0_a2_s0__f38911b5",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 14
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_momentum_lr0.3_wd0.0003_a2_s3__a8e48d85",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 14
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adam_l2_lr0.001_wd1e-06_a4_s0__6eda8e26",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 14
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_lr1_wd0.0001_a4_s3__7a3b783f",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 14
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adam_l2_lr0.001_wd0.0001_a1_s3__aba0c2f3",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 14
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_momentum_lr0.01_wd0.0001_a4_s3__b81c1c18",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 14
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adamw_lr0.001_wd0.1_a1_s3__a93baf21",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.7,
+        "error": "",
+        "worker": 14
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_lr1_wd0.0001_a4_s2__fc955d00",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.2,
+        "error": "",
+        "worker": 15
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_adam_l2_lr0.001_wd0.0001_a2_s0__f9043ddc",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 15
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd0_a2_s2__eb0478cd",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 15
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adamw_lr0.001_wd0.3_a2_s3__1d6dc89a",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 15
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0.001_a2_s0__25694e3e",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 15
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s2__5dbd11ff",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 15
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adam_l2_lr0.001_wd1e-06_a4_s2__21d37695",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 15
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_lr1_wd0.001_a4_s1__df69d00f",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 15
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adamw_lr0.001_wd0.03_a8_s3__7c07d167",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 15
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_momentum_lr0.01_wd0.001_a4_s3__67fe026e",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 15
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_lr0.0001_wd0_a4_s2__2c7efdfb",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 15
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adam_l2_lr0.001_wd1e-06_a4_s1__9bd1ee7f",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 16
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd3e-05_a4_s0__eec026a0",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 16
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0_a2_s1__01055a57",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 16
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_adamw_lr0.001_wd1_a2_s1__88de5b29",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 16
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_lr1_wd0.0003_a2_s0__f7d2955a",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 16
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_lr1_wd0.0001_a4_s0__aa17b3e2",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 16
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s0__b870bc46",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 16
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adamw_lr0.001_wd0_a4_s1__ab31897f",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 16
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adam_l2_lr0.001_wd1e-06_a8_s0__86c04e3e",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 16
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_lr0.03_wd0.003_a4_s0__a7516eea",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 16
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adamw_lr0.001_wd0.01_a8_s0__d8f778df",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.6,
+        "error": "",
+        "worker": 16
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_momentum_lr0.0001_wd0_a4_s0__e7305a01",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 16
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.001_a1_s0__c2dc6eb5",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.3,
+        "error": "",
+        "worker": 17
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_adam_l2_lr0.001_wd0.0001_a2_s3__96c7578c",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 17
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adamw_lr0.001_wd0.3_a2_s2__d1fbd843",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 17
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_adamw_lr0.001_wd1_a1_s1__db3350a4",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.2,
+        "error": "",
+        "worker": 17
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_lr1_wd0.001_a2_s2__b9b22f4b",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 17
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_momentum_lr0.3_wd0.0001_a2_s1__cdfc5782",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 17
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adamw_lr0.001_wd0.1_a4_s0__81f94ae3",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 17
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s1__0775924d",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 17
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_lr0.03_wd0.001_a4_s2__90193cce",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 17
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adam_l2_lr0.001_wd0.001_a1_s0__9d68f34d",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.6,
+        "error": "",
+        "worker": 17
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_momentum_lr0.1_wd0.0001_a2_s2__e12b194d",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 17
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_lr1_wd0.0001_a4_s1__5071083a",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 18
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd3e-05_a4_s1__e5ccfc91",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 18
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.0001_a2_s0__020d9959",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 18
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adamw_lr0.001_wd0_a2_s0__816985f0",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 18
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0.0003_a2_s0__a3137bf6",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 18
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_momentum_lr0.3_wd0.0003_a2_s0__2b6fb9f4",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 18
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.001_a1_s0__7e3d8b41",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 18
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd3e-05_a4_s2__068df7e8",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 18
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adamw_lr0.001_wd0.1_a1_s3__b03c7aad",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.2,
+        "error": "",
+        "worker": 18
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adam_l2_lr0.001_wd0.001_a1_s1__852b3c5e",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 18
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_momentum_lr0.1_wd0.0001_a2_s0__4d0c1b92",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.6,
+        "error": "",
+        "worker": 18
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adamw_lr0.001_wd0.1_a4_s3__88e862b9",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 19
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd3e-05_a4_s2__debfc0b1",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 19
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd1e-06_a2_s1__58bf77ec",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 19
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_adamw_lr0.001_wd1_a2_s3__a1df33c6",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 19
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_lr1_wd0.0003_a2_s2__2e54b295",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 19
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_lr1_wd0.0001_a4_s3__2244efbc",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 19
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s3__5c76c5c5",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 19
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_lr1_wd0.0001_a4_s1__972aa8ba",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 19
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adam_l2_lr0.001_wd1e-06_a8_s3__2dd8625b",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 19
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_lr0.03_wd0.003_a4_s2__5aa13ec1",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 19
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adamw_lr0.001_wd0.01_a8_s3__3c6a4d3b",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.6,
+        "error": "",
+        "worker": 19
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_momentum_lr0.0001_wd0_a4_s2__729fdbc6",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 19
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adamw_lr0.001_wd0_a4_s2__3e54b4e4",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s1__367bf865",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.0001_a2_s2__077c4ff3",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adamw_lr0.001_wd0.1_a4_s2__fb2672de",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0.001_a2_s1__7db7f2ff",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_momentum_lr0.3_wd0_a2_s2__8b495bfc",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.001_a1_s1__b897aa0c",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd3e-05_a4_s1__b928e096",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adamw_lr0.001_wd0.1_a1_s0__517bacb9",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adam_l2_lr0.001_wd0_a8_s0__1846a19d",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.6,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_lr0.0001_wd0.1_a4_s1__e84c5c5e",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 2
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_lr1_wd0.0001_a4_s0__04489209",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd1e-06_a4_s0__3dc19162",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.2,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adamw_lr0.001_wd0.3_a2_s1__4a3f1ac0",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_adamw_lr0.001_wd1_a1_s2__438e05e7",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_lr1_wd0.001_a2_s1__f04a6c60",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_momentum_lr0.3_wd0.0001_a2_s0__a6ded2f8",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adamw_lr0.001_wd0.1_a4_s1__c23f6bfe",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s2__10154afa",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_lr0.03_wd0.001_a4_s1__4e399088",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adam_l2_lr0.001_wd0.001_a1_s2__a8a78d1e",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.6,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_momentum_lr0.1_wd0.0001_a2_s1__defde029",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 3
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adamw_lr0.001_wd0_a4_s0__5e6e784a",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.3,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_adam_l2_lr0.001_wd0.0001_a2_s2__3733028b",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd0_a2_s3__c8fd2d9a",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adamw_lr0.001_wd0.3_a2_s0__dbf9eae8",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0.0003_a2_s3__66e7e234",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_momentum_lr0.3_wd0.0003_a2_s1__9bbf3c59",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0_a2_s0__a0e95a86",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adamw_lr0.001_wd0_a4_s2__583c8124",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adam_l2_lr0.001_wd1e-06_a8_s1__c0848b86",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_lr0.03_wd0.003_a4_s1__8a288872",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adamw_lr0.001_wd0.1_a1_s0__e8c37611",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_momentum_lr0.0001_wd0_a4_s1__7821c58a",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.6,
+        "error": "",
+        "worker": 4
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adam_l2_lr0.001_wd1e-06_a4_s2__1c24a4b9",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_sgd_lr1_wd0.001_a4_s3__7320a2e7",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0_a2_s0__41f22ca2",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_adamw_lr0.001_wd1_a2_s0__d34510ec",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_lr1_wd0.0003_a2_s1__9ad72320",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_lr1_wd0.0001_a4_s1__549814f9",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s2__8e93c392",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adamw_lr0.001_wd0_a4_s3__76115506",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adam_l2_lr0.001_wd1e-06_a8_s2__39a964d5",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_momentum_lr0.01_wd0.0001_a4_s1__13dd7094",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adamw_lr0.001_wd0.1_a1_s1__2de7919d",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_momentum_lr0.0001_wd0_a4_s3__bc3618b2",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 5
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adamw_lr0.001_wd0_a4_s3__ca1b67bd",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd1e-06_a4_s1__642a96f1",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.3,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adamw_lr0.001_wd0.3_a2_s3__63b0919b",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.2,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_adamw_lr0.001_wd1_a1_s3__a3c2c132",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_lr1_wd0.001_a2_s3__1821f444",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_momentum_lr0.3_wd0.0001_a2_s3__3ea4ed20",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adamw_lr0.001_wd0.1_a4_s3__14a3ffd4",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s3__5691f710",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_lr0.03_wd0.001_a4_s3__3e5861ec",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adam_l2_lr0.001_wd0.001_a1_s3__8ef6433b",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.7,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_momentum_lr0.1_wd0.0001_a2_s3__2ff15c75",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 6
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adamw_lr0.001_wd0.1_a4_s1__431788d9",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.2,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_adam_l2_lr0.001_wd0.0001_a2_s1__375a2d92",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd0_a2_s0__931c4dd6",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adamw_lr0.001_wd0.3_a2_s1__25733d43",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0.0003_a2_s2__163c1476",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_sgd_momentum_lr0.3_wd0.0003_a2_s2__0672b53c",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0_a2_s1__3290afef",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_lr1_wd0.0001_a4_s0__244ad5ed",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adam_l2_lr0.001_wd0.0001_a1_s1__aa5f86ac",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_sgd_momentum_lr0.01_wd0.0001_a4_s0__2333d3c2",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adamw_lr0.001_wd0.01_a8_s2__ffdf0e04",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.7,
+        "error": "",
+        "worker": 7
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.001_a1_s3__729991a0",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.2,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd1e-06_a4_s3__1f0dc57c",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.0001_a2_s3__776e749e",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adamw_lr0.001_wd0_a2_s3__ce71e428",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_lr1_wd0_a2_s1__13ca0edf",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_momentum_lr0.3_wd0.0003_a1_s1__888f9fc7",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd0_a2_s3__a6b236fe",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd3e-05_a4_s0__d62fae2f",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adamw_lr0.001_wd0.1_a1_s1__5e7de5b2",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.2,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adam_l2_lr0.001_wd0_a8_s3__90df3294",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_lr0.0001_wd0.1_a4_s2__88338f43",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.6,
+        "error": "",
+        "worker": 8
+      },
+      {
+        "run_id": "modular__xmulty_p97_f0.5_d3w512_adamw_lr0.001_wd0_a4_s1__fc509bf2",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.2,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.3_d3w512_adam_l2_lr0.001_wd1e-06_a4_s2__59346d5c",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.5_d3w512_adamw_lr0.001_wd0.3_a2_s0__3b77e085",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_adamw_lr0.001_wd1_a1_s0__b398c7e4",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_lr1_wd0.001_a2_s0__1f8d54c8",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "modular__xplusy_p97_f0.7_d3w512_sgd_momentum_lr0.3_wd0_a2_s3__5d98a73c",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_adam_l2_lr0.001_wd0.001_a1_s3__cad1f4e5",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "modular__xdivy_p97_f0.5_d3w512_sgd_momentum_lr0.3_wd3e-05_a4_s3__85b2763d",
+        "app": "modular",
+        "ok": true,
+        "seconds": 2.1,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "mnist__n1000_d3w200_adamw_lr0.001_wd0.1_a1_s2__c9edbbac",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 2.0,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_adam_l2_lr0.001_wd0_a8_s1__d498277f",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 9
+      },
+      {
+        "run_id": "mnist__n4000_d8w400_sgd_lr0.0001_wd0.1_a4_s0__7357e10d",
+        "app": "mnist",
+        "ok": true,
+        "seconds": 3.5,
+        "error": "",
+        "worker": 9
+      }
+    ]
+  }
+}

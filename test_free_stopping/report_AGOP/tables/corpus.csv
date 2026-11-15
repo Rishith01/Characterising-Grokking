@@ -1,0 +1,6 @@
+app,variant,runs,cells,optimizers,lr,weight_decay,init_scale,train_size,fast,grokker,joint_plateau,late_collapse,never,no_fit
+mnist,mnist d3,32,8,"adam_l2, adamw, sgd, sgd_momentum","0.001, 0.01, 0.03","1e-06, 0.0001, 0.001, 0.003, 0.03, 0.1","1, 4, 8",1000,15,17,0,0,0,0
+mnist,mnist d8,32,8,"adam_l2, adamw, sgd, sgd_momentum","0.0001, 0.001, 0.1","0, 0.0001, 0.001, 0.01, 0.1","1, 2, 4, 8",4000,14,2,1,1,12,2
+modular,modular x*y,32,8,"adam_l2, adamw, sgd, sgd_momentum","0.001, 0.3, 1","0, 1e-06, 3e-05, 0.0001, 0.0003, 0.001, 0.1","1, 4",0.5,11,15,0,2,4,0
+modular,modular x+y,96,24,"adam_l2, adamw, sgd, sgd_momentum","0.001, 0.3, 1","0, 1e-06, 0.0001, 0.0003, 0.001, 0.1, 0.3, 1","1, 2, 4","0.3, 0.5, 0.7",29,30,4,4,29,0
+modular,modular x/y,32,8,"adam_l2, adamw, sgd, sgd_momentum","0.001, 0.3, 1","0, 1e-06, 3e-05, 0.0001, 0.0003, 0.001, 0.1","1, 4",0.5,10,16,0,2,4,0

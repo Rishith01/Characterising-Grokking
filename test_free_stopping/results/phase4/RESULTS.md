@@ -234,3 +234,21 @@ better, so it bounds what F2 can achieve on each dataset. Costs at λ = 0.1, mea
   0.012 rad over the whole run: the teacher uses all five input directions, so learning
   does not rotate the input-space features. Every F2 variant is uninformative there (the
   oracle "settles" at step 0); the 0.079 of the best rule is threshold luck.
+
+## F2 final study: 224 runs, held-out calibration (2026-11-15)
+
+Full report: [report_AGOP/REPORT.md](../../report_AGOP/REPORT.md). In short:
+
+- **Modular.** Calibrated F2 rules (constant-delta angle, remaining-angle bound) cut the
+  cost of training to the horizon by 38-57% on held-out seeds and on unseen operations
+  (CI excludes 0). They are statistically tied with a calibrated fixed fraction of the
+  budget, and so are the oracles that know the final AGOP. F2 stops before t_eps far
+  less often (0-5% against 7.5-25%). The verdict depends on how compute is weighed. When accuracy is
+  weighted first (lambda 0.03), F2 beats the fixed fraction. When compute is weighted
+  first (lambda 0.3), the constant-delta rule tuned on x+y transfers badly to x*y and x/y.
+- **MNIST.** A calibrated fixed fraction beats every online F2 family, and the
+  final-AGOP oracles are no better than the horizon. At t_eps, cos(M_t, M_T) is only
+  0.36, against 0.81 on modular.
+- **Best rule.** The constant-delta angle tracks the true remaining angle (Spearman
+  about 0.78 on both datasets). The kappa-bound does not (0.37 on modular, -0.07 on
+  MNIST).

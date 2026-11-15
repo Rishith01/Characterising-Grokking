@@ -36,6 +36,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -140,12 +141,44 @@ def _analysis_done(out: Path, rid: str) -> bool:
     return all(p.exists() for p in _analysis_paths(out, rid).values())
 
 
+def _kill_stale(pid_file: Path, log: Callable[[str], None]) -> None:
+    """Stop workers of an earlier call that outlived their parent (a restarted kernel
+    does not kill its subprocesses). Only processes that are still agop_final workers
+    are touched (checked via /proc on Linux), so a recycled pid is left alone."""
+    if not pid_file.exists():
+        return
+    try:
+        pids = json.loads(pid_file.read_text())
+    except ValueError:
+        pids = []
+    killed = []
+    for pid in pids:
+        cmd = Path(f"/proc/{pid}/cmdline")
+        try:
+            if not cmd.exists() or b"stopping.agop_final" not in cmd.read_bytes():
+                continue
+            os.kill(int(pid), signal.SIGTERM)
+            killed.append(pid)
+        except (OSError, ValueError):
+            pass
+    if killed:
+        time.sleep(5)
+        for pid in killed:
+            try:
+                os.kill(int(pid), signal.SIGKILL)
+            except OSError:
+                pass
+        log(f"stopped {len(killed)} leftover worker(s) of an earlier call: {killed}")
+    pid_file.unlink()
+
+
 def _launch(mode: str, spec: dict, selection: list[dict], workers: int, work: Path, project_dir: Path,
             done: Callable[[str], bool], on_poll: Callable[[list[str]], None], poll: float,
             log: Callable[[str], None], env: Optional[dict]) -> list[dict]:
     work = Path(work)
     for d in (f"claims_{mode}", f"status_{mode}", f"logs_{mode}"):
         (work / d).mkdir(parents=True, exist_ok=True)
+    _kill_stale(work / f"pids_{mode}.json", log)  # workers orphaned by a kernel restart
     for p in (work / f"claims_{mode}").iterdir():  # stale claims of an earlier, interrupted call
         p.unlink()
     for p in (work / f"status_{mode}").iterdir():
@@ -165,6 +198,7 @@ def _launch(mode: str, spec: dict, selection: list[dict], workers: int, work: Pa
         fh = open(work / f"logs_{mode}" / f"w{i}.log", "a")
         procs.append((subprocess.Popen([sys.executable, "-m", "stopping.agop_final", mode, str(spec_path), str(i)],
                                        cwd=str(project_dir), env=env, stdout=fh, stderr=subprocess.STDOUT), fh))
+    (work / f"pids_{mode}.json").write_text(json.dumps([p.pid for p, _ in procs]))
     t0, seen = time.time(), set()
     while True:
         running = [p for p, _ in procs if p.poll() is None]
@@ -230,6 +264,15 @@ def replay_parallel(selection: list[dict], store: TraceStore, cfg: AgopPathConfi
             pending[f"{rel}/config.json"] = cfg_path
         if len([k for k in pending if k.startswith("curves/")]) >= upload_every:
             flush("agop final: traces")
+
+    if out_remote is not None:
+        # runs finished by an earlier, interrupted call but not uploaded before it stopped
+        try:
+            have = set(out_remote.list_files("curves"))
+        except Exception:
+            have = set()
+        on_poll([r["run_id"] for r in selection
+                 if f"curves/{r['run_id']}.json" not in have and _trace_done(store, cfg, work, r["run_id"])])
 
     status = _launch("worker", spec, selection, workers, work, project_dir,
                      lambda rid: _trace_done(store, cfg, work, rid), on_poll, poll, log, env)

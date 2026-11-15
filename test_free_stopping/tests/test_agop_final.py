@@ -102,6 +102,11 @@ def test_parallel_replay_analysis_and_report_end_to_end(dummy_run, tmp_path):
     assert [s["ok"] for s in status] == [True], status
     assert af._trace_done(store, cfg, work, dummy_run.name)
     assert any(p.endswith(f"{dummy_run.name}.parquet") for p in remote.list_files("signals"))
+    # a restarted call uploads runs an interrupted call finished but never uploaded
+    remote2 = LocalRemote(tmp_path / "remote2")
+    assert af.replay_parallel([info], store, cfg, work, PROJECT, workers=1, device="cpu", out_remote=remote2,
+                              poll=0.5, log=lambda m: None) == []
+    assert f"curves/{dummy_run.name}.json" in remote2.list_files("curves")
     # resuming in a fresh work dir downloads the trace and curves
     store2 = TraceStore(tmp_path / "w2" / "traces")
     assert af.resume_from(remote, "x", store2, cfg, tmp_path / "w2", {dummy_run.name}, log=lambda m: None) == 2
