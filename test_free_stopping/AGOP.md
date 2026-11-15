@@ -520,6 +520,15 @@ gate (same test on log‖w‖).
 
 ## 6. Decisions for the user
 
+**Resolved by experiment (2026-11-15).** All four items were tested rather than decided
+on paper: the bound (F2-A) and four alternatives (rotation over a lag f·t, rotation over
+a fixed lag c·T, MSD and Geweke settling tests) were each tuned over M, G and W on
+224 corpus runs and scored on held-out runs. The extrapolated bound tracks the true
+remaining angle poorly; the plain rotation over a window works on modular and ties a
+tuned budget fraction; nothing works on MNIST. See
+[report_AGOP/REPORT.md](report_AGOP/REPORT.md). The list below is kept as the record
+of what was open.
+
 1. **Signal definition for F2.** Replace METRICS F2's "consecutive change" with the
    remaining-angle bound R̂ (recommended). Alternatives: keep the proposal's ŝ_cal as the
    signal, or record both. Recording both costs only a few extra columns in one trace.

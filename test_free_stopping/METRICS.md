@@ -7,7 +7,10 @@ document details the reduced metric set proposed in [PLAN.md](PLAN.md) §5 ("Pro
 reduced set"). The user has not confirmed it yet. Phase 4 builds whatever is confirmed.
 Open decisions are collected in §6 of this document. **F2 has a newer proposed
 definition, the remaining-angle bound, derived in [AGOP.md](AGOP.md) §4** (summary at
-the end of the F2 entry below).
+the end of the F2 entry below). **Update 2026-11-15: F2 has been tested and closed**
+(five online variants, 224 held-out runs; [report_AGOP/REPORT.md](report_AGOP/REPORT.md)):
+it ties a tuned budget fraction on modular and fails on MNIST. The F2 items of §6 are
+settled by that study.
 
 Each metric produces a **signal**: a time series computed causally from a run's stored
 data or from replay. A shared rule (causal smoothing, then a threshold with a direction,

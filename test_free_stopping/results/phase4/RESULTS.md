@@ -237,18 +237,54 @@ better, so it bounds what F2 can achieve on each dataset. Costs at λ = 0.1, mea
 
 ## F2 final study: 224 runs, held-out calibration (2026-11-15)
 
-Full report: [report_AGOP/REPORT.md](../../report_AGOP/REPORT.md). In short:
+Full report: [report_AGOP/REPORT.md](../../report_AGOP/REPORT.md) (plain-language, ten
+sections, 13 figures; every number in `report_AGOP/tables/summary.csv` and
+`tables/numbers.txt`). Earlier technical write-up: `report_AGOP/detailed/`. This summary
+supersedes the shorter one written before the report was checked number by number.
 
-- **Modular.** Calibrated F2 rules (constant-delta angle, remaining-angle bound) cut the
-  cost of training to the horizon by 38-57% on held-out seeds and on unseen operations
-  (CI excludes 0). They are statistically tied with a calibrated fixed fraction of the
-  budget, and so are the oracles that know the final AGOP. F2 stops before t_eps far
-  less often (0-5% against 7.5-25%). The verdict depends on how compute is weighed. When accuracy is
-  weighted first (lambda 0.03), F2 beats the fixed fraction. When compute is weighted
-  first (lambda 0.3), the constant-delta rule tuned on x+y transfers badly to x*y and x/y.
-- **MNIST.** A calibrated fixed fraction beats every online F2 family, and the
-  final-AGOP oracles are no better than the horizon. At t_eps, cos(M_t, M_T) is only
-  0.36, against 0.81 on modular.
-- **Best rule.** The constant-delta angle tracks the true remaining angle (Spearman
-  about 0.78 on both datasets). The kappa-bound does not (0.37 on modular, -0.07 on
-  MNIST).
+**Setup.** 224 corpus runs (modular 160 = 40 settings x 4 seeds; MNIST 64 = 16 x 4),
+replayed with verification (188 replayed, 36 reused from phase4/agop_study), 223 eval
+points each. Five online F2 variants (F2-A bound, F2-B rotation over a lag f*t, F2-C
+rotation over a fixed lag c*T, F2-D MSD exponent, F2-E Geweke; 954 settings), a "tuned
+pick" across all of them, fixed fraction of the budget, never stop, two final-AGOP oracles
+and the perfect stop at t_eps. Score = regret + lambda * (stop - t_eps)+ / T, lambda in
+{0.03, 0.1 (main), 0.3}. Each rule tuned on one set of runs, scored on held-out runs:
+Test A seeds 0-1 -> 2-3; Test B modular x+y -> x*y, x/y and MNIST d3 -> d8. 95% CIs:
+percentile cluster bootstrap over settings (2,000 resamples, seed 0), paired for
+differences; verdict "better/worse" only when the paired CI excludes 0.
+
+**Findings (lambda 0.1 unless noted).**
+- **Modular.** F2-B and F2-C beat never stopping on both tests (F2-C: 0.073 vs 0.128 and
+  0.068 vs 0.138, better in 16/16 Test B settings). No variant is clearly better than
+  the tuned fixed fraction (all CIs include 0); the tuned pick ties on both tests.
+- **Safety.** The fixed fraction (40%, tuned on x+y) stops 52% of the x*y, x/y grokkers
+  before they generalize; F2-B, C, D stop none, F2-A 1 of 31, F2-E 9 of 31. Caveat: F2-B
+  and F2-D never stop on ~3/4 of Test-B grokkers (slow post-jump drift), so part of their
+  safety is not stopping at all; F2-C stops all but 3 of 31 grokkers, every one after the
+  jump.
+- **Modular oracle.** Tuned oracles tie the fixed fraction, but the best oracle threshold
+  in hindsight beats the best fixed fraction (0.044 vs 0.076; 0.035 vs 0.046), and at
+  lambda 0.3 both tuned oracles are clearly better on Test A. So the features hold
+  timing information beyond a budget fraction; the online rules could not exploit it
+  with this much tuning data. (Earlier text saying "no feature rule could beat fixed"
+  was wrong.)
+- **Lambda.** At 0.03 the tuned fixed fraction becomes 100% (= never stop) and F2-A/F2-B
+  (Test A) and F2-B/F2-C (Test B) beat it. At 0.3, F2-C tuned on x+y is clearly worse on
+  Test B (+0.173, 23% premature, 48% of grokkers cut): safety depends on a cautious
+  threshold.
+- **MNIST.** The fixed fraction (0.034, 0.039) beats every variant on Test A and A/B/C
+  on Test B (D, E tie). Only F2-D beats never stopping. The oracle is no better than
+  never stopping even with the best threshold in hindsight (0.082, 0.091). Reason:
+  alignment with the final M at t_eps is 0.44 (d3) / 0.27 (d8) vs 0.80 on modular; after
+  t_eps the weight norm falls to 0.53 (d3) / 0.78 (d8) and the AGOP effective rank to
+  ~0.27, while test accuracy stays flat.
+- **Measurement.** Spearman(F2-C angle over 0.02T on M, true remaining angle): within a
+  run (median) 0.79 modular, 0.81 MNIST d3, 0.20 MNIST d8; pooled 0.84 / 0.78 / 0.87.
+  F2-A bound within a run: 0.37 / -0.01 / -0.17.
+- **Tuning transfer.** Fixed fraction and never stop transfer almost exactly; angle
+  thresholds do not transfer to the 8-layer MNIST network (F2-A, F2-C, both oracles).
+
+**Conclusion.** F2 is closed. AGOP settling is a real, grokking-safe stopping signal where
+feature learning and generalization finish together (modular), but on average no better
+than a tuned budget fraction; it does not work on MNIST, and no feature-settling rule can
+there. Keep the plain rotation over a window (F2-B budget-free, F2-C); drop extrapolation.

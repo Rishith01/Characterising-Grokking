@@ -12,7 +12,7 @@ The code structure, classes and data flow are in [DESIGN.md](DESIGN.md). This fi
 covers *what* we run and *in what order*. A new contributor should start with
 [RAMPUP.md](RAMPUP.md).
 
-**Status (2026-11-14):**
+**Status (2026-11-15):**
 - Phases 0, 1 (with 1b) and 2 (2a, 2b, 2c) are done. Gates G0, G1 and G2 passed, and the
   Phase 3 grid is frozen (§3).
 - **Phase 3 is done** (2026-11-04): MNIST (256), teacher–student (576) and modular (832)
@@ -26,8 +26,14 @@ covers *what* we run and *in what order*. A new contributor should start with
   - F2 redesigned on paper 2026-11-04 after reviewing the online-AGOP-alignment proposal
     (`BTP_Proof_AGOP_online_variant.pdf`): the remaining-angle bound in
     [AGOP.md](AGOP.md) §4, checked on a toy only.
-  - S1, S1b and F2 are not built: they wait on the decisions in METRICS.md §6 and
-    AGOP.md §6. The full Phase 4 notebook and Phase 5 are not started.
+  - F2 studied and closed (2026-11-14/15): the F2 experiment (61 runs) and the final
+    held-out study (224 runs, `stopping/agop_final.py`, `molab/phase4_agop_final.py`).
+    Report: [report_AGOP/REPORT.md](report_AGOP/REPORT.md); summary in
+    [results/phase4](results/phase4/RESULTS.md). F2 works on modular (ties a tuned
+    budget fraction, safer on grokkers) and fails on MNIST; it is not carried into
+    Phase 5 as a main signal unless the user decides otherwise.
+  - S1 and S1b are not built: they wait on the decisions in METRICS.md §6. The full
+    Phase 4 notebook and Phase 5 are not started.
 - §5's metric list is being cut down to theory-backed signals. The proposed set is in
   §5, "Proposed reduced set", detailed in [METRICS.md](METRICS.md); the user has not
   confirmed it yet.
@@ -494,7 +500,8 @@ The blocks:
 |---|---|
 | Core package `stopping/` (DESIGN §13): source adapter, signal/rule split, runner with one shared replay pass, trace cache, causality and quarantine tests | ✅ 2026-11-03 |
 | Signals N1, R1, B0–B6 | ✅ built and piloted on MNIST, 18 runs (2026-11-04, [results](results/phase4/RESULTS.md)) |
-| S1, S1b, F2 | ⏳ not built; decisions open (METRICS.md §6, AGOP.md §6) |
+| F2 | ✅ studied and closed 2026-11-15 (224-run held-out study; [report](report_AGOP/REPORT.md)) |
+| S1, S1b | ⏳ not built; decisions open (METRICS.md §6) |
 | Pilots on teacher–student and modular | not run |
 | Full Phase 4 notebook (all signals on all 1,664 runs) | not written |
 

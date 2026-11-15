@@ -71,7 +71,8 @@ test_free_stopping/
                                        phase2c.py, phase3_mnist.py, phase3_teacher_student.py,
                                        phase3_modular.py (all run), phase4_pilot.py (run on MNIST)
                                        phase4_agop_study.py (F2 experiment, §13.9; run 2026-11-14)
-                                       phase4_agop_final.py  (final F2 study, §13.10)
+                                       phase4_agop_final.py  (final F2 study, §13.10; run 2026-11-15)
+                                       phase4_metrics_a.py   (N1, R1, B5 study, §13.11; written 2026-11-16)
                                     ⏳ phase4 full notebook (all signals on the corpus)
   results/phase1/ … phase4/         ✅ RESULTS.md + figures per phase (versioned);
                                        phase4/agop_toy_sim.py (AGOP.md §5 toy check)
@@ -1142,4 +1143,47 @@ offline, then the chosen form becomes `agop_angle` (§13.8).
   vs x*y, x/y; MNIST d3 vs d8). 95% CIs by bootstrap over cells; sign test over cells;
   differences against the horizon and against the calibrated fixed fraction; the
   hindsight-best setting on the test runs as an upper bound per family.
+- **Restart safety (2026-11-15).** `_launch` kills stale workers of an earlier call
+  (`pids_<mode>.json`, only processes whose cmdline contains `stopping.agop_final`)
+  before clearing claims; `replay_parallel` first uploads runs finished locally but
+  missing remotely. Tested in `tests/test_agop_final.py`.
+- **Outputs.** HF `advay333/tfs:phase4/agop_final/`: `rows.parquet` (cost of every family
+  x setting x run), `series.parquet` (per-step test acc, alignment to final M/G/W, true
+  remaining angle, F2-C angle on M at 0.02T, bound R, weight norm, erank), traces.
+  `report_AGOP/make_figures.py <dir with the two parquets>` rebuilds the report's
+  figures and tables from them plus `report_AGOP/detailed/tables/{calibration,selection}.csv`.
+  Report names: F2-A = bound, F2-B = rel_delta, F2-C = const_delta, F2-D = msd,
+  F2-E = geweke, "tuned pick" = `F2 best`.
+
+### 13.11 Study A: N1, R1, B5 (`metric_study.py`, `molab/phase4_metrics_a.py`)
+
+The F2 protocol (§13.10) applied to three cheap signals, with teacher-student added. One
+report per metric (the user's choice, 2026-11-16).
+
+- **No replay.** N1 (telemetry `l{i}_w_norm`), R1 (summaries `actspec/l{i}`) and B5's
+  alpha (summaries `sv/l{i}`) are recorded data. `trace_run` downloads telemetry,
+  summaries and the oracle curve, runs `compute_run` with WeightNormConfig, ERankConfig and
+  HtsrAlphaConfig(min_eigs=50) (the causal signal classes), and stores one wide parquet per
+  run (log steps; per-layer erank, alpha and KS at summary steps). B5's correlation traps
+  need replayed weights and move to the replay study with B2 and S1b.
+- **Selection.** `pick_final_runs` (same as F2, so modular and MNIST are the same 224 runs);
+  teacher-student's variant is relabeled by training-set size (`teacher_student n50/n100/n400`),
+  2 cells per (size, optimizer) = 96 runs. Total 320.
+- **Rule grid, evaluated offline on the summary-step grid with patience 3** (module
+  docstring): N1 140 (n1_abs, n1_shrink; lag f·t or c·T, normalization none or per
+  unit of weight decay, 5 thresholds), R1 210 (r1, r1_guard; layers mean/last/all), B5 28
+  (b5_level α ≤ a, b5_settle). References: horizon, fixed_frac, oracle_teps. Per-layer
+  erank and alpha are smoothed by a causal median of 3 rows.
+- **Splits.** Seeds 0-1 → 2-3 for every application; transfer: modular x+y → x*y, x/y;
+  MNIST d3 → d8; teacher-student N 50, 100 → 400. `calibrate` is agop_final's, per metric,
+  with "<metric> best" as the tuned pick across the metric's families.
+- **Parallelism.** `run_all`: a process pool (fork on Linux), each worker downloads with
+  its own HfRunSource (token passed in memory); traces and curves are uploaded every
+  `upload_every` runs to `phase4/metrics_a/traces/`, `curves/`; `resume_from` restores them.
+  Measured locally: 20-45 s per run including the download.
+- **Outputs** (`phase4/metrics_a/`): rows.parquet (metric, family, setting, run, cost),
+  series.parquet (per summary step: test acc, w_norm, mean erank, mean alpha),
+  selection.csv, status.json, and `report_N1/`, `report_R1/`, `report_B5/` each with
+  REPORT_auto.md, figures/ (cost_heldout.png, signal_vs_accuracy.png) and
+  tables/calibration.csv. Tests: tests/test_metric_study.py.
 

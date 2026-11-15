@@ -24,7 +24,10 @@ why) and [DESIGN.md](DESIGN.md) (how the code works). Metric definitions are in
   yet; their open decisions are in METRICS.md §6 and AGOP.md §6. The F2 experiment
   (`molab/phase4_agop_study.py`, DESIGN.md §13.9) ran on 2026-11-14; the final F2 study
   (`molab/phase4_agop_final.py`, DESIGN.md §13.10) ran on 2026-11-15 and closes F2;
-  see [report_AGOP/REPORT.md](report_AGOP/REPORT.md). The theory review of the metric set is in [THEORY.md](THEORY.md).
+  see [report_AGOP/REPORT.md](report_AGOP/REPORT.md). Verdict: on modular, F2 halves the
+  cost of training to the end and never cuts off a grokker, but only ties a tuned fixed
+  fraction of the budget; on MNIST it loses to the fixed fraction, and even an oracle
+  that knows the final AGOP does not help. S1 and S1b remain unbuilt. The theory review of the metric set is in [THEORY.md](THEORY.md).
 - **Phases 5–6** (calibration, evaluation, write-up): not started.
 
 ## Local setup (development, CPU)

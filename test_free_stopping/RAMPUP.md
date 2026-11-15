@@ -1,9 +1,10 @@
 # Ramp-up: taking over `test_free_stopping`
 
 This is the starting point for a new agent (or person) picking up the project. Read this
-file, then the documents in §2. Updated 2026-11-14. **Phase 3 is done** (the full
+file, then the documents in §2. Updated 2026-11-15. **Phase 3 is done** (the full
 1,664-run corpus is on HF). **Phase 4 is in progress**: the signal package is built and
-piloted on MNIST, and three signals (S1, S1b, F2) wait on the user's metric decisions.
+piloted on MNIST; **F2 (AGOP settling) has been studied and closed** (report_AGOP/);
+S1 and S1b still wait on the user's metric decisions.
 
 ---
 
@@ -121,7 +122,7 @@ the exact claim or arXiv number):
 
 ---
 
-## 4. Current state (2026-11-14)
+## 4. Current state (2026-11-15)
 
 | Phase | Status |
 |---|---|
@@ -129,25 +130,50 @@ the exact claim or arXiv number):
 | 1: tasks, recording, determinism, reproductions (G1) | ✅ 2026-10-21 |
 | 2: pilot (2a lr scan, 2b γ placement, 2c checks), G2 | ✅ 2026-10-22. Grid frozen in PLAN §3 |
 | 3: corpus, G3 per dataset | ✅ 2026-11-04. MNIST 256/256 · teacher–student 576/576 · modular 832/832, all L0, every audit at full L0; 78.6 GB on HF ([results](results/phase3/RESULTS.md)) |
-| 4: signals | ⏳ **in progress.** Core built 2026-11-03: the `stopping/` package (DESIGN §13) with N1, R1 and B0–B6. MNIST pilot run 2026-11-04: signals verified; B2 never stops on Adam-family runs, which argues for S1b ([results](results/phase4/RESULTS.md)). F2 redesigned on paper 2026-11-04 as the remaining-angle bound ([AGOP.md](AGOP.md)), toy-checked only. **S1, S1b and F2 are not built**: they wait on the decisions in METRICS.md §6 and AGOP.md §6. The full Phase 4 notebook is not written |
+| 4: signals | ⏳ **in progress.** Core built 2026-11-03: the `stopping/` package (DESIGN §13) with N1, R1 and B0–B6. MNIST pilot run 2026-11-04: signals verified; B2 never stops on Adam-family runs, which argues for S1b ([results](results/phase4/RESULTS.md)). F2 redesigned on paper 2026-11-04 as the remaining-angle bound ([AGOP.md](AGOP.md)), toy-checked only. **F2 closed 2026-11-15** after the F2 experiment (61 runs) and the final held-out study (224 runs): ties a tuned budget fraction on modular, fails on MNIST ([report](report_AGOP/REPORT.md)). **S1 and S1b are not built**: they wait on METRICS.md §6. The full Phase 4 notebook is not written |
 | 5–6: rules, calibration, evaluation, write-up | not started |
 
 **Next actions, in order (each only when the user asks):**
 1. **The user settles the open metric decisions**: METRICS.md §6 (the metric set, ρ's
-   definition, S1b on full-batch tasks, the γ = 0 fallback, layer aggregation) and
-   AGOP.md §6 (F2 = remaining-angle bound or not, G^{1/2} or G, lags proportional to t).
+   definition, S1b on full-batch tasks, the γ = 0 fallback, layer aggregation). The
+   AGOP.md §6 / F2 questions are settled by the F2 study; whether F2 (e.g. F2-C) is kept
+   as a Phase 5 candidate on grokking tasks is the user's call.
    Raised but not yet decided: S1b's ∇J = g + γw is the wrong fixed point for AdamW
    (decoupled decay), so S1b on AdamW would never stop.
-2. Build S1, S1b and F2 as new files under `stopping/signals/` (DESIGN §13.7), with tests.
-   F2 should record the paper's ŝ_cal and D_chord as extra columns, so both estimators
-   can be compared from one trace.
+2. **Study A (N1, R1, B5), written 2026-11-16:** `molab/phase4_metrics_a.py` +
+   `stopping/metric_study.py` (DESIGN §13.11): 320 runs (modular 160, MNIST 64,
+   teacher-student 96), no replay, outputs to HF `phase4/metrics_a/`. When the user has
+   run it: download the outputs and write one plain-language report per metric
+   (`report_N1/`, `report_R1/`, `report_B5/`), structured like report_AGOP/REPORT.md.
+   Next after that, study B: B2, S1b (optimizer-specific null: g + γw for SGD, SGD+m,
+   Adam+L2; THEORY §5 for AdamW) and B5's correlation traps, which need one replay pass.
+   Build S1b under `stopping/signals/` (DESIGN §13.8), with tests.
 3. Pilot them: rerun `molab/phase4_pilot.py` with the new signals on MNIST, and add
    teacher–student and modular pilots (the notebook has a `DATASET` constant).
 4. Rewrite PLAN §5 to the final set, then write the full Phase 4 notebook (every signal
    on all 1,664 runs, traces to `phase4/<dataset>/signals/`), then Phase 5.
 
 Done since the last handover: the modular corpus (2026-11-04), the MNIST signal pilot
-(2026-11-04), the AGOP review and F2 proposal (2026-11-04).
+(2026-11-04), the AGOP review and F2 proposal (2026-11-04), THEORY.md (metric theory
+review), the F2 experiment on 61 runs (2026-11-14), and the final F2 study on 224 runs
+(2026-11-15) with its plain-language report.
+
+**F2 study, where things are (2026-11-15):**
+- `report_AGOP/REPORT.md`: the report, structured as the user asked: 1 AGOP definition,
+  2 derivation of the online version, 3 the five variants and their knobs, 4 the 224
+  runs, 5 outcome breakdown (modular and MNIST separately), 6 score and λ, 7 candidates,
+  8 tuning and confidence intervals, 9 results (each observation with a reason built on
+  four facts F1-F4), 10 conclusion. Figures `report_AGOP/figures/01..12` (03, 04a, 04b =
+  scores at λ 0.1, 0.03, 0.3), tables `report_AGOP/tables/` (summary, by_outcome,
+  corpus, numbers.txt).
+- `report_AGOP/make_figures.py <dir>` regenerates all of it; `<dir>` must hold
+  `rows.parquet` and `series.parquet` downloaded from HF `phase4/agop_final/` (local copies
+  were only in a session scratchpad). Needs the `.venv` python (pyarrow).
+- `report_AGOP/detailed/`: the earlier technical report (`REPORT_detailed.md`, moved with
+  `git mv`), `REPORT_auto.md`, its figures, `tables/calibration.csv` (every family x split
+  x λ, with sign tests and hindsight settings), `selection.csv` (the 224 runs),
+  `data/diag.csv`, `data/status.json`.
+- Summary of findings: results/phase4/RESULTS.md, last section.
 
 ### HF layout (`advay333/tfs`, public)
 
@@ -158,6 +184,9 @@ Done since the last handover: the modular corpus (2026-11-04), the MNIST signal 
 | `phase3/<dataset>/runs/`, `phase3/<dataset>/manifest.json` | the corpus, one manifest per dataset |
 | `phase3/<dataset>/reports/` | `corpus_runs.json` (one summary row per run), `corpus_curves.json` (compact curves), `audit.json`, `status.json`, category tables, plots, `summary.md` |
 | `phase4/pilot/mnist/` | the MNIST signal pilot (18 runs): `signals/<signal>/<hash>/` traces, `plots/`, `stops.csv`, `status.json`, `summary.md` |
+| `phase4/agop_study/` | the F2 experiment (61 runs): agop_path traces and per-run analysis |
+| `phase4/agop_final/` | the final F2 study (224 runs): `rows.parquet`, `series.parquet`, traces, curves |
+| `phase4/metrics_a/` | study A, N1/R1/B5 (320 runs, once run): `traces/`, `curves/`, `rows.parquet`, `series.parquet`, `selection.csv`, `report_N1/`, `report_R1/`, `report_B5/` |
 
 Older repos: `advay333/tfs-phase1` (Phase 1/1b; oversized runs deleted, history squashed)
 and `advay333/tfs-g0-test` (throwaway).
@@ -236,6 +265,18 @@ These are the load-bearing design rules. Each one has a test.
   proposal's three-point Aitken estimate is arbitrary when the signal is flat plus
   noise; in a toy it stopped on the plateau in 10/10 seeds unless gated (AGOP.md §3, §5).
   Prefer estimates that fail towards "keep training".
+- **Report checks catch real errors.** In the F2 report, checking every sentence against
+  the data overturned three claims (oracle ceiling, why F2 never stops, d8 measurement
+  quality). Re-derive every quoted number from `rows.parquet` before writing it.
+- **Choose the highlighted variant by a rule fixed in advance.** Highlighting the variant
+  that looked best afterwards is selection bias; report the calibration-chosen "tuned
+  pick" and show all variants.
+- **Pooled correlations can hide a within-run failure** (MNIST d8: 0.87 pooled, 0.20
+  within a run). Report both.
+- **Medians over runs must be per run.** Binning all eval points pools runs unevenly
+  (dense eval grids dominate); interpolate each run, then take the median.
+- **Bootstrap over settings, paired for comparisons.** Seeds of a setting are not
+  independent; overlapping score CIs do not mean a tie, the paired CI decides.
 - **MNIST has dead pixels.** Pixels that are 0 in every training image get no data
   gradient, so under weight decay their first-layer weights decay on their own. Any
   input-space signal (AGOP, F2) must mask zero-variance inputs, as B2 already does.
