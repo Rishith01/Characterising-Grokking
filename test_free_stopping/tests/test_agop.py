@@ -140,8 +140,12 @@ def test_trace_survives_the_store_and_analysis_runs(agop_trace, dummy_run, tmp_p
     info = {"run_id": dummy_run.name, "app": "dummy", "category": "fast", "optim": "adamw",
             "t_eps": int(back["step"].iloc[2]), "train99_step": int(back["step"].iloc[1]), "max_test": 0.5}
     rows, q, s = st.analyze_run(back, curves, info)
-    n_settings = len(st.OBJECTS) * len(st.LAG_FRACS) * len(st.WINDOWS) * len(st.ESTIMATORS) * len(st.EPS_R) * len(st.GATES)
-    assert len(rows) == n_settings
+    n_bound = len(st.OBJECTS) * len(st.LAG_FRACS) * len(st.WINDOWS) * len(st.ESTIMATORS) * len(st.EPS_R) * len(st.GATES)
+    n_settle = (len(st.MSD_THRESHOLDS) + len(st.GEWEKE_THRESHOLDS)) * len(st.SETTLE_FACTORS) \
+        * len(st.SETTLE_OBJECTS) * len(st.GATES)
+    assert sum(r["family"] == "bound" for r in rows) == n_bound
+    assert sum(r["family"] in ("msd", "geweke") for r in rows) == n_settle
+    assert all(np.isfinite(r[f"cost_{st.MAIN_LAMBDA}"]) for r in rows)
     assert q["eval_rows"] == len(back)
     summary = st.summarize_settings(pd.DataFrame(rows))
     assert set(summary["app"]) == {"dummy", "all"}
@@ -182,3 +186,61 @@ def test_pick_study_runs_spreads_over_cells_and_adds_seeds():
     assert roles["gamma0"] == 2  # adamw and sgd; adam_l2 at gamma 0 duplicates adamw
     assert roles["seed1"] == 2 and roles["seed2"] == 2
     assert len({r["run_id"] for r in sel}) == len(sel)
+
+
+# ---- late-penalized score and settling tests (2026-11-15) -------------------------------
+
+def test_score_stop_penalizes_training_after_t_eps():
+    curves = {"step": [0, 100, 200, 1000], "train_acc": [1] * 4, "test_acc": [0.1, 0.9, 0.95, 0.95]}
+    info = {"max_test": 0.95, "t_eps": 200}
+    on_time = st.score_stop(curves, 200, info)
+    never = st.score_stop(curves, None, info)
+    early = st.score_stop(curves, 100, info)
+    assert on_time["cost_0.1"] == pytest.approx(0.0)
+    assert never["regret"] == pytest.approx(0.0) and never["cost_0.1"] == pytest.approx(0.1 * 800 / 1000)
+    assert early["premature"] and early["cost_0.1"] == pytest.approx(0.05)
+
+
+def _sphere_path(steps, kind, rng):
+    d = 20
+    base = np.zeros(d); base[0] = 1.0
+    if kind == "drift":
+        phi = 1e-4 * steps
+        X = np.outer(np.cos(phi), base) + np.outer(np.sin(phi), np.eye(d)[1])
+    elif kind == "walk":
+        X = base + np.cumsum(1e-3 * rng.normal(size=(len(steps), d)), axis=0)
+    else:  # jitter around a fixed point
+        X = base + 1e-3 * rng.normal(size=(len(steps), d))
+    return st.full_d2(_unit_rows(X)[1])
+
+
+@pytest.mark.parametrize("kind,lo,hi", [("drift", 1.7, 2.1), ("walk", 0.6, 1.4), ("jitter", -0.3, 0.3)])
+def test_msd_exponent_separates_directed_random_and_confined_motion(kind, lo, hi):
+    rng = np.random.default_rng(0)
+    steps = np.arange(0, 20000, 50)
+    a = st.msd_exponent(steps, _sphere_path(steps, kind, rng), factor=2.0)
+    assert lo < np.nanmedian(a[steps > 5000]) < hi
+
+
+def test_geweke_is_large_for_drift_and_order_one_for_jitter():
+    rng = np.random.default_rng(0)
+    steps = np.arange(0, 20000, 50)
+    zd = st.geweke_z(steps, _sphere_path(steps, "drift", rng), 2.0)
+    zj = st.geweke_z(steps, _sphere_path(steps, "jitter", rng), 2.0)
+    late = steps > 5000
+    assert np.nanmedian(zd[late]) > 100
+    assert 0.2 < np.nanmedian(zj[late]) < 3
+
+
+def test_settling_tests_do_not_fire_at_the_end_of_a_fast_transient_followed_by_drift():
+    # the failure of the bound on real runs: fast exponential relaxation, then slow drift
+    steps = np.unique(np.r_[np.geomspace(1, 50000, 150).astype(int), np.linspace(0, 50000, 150).astype(int)])
+    phi = 0.5 * (1 - np.exp(-steps / 300)) + 2e-5 * steps  # transient ends ~1k, drift to 50k
+    d2 = st.full_d2(_unit_rows(np.c_[np.cos(phi), np.sin(phi)])[1])
+    th1, dt1, th2, dt2, _ = st.path_lags(steps, d2, 0.25, 1, False)
+    _, R = st.bound(steps, th1, dt1, th2, dt2, "ratio")
+    window = (steps > 1500) & (steps < 4000)
+    assert np.nanmin(R[window]) < 0.1  # the bound says "done" here ...
+    a = st.msd_exponent(steps, d2, 2.0)
+    late = steps > 3000
+    assert np.nanmin(a[late]) > 1.0  # ... the MSD exponent sees the drift as directed

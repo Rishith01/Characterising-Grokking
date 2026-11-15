@@ -70,7 +70,8 @@ test_free_stopping/
                                        phase0_g0.py, phase1.py, phase1b.py, phase2a.py, phase2b.py,
                                        phase2c.py, phase3_mnist.py, phase3_teacher_student.py,
                                        phase3_modular.py (all run), phase4_pilot.py (run on MNIST)
-                                       phase4_agop_study.py (F2 experiment, §13.9; not run yet)
+                                       phase4_agop_study.py (F2 experiment, §13.9; run 2026-11-14)
+                                       phase4_agop_final.py  (final F2 study, §13.10)
                                     ⏳ phase4 full notebook (all signals on the corpus)
   results/phase1/ … phase4/         ✅ RESULTS.md + figures per phase (versioned);
                                        phase4/agop_toy_sim.py (AGOP.md §5 toy check)
@@ -1113,3 +1114,32 @@ offline, then the chosen form becomes `agop_angle` (§13.8).
   a γ = 0 run per (variant, optimizer), and seeds 1–2 of two grokkers per application
   (~50 runs); uploads per-run traces every few runs to `phase4/agop_study/` and resumes
   from them in a new session; "analysis only" re-scores uploaded traces without replay.
+
+### 13.10 Final F2 study (`agop_final.py`, `molab/phase4_agop_final.py`, `report_AGOP/`)
+
+- **Selection.** Whole hyperparameter cells (all 4 seeds), round-robin over seed-0
+  categories per (variant, optimizer). Default: modular 40 cells (x+y 6, x*y 2, x/y 2 per
+  optimizer), MNIST 16 cells (d3 2, d8 2 per optimizer) = 224 runs.
+- **Speed.** A replay retrains from step 0 (keyframes are 10k steps apart) with tiny
+  kernels, so one replay leaves the GPU mostly idle. `replay_parallel` runs N replays at
+  once, each in its own process (`python -m stopping.agop_final worker`), claiming runs
+  from a shared queue with exclusive file creates; the main process uploads finished
+  traces. `analyze_parallel` does the same for the CPU-bound offline analysis.
+  `input_agop` now runs the c output backward passes as one vmapped pass.
+  One pool for both applications, queued longest first (corpus wall time). Default pool
+  size min(16, cores − 1, 0.6·GPU memory / 4 GB) (a replay peaks at ~4 GB: MNIST d8);
+  each process is capped at ~2× its fair share of GPU memory and retries a run after an
+  out-of-memory error. With verification on (default), every replay is checked against
+  the recorded telemetry, train predictions and keyframes (tolerances in
+  tfs.training.replay.ReplayTolerance), so parallel replays are known to reproduce the
+  recorded runs; a run that diverges fails instead of yielding a wrong trace.
+- **Families.** bound, rel_delta (angle over the last f·t, no κ), const_delta (angle over a
+  fixed Δ = c·T), msd, geweke; references fixed_frac (stop at c·T), horizon; oracles
+  oracle_cos (first cos(M_t, M_T) ≥ c, Mallinar's alignment with the final AGOP),
+  oracle_settle (first t after which the angle to M_T stays < δ), oracle_teps.
+- **Protocol.** Per family the setting with the lowest mean cost on the calibration runs
+  is scored on the test runs: seed split (0–1 vs 2–3) and a transfer split (modular x+y
+  vs x*y, x/y; MNIST d3 vs d8). 95% CIs by bootstrap over cells; sign test over cells;
+  differences against the horizon and against the calibrated fixed fraction; the
+  hindsight-best setting on the test runs as an upper bound per family.
+

@@ -12,23 +12,44 @@ from torch.func import functional_call, grad, vmap
 
 # ---- AGOP -------------------------------------------------------------------------------
 
-def input_agop(model: torch.nn.Module, x: torch.Tensor, chunk: int = 4096) -> torch.Tensor:
+def input_agop(model: torch.nn.Module, x: torch.Tensor, chunk: int = 4096,
+               batched: bool = True, mem_bytes: float = 5e8) -> torch.Tensor:
     """Average gradient outer product of the input Jacobian over the rows of x
     (Mallinar et al. Def. 2.1): G = (1/n) sum_i J(x_i)^T J(x_i), d_in x d_in, float64.
-    One backward pass per output per chunk: example i's output depends only on x_i, so
-    the gradient of sum_i f_c(x_i) with respect to x gives every per-example input
-    gradient for output c at once."""
+    Example i's output depends only on x_i, so the gradient of sum_i f_c(x_i) with respect
+    to x gives every per-example input gradient for output c at once. With batched=True
+    the c backward passes run as one vmapped pass (is_grads_batched), on row blocks small
+    enough that the c x rows x d_in Jacobian fits in about mem_bytes; this is several
+    times faster on a GPU (one large kernel instead of c small ones). Falls back to one
+    pass per output if the batched pass is not supported."""
     n = x.shape[0]
     G = None
     for i in range(0, n, chunk):
-        xb = x[i:i + chunk].detach().clone().requires_grad_(True)
-        with torch.enable_grad():
-            out = model(xb)
-            c = out.shape[1]
-            for k in range(c):
-                (g,) = torch.autograd.grad(out[:, k].sum(), xb, retain_graph=k < c - 1)
-                g = g.to(torch.float64)
-                G = g.T @ g if G is None else G + g.T @ g
+        xb_all = x[i:i + chunk].detach()
+        with torch.no_grad():
+            c = model(xb_all[:1]).shape[1]
+        d = xb_all.shape[1]
+        rows = max(1, min(xb_all.shape[0], int(mem_bytes // (12 * c * d)))) if batched else xb_all.shape[0]
+        for j in range(0, xb_all.shape[0], rows):
+            xb = xb_all[j:j + rows].clone().requires_grad_(True)
+            g_all = None
+            with torch.enable_grad():
+                out = model(xb)
+                if batched:
+                    try:
+                        eye = torch.eye(c, dtype=out.dtype, device=out.device)
+                        (g_all,) = torch.autograd.grad(out, xb, grad_outputs=eye[:, None, :].expand(c, *out.shape),
+                                                       is_grads_batched=True, retain_graph=True)
+                    except RuntimeError:
+                        g_all = None
+                if g_all is not None:
+                    g = g_all.reshape(-1, d).to(torch.float64)
+                    G = g.T @ g if G is None else G + g.T @ g
+                    continue
+                for k in range(c):
+                    (g,) = torch.autograd.grad(out[:, k].sum(), xb, retain_graph=k < c - 1)
+                    g = g.to(torch.float64)
+                    G = g.T @ g if G is None else G + g.T @ g
     return G / n
 
 

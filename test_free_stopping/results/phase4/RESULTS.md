@@ -1,7 +1,8 @@
 # Phase 4 results
 
-Contents: the MNIST signal pilot (below), and a toy check of online AGOP estimators
-([last section](#agop-online-estimators-toy-check-2026-11-04)).
+Contents: the MNIST signal pilot (below), a toy check of online AGOP estimators
+([section](#agop-online-estimators-toy-check-2026-11-04)), and the F2 experiment on
+corpus runs ([last section](#f2-experiment-remaining-angle-bound-on-61-corpus-runs-2026-11-15)).
 
 ## Pilot: MNIST, 18 runs (2026-11-04)
 
@@ -95,3 +96,141 @@ arbitrary when the signal is flat plus noise. With its own gate, it is safe in t
 The bound is never premature, and stops 1.4k–5k steps after the true crossing.
 Full discussion: [AGOP.md](../../AGOP.md) §3–§5. Real AGOP traces are needed before
 choosing (AGOP.md §6).
+
+## F2 experiment: remaining-angle bound on 61 corpus runs (2026-11-15)
+
+**Run.** `molab/phase4_agop_study.py` (DESIGN.md §13.9), cuda, 227 min, 61/61 runs ok:
+MNIST 26, modular x+y 17, teacher–student 18 (28 grokkers, 18 fast, 10 late collapse,
+5 never; seed 0 plus seeds 1–2 of six grokkers). ~300 eval steps per run. Outputs on HF
+at `advay333/tfs`, `phase4/agop_study/` (traces, curves, plots, `settings_summary.csv`,
+`questions.csv`, `summary.md`). 324 estimator settings scored offline per run.
+
+**Verdict: the remaining-angle bound fails as a stopping rule.** No setting is both rarely
+premature and stopping in most runs, and none beats simply stopping at the horizon.
+
+| | premature | never stops | mean regret (never = horizon) |
+|---|---|---|---|
+| Stop at the horizon (B0 at T) | 0 | – | **0.042** (median 0.002) |
+| Best F2 setting by regret (W, lag 0.15, w 3, ε 0.03) | 0.08 | 0.82 | 0.050 |
+| Best F2 settings that stop in ≥ 80% of runs | 0.43–0.62 | 0.12–0.20 | 0.23–0.26 |
+| Default (M, lag 0.25, w 3, floor, ratio), ε 0.1, patience = ×4 in t, norm gate | 0.10 | 0.85 | 0.076 |
+
+Lowering the premature rate always pushed the never-stop rate toward 80–90%. Longer
+patience measured in log-time (R̂ < ε held over a factor 2 or 4 in t) and the norm gate
+both trade premature for never-stop the same way.
+
+**Answers to the questions.**
+- **Q1 (do the features move on the plateau?): yes.** On grokkers a median 20% of the
+  whole M path is travelled between memorization and t_ε, at a near-constant speed
+  (median κ·t = 0.29). The premise of F2 holds, and on the plateau itself R̂ is large or
+  ∞, as designed (MNIST AdamW α = 8: ω ≈ 5e-5 rad/step, flat from 2k to 30k steps).
+- **Q3 (does R̂ dip before t_ε?): yes, almost always. This is the failure.** R̂ fell
+  below 0.1 before t_ε in 42/54 runs (24/28 grokkers on the plateau). It is the
+  two-timescale case predicted in THEORY.md §4.3: right after memorization the feature
+  speed falls fast (κ·t ≈ 3.5 on MNIST), so the exponential extrapolation says "almost
+  done" (R̂ ≈ 0.03 rad) while 1.5 rad of feature motion is still to come.
+- **The norm gate does not catch it** because at the end of memorization the norm has
+  not started shrinking yet (Omnigrok's shrinkage starts later, ~5k steps on MNIST α = 8),
+  so the norm also looks settled.
+- **Bound validity:** at the stop, R̂ was below the true remaining angle in 95% of stops.
+  The exponential-tail assumption does not hold at the points where the rule fires.
+- **Q2 (tail shape):** neither exponential nor power law is clearly better (coefficient of
+  variation 0.46 for κ vs 0.44 for κ·t in the last 30% of runs).
+- **Q4 (noise floor):** small on MNIST (late scatter/lagged angle 0.18), but large on the
+  full-batch tasks: modular 0.90, teacher–student 0.59. That is Adam-family and
+  edge-of-stability jitter (THEORY.md §4.2): on modular the features never settle to a
+  point, so the true remaining angle stays at 0.3–0.5 rad to the end.
+- **Q6 (G vs M):** no real difference; per-layer weight directions (W) were slightly
+  better than either (fewer premature stops, more never-stops).
+- **Q8 (chord model):** a median 86% of post-memorization rows have D_chord < 0.05, so
+  the team's straight-line assumption is closer to true than expected on modular and
+  teacher–student, but not on MNIST grokkers (D_chord 0.05–0.17).
+
+**Caveat on the baseline.** Stopping at the horizon is hard to beat on this corpus: most
+runs hold their best test accuracy to the end (median horizon regret 0.002). Only late
+collapse (mean horizon regret 0.24) rewards stopping early, and that is where every
+stationarity signal is late by construction (METRICS.md §5).
+
+**What this means for F2.** The AGOP speed is a valid "not done yet" signal on the
+plateau (Q1), but extrapolating it into a remaining distance is not safe on real runs:
+the speed's history does not predict its future at the memorization–plateau handoff.
+Options are in the discussion with the user (2026-11-15).
+
+### Follow-up (2026-11-15): late-penalized score and settling tests, re-scored locally
+
+Same 61 traces, no new replay (`analyze_all` on the downloaded traces; the notebook's
+"analysis only" option reproduces it and uploads). Two changes:
+- **Score** (PLAN.md §5, the user's decision): cost_λ = regret + λ·max(0, τ − t_ε)/T,
+  never-stop scored at the horizon T.
+- **Two settling tests instead of extrapolation** (AGOP.md §5b): the MSD exponent α of
+  the feature path over a trailing window [t/f, t] (≈2 directed, ≈0 confined), and a
+  Geweke-style Z (early vs late segment means, over their standard errors).
+
+Mean over 61 runs (λ = 0.1 is the headline):
+
+| | premature | never | regret | cost λ=0.03 | **cost λ=0.1** | cost λ=0.3 |
+|---|---|---|---|---|---|---|
+| Oracle stop at t_ε (floor) | 0 | 0 | 0.008 | 0.008 | **0.008** | 0.008 |
+| Horizon (never stop) | 0 | 1 | 0.042 | 0.066 | **0.120** | 0.276 |
+| Best bound (W, lag 0.15, ε 0.03) | 0.08 | 0.82 | 0.050 | 0.070 | **0.117** | 0.250 |
+| Best MSD (G, f 2, α ≤ 0.5) | 0.21 | 0.52 | 0.060 | 0.072 | **0.101** | 0.183 |
+| Best Geweke (M, f 4, Z ≤ 5) | 0.15 | 0.75 | 0.047 | 0.064 | **0.104** | 0.219 |
+
+Per application, the best of each family at λ = 0.1 (horizon → best):
+MNIST 0.130 → 0.097 (Geweke W); modular 0.102 → 0.052 (bound M, ε 0.3, norm gate) and
+0.066 (Geweke M); teacher–student 0.123 → 0.079 (MSD M).
+
+**Reading.**
+- The settling tests beat the bound and the horizon, but only modestly: they close
+  ~15–20% of the gap between the horizon (0.120) and the oracle (0.008) overall, and up
+  to ~50% on modular. Premature stops drop for Geweke, not for MSD.
+- **Why the gain is small: the features keep drifting after test accuracy has
+  settled.** On MNIST, t_ε comes at a median 21% of the horizon, but the M path is still
+  directed (α > 1) in 88% of the eval steps after t_ε, and the Geweke Z at the last step
+  is 76 (jitter gives ~1). 27/61 runs are still directed at the very last step. On
+  modular and teacher–student the features do settle (directed in 25% of post-t_ε
+  steps). So "the features have stopped moving" is a much later event than "the test
+  accuracy has stopped improving" in the Omnigrok-style MNIST runs. Plausible mechanism:
+  the norm keeps shrinking and the features keep sharpening after accuracy saturates.
+  Any F2 rule that waits for the features to settle is late there by construction.
+
+### Do the features settle when test accuracy does? Per dataset (2026-11-15)
+
+From the same 61 traces. "Angle to final" = angle between M = G^{1/2} at a step and M at
+the last step; alignment = its cosine (Mallinar's measure). The **F2 oracle** stops at
+the first step after which M stays within δ of its final value: no online F2 rule can do
+better, so it bounds what F2 can achieve on each dataset. Costs at λ = 0.1, means.
+
+| | MNIST (26) | modular (17) | teacher–student (18) |
+|---|---|---|---|
+| t_ε as a fraction of the horizon (median) | 0.21 | 0.02 | 0.07 |
+| Angle memorization → final (median, rad) | 1.36 | 1.08 | **0.012** |
+| Angle t_ε → final (median, rad) | **1.11** | 0.67 | 0.003 |
+| Alignment at t_ε (median) | **0.45** | 0.78 | 1.00 |
+| Share of the memorization→final angle still ahead at t_ε | 85% | 62% | – |
+| Runs with angle t_ε → final > 0.3 rad | 77% | 94% | 0% |
+| Change in log‖w‖ after t_ε (median) | −0.20 | −0.05 | −0.04 |
+| erank(G) at the end / at t_ε (median) | **0.31** | 1.19 | 1.00 |
+| Cost: oracle stop at t_ε / horizon | 0.009 / 0.130 | 0.006 / 0.102 | 0.009 / 0.123 |
+| Cost: F2 oracle, δ = 0.05 / 0.1 / 0.2 / 0.3 | 0.128 / 0.140 / 0.133 / 0.131 | 0.068 / 0.056 / **0.052** / 0.069 | 0.63–0.81 (stops at step 0) |
+| Best online F2 rule found | 0.097 (Geweke W) | **0.052** (bound M ε 0.3 + norm gate) | 0.079 (MSD M) |
+
+**Three different situations.**
+- **MNIST: the features keep changing long after accuracy settles, and F2 cannot work
+  there even in principle.** At t_ε the features are only 0.45-aligned with their final
+  state. After t_ε the norm keeps shrinking (Adam+L2 and SGD-family: log‖w‖ −0.6 to −0.8)
+  and the AGOP compresses to ~1/3 of its effective rank, without changing predictions
+  (Spearman 0.59 between post-t_ε feature angle and post-t_ε norm change, MNIST +
+  modular). Even the F2 oracle stops at 84–100% of the horizon and does not beat
+  training to the end.
+- **Modular: F2 works as well as it can.** The features also move after t_ε (alignment
+  0.78), but much of that is a persistent oscillation, not a drift: the same runs
+  oscillate in test accuracy (Adam / edge-of-stability, Q4 floor ratio 0.90), so M never
+  converges to a point. The F2 oracle halves the horizon's cost (0.102 → 0.052, 6%
+  premature), and the best online rule already reaches it (0.052). Caveat: that rule
+  was chosen among ~400 settings on these 17 runs, so the number is optimistic until it
+  is calibrated on seeds {0, 1} and scored on {2, 3} (PLAN §5).
+- **Teacher–student: the input AGOP carries no signal.** It is 5 × 5 and moves only
+  0.012 rad over the whole run: the teacher uses all five input directions, so learning
+  does not rotate the input-space features. Every F2 variant is uninformative there (the
+  oracle "settles" at step 0); the 0.079 of the best rule is threshold luck.

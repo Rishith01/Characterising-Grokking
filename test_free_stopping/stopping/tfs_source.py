@@ -180,5 +180,9 @@ class HfRunSource(RunSource):
 
     def open(self, run_id: str, needs: Iterable[str]) -> TfsRunHandle:
         app = self.manifest[run_id]["app"]
-        run_dir = pull_run(self.remote, app, run_id, self.work, parts=parts_for(needs))
+        parts = parts_for(needs)
+        if self.handle_kw.get("verify_replay") and "keyframes" in parts:
+            # replay verification compares telemetry, train predictions and fingerprints too
+            parts = sorted(set(parts) | {"preds", "fingerprints"})
+        run_dir = pull_run(self.remote, app, run_id, self.work, parts=parts)
         return TfsRunHandle(run_dir, self.device, delete_on_close=not self.keep, **self.handle_kw)

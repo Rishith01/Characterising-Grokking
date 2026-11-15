@@ -49,6 +49,8 @@ PATIENCE = 3  # consecutive eval rows below the threshold
 DEFAULT = {"obj": "M", "lag": 0.25, "w": 3, "floor": True, "est": "ratio"}  # the setting the plots show
 _DEFAULT_KEY = tuple(DEFAULT[k] for k in ("obj", "lag", "w", "floor", "est"))
 CATEGORIES = ("grokker", "fast", "late_collapse")
+LAMBDAS = (0.03, 0.1, 0.3)  # late-stop penalty per horizon of extra training (score_stop)
+MAIN_LAMBDA = 0.1
 
 
 # ---- geometry: angles from squared chord distances --------------------------------------
@@ -236,6 +238,170 @@ def first_stop(steps: np.ndarray, cond: np.ndarray, patience: int = PATIENCE) ->
     return None
 
 
+# ---- settling tests (2026-11-15) --------------------------------------------------------
+#
+# The bound failed on real runs because it extrapolates the speed's recent trend, and the
+# speed falls fast at the end of memorization although a slow drift follows (RESULTS.md,
+# F2 experiment). These tests extrapolate nothing; they ask whether the path over a
+# trailing window [t / factor, t] (log-time, so lr-free) is *confined* (settled: jitter
+# around a point) or *directed* (still drifting), the standard question of
+#  - mean-squared-displacement analysis of trajectories: MSD(lag) ~ lag^alpha with
+#    alpha = 2 for directed motion, 1 for a free random walk, ~0 for confined motion
+#    (Michalet 2010; Metzler et al. 2014);
+#  - MCMC convergence diagnostics: Geweke 1992 compares the mean of an early and a late
+#    segment of the chain, in units of their standard errors (Gelman & Rubin 1992 is the
+#    multi-chain version). Here: the angle between the two segments' mean directions,
+#    over the squared standard error of those means.
+# Both are computed from the stored squared chord distances alone.
+
+SETTLE_FACTORS = (2.0, 4.0)  # trailing window [t / factor, t]
+MSD_THRESHOLDS = (0.5, 1.0)  # settled when the MSD exponent alpha <= threshold
+GEWEKE_THRESHOLDS = (2.0, 5.0, 20.0)  # settled when Z <= threshold (iid jitter: Z ~ 1)
+SETTLE_OBJECTS = ("M", "G", "W")
+MIN_WINDOW = 6
+
+
+def _trail(steps: np.ndarray, i: int, factor: float) -> np.ndarray:
+    lo = int(np.searchsorted(steps, steps[i] / factor, side="left"))
+    return np.arange(lo, i + 1)
+
+
+def _msd_slope(lag: np.ndarray, val: np.ndarray, nbins: int) -> float:
+    """Slope of log MSD against log lag over the longest lags of the window
+    (lags in [L/8, L]: short lags are dominated by jitter)."""
+    L = lag.max()
+    edges = np.geomspace(L / 8, L, nbins + 1)
+    mids, ms = [], []
+    for e0, e1 in zip(edges[:-1], edges[1:]):
+        m = (lag >= e0) & (lag <= e1)
+        if m.any():
+            mids.append(lag[m].mean())
+            ms.append(val[m].mean())
+    if len(ms) < 3:
+        return float("nan")
+    ms = np.asarray(ms)
+    if ms.max() <= 1e-14:
+        return 0.0  # no motion at all
+    x, y = np.log(mids), np.log(np.maximum(ms, 1e-300))
+    x = x - x.mean()
+    return float((x * (y - y.mean())).sum() / (x * x).sum())
+
+
+def msd_exponent(steps: np.ndarray, D: np.ndarray, factor: float, nbins: int = 4,
+                 min_pts: int = MIN_WINDOW) -> np.ndarray:
+    """MSD exponent alpha of the path over each trailing window; D holds squared chord
+    distances (the squared displacement between two points)."""
+    out = np.full(len(steps), np.nan)
+    for i in range(len(steps)):
+        W = _trail(steps, i, factor)
+        if len(W) < min_pts:
+            continue
+        a, b = np.triu_indices(len(W), 1)
+        a, b = W[a], W[b]
+        out[i] = _msd_slope((steps[b] - steps[a]).astype(float), D[a, b], nbins)
+    return out
+
+
+def geweke_z(steps: np.ndarray, D: np.ndarray, factor: float, min_half: int = 3) -> np.ndarray:
+    """Geweke-style Z over each trailing window: split at t / sqrt(factor) into an early
+    segment A and a late segment B; Z = chord^2(mean A, mean B) / (s_A^2/n_A + s_B^2/n_B),
+    with s^2 the segment's total variance (mean squared distance to its mean, unbiased).
+    Z ~ 1 for independent jitter around a point; large for a drift."""
+    out = np.full(len(steps), np.nan)
+    for i in range(len(steps)):
+        W = _trail(steps, i, factor)
+        split = steps[i] / math.sqrt(factor)
+        A, B = W[steps[W] < split], W[steps[W] >= split]
+        if len(A) < min_half or len(B) < min_half:
+            continue
+        c2 = mean_chord2(D, A, B)
+        vA = D[np.ix_(A, A)].mean() / 2 * len(A) / (len(A) - 1)
+        vB = D[np.ix_(B, B)].mean() / 2 * len(B) / (len(B) - 1)
+        den = vA / len(A) + vB / len(B)
+        out[i] = c2 / den if den > 0 else (0.0 if c2 == 0 else np.inf)
+    return out
+
+
+def _scalar_d2(y: np.ndarray) -> np.ndarray:
+    """Squared differences, so the scalar log-norm goes through the same tests."""
+    return (y[:, None] - y[None, :]) ** 2
+
+
+def _scalar_geweke(steps: np.ndarray, y: np.ndarray, factor: float, min_half: int = 3) -> np.ndarray:
+    out = np.full(len(steps), np.nan)
+    for i in range(len(steps)):
+        W = _trail(steps, i, factor)
+        split = steps[i] / math.sqrt(factor)
+        A, B = y[W[steps[W] < split]], y[W[steps[W] >= split]]
+        if len(A) < min_half or len(B) < min_half:
+            continue
+        den = A.var(ddof=1) / len(A) + B.var(ddof=1) / len(B)
+        d2 = (A.mean() - B.mean()) ** 2
+        out[i] = d2 / den if den > 0 else (0.0 if d2 == 0 else np.inf)
+    return out
+
+
+def settle_stats(tr: PathTrace, test: str, obj: str, factor: float) -> np.ndarray:
+    """The test statistic for one object (W: max over layers, all must be settled)."""
+    mats = tr.D["W"] if obj == "W" else [tr.D[obj]]
+    f = msd_exponent if test == "msd" else geweke_z
+    return np.max(np.vstack([f(tr.steps, D, factor) for D in mats]), axis=0)
+
+
+def settle_rows(tr: PathTrace, curves: dict, info: dict) -> list[dict]:
+    """Score every settling-test setting: test x object x window factor x threshold x
+    norm gate (the same test on log |w|, same threshold)."""
+    rows = []
+    logn = np.log(np.maximum(tr.w_norm, 1e-300))
+    for test, thresholds in (("msd", MSD_THRESHOLDS), ("geweke", GEWEKE_THRESHOLDS)):
+        for factor in SETTLE_FACTORS:
+            if test == "msd":
+                norm_stat = msd_exponent(tr.steps, _scalar_d2(logn), factor)
+            else:
+                norm_stat = _scalar_geweke(tr.steps, logn, factor)
+            for obj in SETTLE_OBJECTS:
+                stat = settle_stats(tr, test, obj, factor)
+                for thr in thresholds:
+                    for gate in GATES:
+                        cond = np.nan_to_num(stat, nan=np.inf) <= thr
+                        if gate == "norm":
+                            cond &= np.nan_to_num(norm_stat, nan=np.inf) <= thr
+                        stop = first_stop(tr.steps, cond)
+                        rows.append({**_ids(info), "family": test,
+                                     "setting": f"{test} {obj} factor={factor:g} thr={thr:g} gate={gate}",
+                                     "obj": obj, "factor": factor, "thr": thr, "gate": gate,
+                                     **score_stop(curves, stop, info)})
+    return rows
+
+
+# ---- scoring ----------------------------------------------------------------------------
+
+def score_stop(curves: dict, stop: Optional[int], info: dict) -> dict:
+    """Score one stop. A rule that never stops trains to the horizon T (the last logged
+    step), so it is scored as a stop at T. Besides the regret max_test - acc(tau), every
+    step trained after t_eps (the first step within EPS of the best test accuracy) costs
+    lambda / T:
+
+        cost_lambda = (max_test - acc(tau)) + lambda * max(0, tau - t_eps) / T
+
+    so training the whole horizon after converging at once costs about lambda in every
+    task, whatever its length. Dividing by T keeps the penalty comparable across tasks
+    with different horizons and learning rates."""
+    T = int(curves["step"][-1])
+    tau = T if stop is None else int(stop)
+    acc = _acc_at(curves, tau)
+    max_test, t_eps = info.get("max_test"), info.get("t_eps")
+    regret = (max_test - acc) if max_test is not None else np.nan
+    late = max(0, tau - t_eps) / T if t_eps is not None else np.nan
+    out = {"stop": stop, "test_at_stop": acc, "never": stop is None,
+           "premature": stop is not None and t_eps is not None and stop < t_eps,
+           "rel_lag": (stop - t_eps) / max(t_eps, 1) if stop is not None and t_eps is not None else np.nan,
+           "regret": regret, "late": late}
+    for lam in LAMBDAS:
+        out[f"cost_{lam}"] = regret + lam * late
+    return out
+
+
 # ---- one run ----------------------------------------------------------------------------
 
 @dataclass
@@ -325,24 +491,26 @@ def analyze_run(df: pd.DataFrame, curves: dict, info: dict) -> tuple[list[dict],
                     cond &= np.nan_to_num(s["R_norm"], nan=np.inf) <= EPS_NORM
                 stop = first_stop(steps, cond)
                 i = None if stop is None else int(np.searchsorted(steps, stop))
-                acc = _acc_at(curves, stop)
                 rows.append({
-                    "run_id": info["run_id"], "app": info.get("app"), "category": info.get("category"),
-                    "optim": info.get("optim"), "obj": obj, "lag": lag, "w": w, "floor": floor, "est": est, "eps": eps,
-                    "gate": gate, "stop": stop, "test_at_stop": acc,
-                    "regret": (max_test - acc) if stop is not None and max_test is not None else np.nan,
-                    "never": stop is None,
-                    "premature": stop is not None and t_eps is not None and stop < t_eps,
-                    "rel_lag": (stop - t_eps) / max(t_eps, 1) if stop is not None and t_eps is not None else np.nan,
+                    **_ids(info), "family": "bound",
+                    "setting": f"bound {obj} lag={lag} w={w} floor={int(floor)} est={est} eps={eps} gate={gate}",
+                    "obj": obj, "lag": lag, "w": w, "floor": floor, "est": est, "eps": eps, "gate": gate,
+                    **score_stop(curves, stop, info),
                     "R_at_stop": float(s["R"][i]) if i is not None else np.nan,
                     "true_angle_at_stop": float(s["true"][i]) if i is not None else np.nan,
                     "bound_ok": bool(s["R"][i] >= s["true"][i]) if i is not None else np.nan,
                 })
+    rows += settle_rows(tr, curves, info)
     q = question_row(tr, default, info)
     return rows, q, {"steps": steps, "w_norm": tr.w_norm, "erank_G": tr.erank_G, **default,
                      "series_G": series(tr, "G", *_DEFAULT_KEY[1:]),
                      "series_W": series(tr, "W", *_DEFAULT_KEY[1:]),
                      "d_chord": _dchord_for(tr, info)}
+
+
+def _ids(info: dict) -> dict:
+    return {"run_id": info["run_id"], "app": info.get("app"), "category": info.get("category"),
+            "optim": info.get("optim")}
 
 
 def _dchord_for(tr: PathTrace, info: dict) -> np.ndarray:
@@ -408,21 +576,31 @@ def question_row(tr: PathTrace, s: dict, info: dict) -> dict:
 
 # ---- many runs --------------------------------------------------------------------------
 
+def baseline_rows(curves: dict, info: dict) -> list[dict]:
+    """Reference stops scored the same way: train to the horizon, and stop exactly at
+    t_eps (an oracle, and the best any rule can do on this score)."""
+    return [{**_ids(info), "family": "baseline", "setting": "horizon (never stop)", **score_stop(curves, None, info)},
+            {**_ids(info), "family": "baseline", "setting": "oracle stop at t_eps",
+             **score_stop(curves, info.get("t_eps"), info)}]
+
+
 def summarize_settings(settings: pd.DataFrame) -> pd.DataFrame:
-    """One row per (app or "all", setting): premature / never / bound-violation rates and
-    regret and lag statistics."""
-    keys = ["obj", "lag", "w", "floor", "est", "eps", "gate"]
-    frames = [settings, settings.assign(app="all")]
-    df = pd.concat(frames, ignore_index=True)
-    g = df.groupby(["app"] + keys, dropna=False)
-    out = g.agg(runs=("run_id", "count"), premature=("premature", "mean"), never=("never", "mean"),
-                regret_median=("regret", "median"), regret_mean=("regret", "mean"),
-                rel_lag_median=("rel_lag", "median"),
-                bound_violation=("bound_ok", lambda x: float((x == False).sum()) / max(int(x.notna().sum()), 1)),  # noqa: E712
-                ).reset_index()
-    for c in ("premature", "never", "regret_median", "regret_mean", "rel_lag_median", "bound_violation"):
-        out[c] = out[c].astype(float).round(3)
-    return out.sort_values(["app", "premature", "never", "regret_mean"]).reset_index(drop=True)
+    """One row per (app or "all", setting): premature and never rates, regret, the
+    late-penalized costs and lag statistics, sorted by the main cost."""
+    df = pd.concat([settings, settings.assign(app="all")], ignore_index=True)
+    if "bound_ok" not in df:
+        df["bound_ok"] = np.nan
+    g = df.groupby(["app", "family", "setting"], dropna=False)
+    agg = {"runs": ("run_id", "count"), "premature": ("premature", "mean"), "never": ("never", "mean"),
+           "regret_mean": ("regret", "mean"), "regret_median": ("regret", "median"),
+           "late_mean": ("late", "mean"), "rel_lag_median": ("rel_lag", "median"),
+           "bound_violation": ("bound_ok", lambda x: float((x == False).sum()) / max(int(x.notna().sum()), 1))}  # noqa: E712
+    for lam in LAMBDAS:
+        agg[f"cost_{lam}"] = (f"cost_{lam}", "mean")
+    out = g.agg(**agg).reset_index()
+    for c in out.columns[4:]:
+        out[c] = out[c].astype(float).round(4)
+    return out.sort_values(["app", f"cost_{MAIN_LAMBDA}"]).reset_index(drop=True)
 
 
 def headline(q: pd.DataFrame, summary: pd.DataFrame) -> str:
@@ -442,12 +620,16 @@ def headline(q: pd.DataFrame, summary: pd.DataFrame) -> str:
     for app, g in q.groupby("app"):
         lines.append(f"- **Q4 (noise floor), {app}:** median late scatter / lagged angle = "
                      f"{_median(g['floor_ratio_late']):.2f} (above ~0.5 the floor dominates the measured speed).")
-    best = summary[(summary["app"] == "all") & (summary["obj"] == "M")].head(5)
-    lines.append("- **Q5-Q7:** best five M settings overall (fewest premature stops, then never, then regret) are "
-                 "in the table below; compare obj G (Q6) and gate norm vs none (Q7) in settings_summary.csv.")
+    allr = summary[summary["app"] == "all"]
+    best = pd.concat([allr[allr["family"] == "baseline"]]
+                     + [allr[allr["family"] == f].head(3) for f in allr["family"].unique() if f != "baseline"])
+    lines.append(f"- **Q5-Q7:** the table below has the baselines and the best three settings of each family by "
+                 f"mean cost at lambda = {MAIN_LAMBDA} (regret + lambda x training after t_eps / horizon); "
+                 f"settings_summary.csv has every setting.")
     lines.append(f"- **Q8 (chord model):** median share of post-memorization rows with D_chord < 0.05 = "
                  f"{_median(q['dchord_frac_below_0.05']):.2f}.")
-    return "\n".join(lines) + "\n\n" + rows_to_markdown(best.to_dict("records"))
+    cols = ["family", "setting", "runs", "premature", "never", "regret_mean", "late_mean"] + [f"cost_{l}" for l in LAMBDAS]
+    return "\n".join(lines) + "\n\n" + rows_to_markdown(best[cols].to_dict("records"))
 
 
 def plot_run(curves: dict, s: dict, info: dict, settings: pd.DataFrame, out_path: Path) -> Path:
@@ -464,6 +646,7 @@ def plot_run(curves: dict, s: dict, info: dict, settings: pd.DataFrame, out_path
         if t:
             for a in ax:
                 a.axvline(max(t, 1), color=c, lw=0.8, ls=":")
+    settings = settings[settings["family"] == "bound"]
     me = settings[(settings["obj"] == DEFAULT["obj"]) & (settings["lag"] == DEFAULT["lag"])
                   & (settings["w"] == DEFAULT["w"]) & (settings["floor"] == DEFAULT["floor"])
                   & (settings["est"] == DEFAULT["est"]) & (settings["eps"] == 0.1)]
@@ -649,7 +832,7 @@ def analyze_all(selection: list[dict], store: TraceStore, cfg: AgopPathConfig, w
         try:
             curves = json.loads(cpath.read_text())
             rows, q, s = analyze_run(store.read(cfg, rid), curves, r)
-            all_rows += rows
+            all_rows += rows + baseline_rows(curves, r)
             qrows.append({**q, "role": r.get("role")})
             if plots:
                 plot_paths.append(plot_run(curves, s, r, pd.DataFrame(rows), out_dir / "plots" / r["app"] / f"{rid}.png"))

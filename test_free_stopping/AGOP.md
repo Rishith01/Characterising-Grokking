@@ -470,6 +470,54 @@ s = 0.947, which is a rounding-level miss on the paper's own model.
 
 ---
 
+## 5b. After the corpus experiment: settling tests instead of extrapolation (2026-11-15)
+
+**What failed.** On 61 corpus runs (results/phase4/RESULTS.md) the bound stopped too early
+in about half the runs. The features *do* keep moving on the plateau, but right after
+memorization their speed falls fast, so any extrapolation of the speed's trend says
+"almost done" while most of the feature motion is still ahead. The flaw is the
+extrapolation, not the feature matrix.
+
+**Idea.** Don't predict the future speed. Ask a question about the recent *shape* of the
+path, over a trailing window [t/f, t] (log-time, so it has no learning-rate unit): is
+the feature matrix still **going somewhere** (directed motion), or is it **staying in
+place** apart from noise (confined motion)? Two standard tools answer exactly this:
+
+1. **Mean-squared displacement (MSD) scaling**, from trajectory analysis in physics and
+   biophysics (single-particle tracking; Michalet 2010 †, Metzler et al. 2014 †). For two
+   points of the path a lag ℓ apart, MSD(ℓ) = mean squared distance. Then
+   MSD(ℓ) ∝ ℓ^α with α ≈ 2 for directed motion (drift), α ≈ 1 for a random walk, α ≈ 0
+   for motion confined around a point. **Settled ⇔ α small.** On the unit sphere the
+   squared chord distance is exactly the squared displacement, so every MSD is already in
+   the trace. The fit uses the longest lags of the window (ℓ ∈ [L/8, L]), where a drift
+   shows and jitter does not.
+2. **Geweke's convergence diagnostic** (Geweke 1992 †; Gelman & Rubin 1992 † is the
+   multi-chain version), the standard test for whether an MCMC chain has reached
+   stationarity from its own history. Split the window into an early and a late segment
+   and compare their means, in units of their standard errors:
+   Z = ‖mean_late − mean_early‖² / (s²_early/n_early + s²_late/n_late), with s² the
+   segment's total variance. Z ≈ 1 for jitter around a fixed point; Z ≫ 1 for a drift.
+   **Settled ⇔ Z small.** Also computed from the stored distances alone.
+
+**Why these avoid the failure.** At the end of memorization the path is still drifting
+slowly. Over a window [t/2, t], that drift makes the longest-lag displacements grow like
+ℓ² (α ≈ 2) and separates the two segment means (Z large), however fast the speed fell
+just before. Neither test assumes anything about the future. Adam's jitter on full-batch
+tasks reads as confined (α ≈ 0, Z ≈ 1), which is the right answer there: the features have
+stopped going anywhere. Unit test: on a synthetic fast-transient-then-drift path the
+bound says "done" (R̂ < 0.1) while the MSD exponent stays above 1
+(`tests/test_agop.py`).
+
+**What they cannot do.** They detect "has settled", not "will not move again": a second
+transition after a quiet stretch is invisible to any causal test (§3.2 f). And late
+collapse still needs the separate guards of METRICS §5.
+
+Both are evaluated offline on the stored traces (`settle_rows` in
+`stopping/agop_study.py`): object (M, G, W) × window factor (2, 4) × threshold × norm
+gate (same test on log‖w‖).
+
+---
+
 ## 6. Decisions for the user
 
 1. **Signal definition for F2.** Replace METRICS F2's "consecutive change" with the

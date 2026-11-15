@@ -355,7 +355,17 @@ Recorded in full in METRICS.md; the points that change the proposal above:
 
 Computed per run, then aggregated per application and overall.
 
-- **Regret** (main score): `max_acc − acc(τ)`
+- **Late-penalized cost** (main score from 2026-11-15, user's decision):
+  `cost_λ = (max_acc − acc(τ)) + λ · max(0, τ − t_ε) / T`, where T is the horizon and a
+  rule that never stops is scored as stopping at T. Every step trained after reaching
+  within ε of the best accuracy costs λ/T, so training the whole horizon after converging
+  at once costs ≈ λ in every task (dividing by T keeps tasks with different horizons and
+  learning rates comparable). Reported for λ ∈ {0.03, 0.1, 0.3}; λ = 0.1 is the headline.
+  Without this term, "never stop" is nearly unbeatable on our corpus (median horizon
+  regret 0.002; F2 experiment, results/phase4/RESULTS.md). Reference rows: "horizon"
+  (never stop) and "oracle stop at t_ε" (cost = regret at t_ε, the floor).
+  Implemented in `stopping.agop_study.score_stop`; Phase 5's `score.py` should reuse it.
+- **Regret**: `max_acc − acc(τ)` (never-stopped runs: at the horizon)
 - **ε-pass**: `acc(τ) ≥ max_acc − ε`, with ε = 0.01
 - **Lag**: `τ − t_ε`, where `t_ε` is the first step with `acc ≥ max_acc − ε`
 - **Premature-stop rate**: fraction of runs with `τ < t_ε`
