@@ -346,7 +346,7 @@ The held-out score is the number reported. We did this twice, for two kinds of n
 
 | Test | Tuning runs | Held-out runs | What it asks |
 |---|---|---|---|
-| **Test A: new seeds** | seeds 1–2 of every setting (modular 80 runs, MNIST 32) | seeds 3–4 of the same settings (modular 80, MNIST 32) | Does the rule work on new runs of familiar settings? |
+| **Test A: new seeds** | seeds 0–1 of every setting (modular 80 runs, MNIST 32) | seeds 2–3 of the same settings (modular 80, MNIST 32) | Does the rule work on new runs of familiar settings? |
 | **Test B, modular: new operations** | all x + y runs (96) | all x × y and x ÷ y runs (64) | Does it work on a task it was not tuned on? |
 | **Test B, MNIST: a deeper network** | 3-layer runs (32) | 8-layer runs on 4× more data (32) | Does it work on a different architecture? |
 
@@ -354,7 +354,7 @@ The held-out score is the number reported. We did this twice, for two kinds of n
 computed on the held-out runs only.
 
 1. **The unit is a setting, not a run.** The held-out runs are grouped by
-   hyperparameter setting. Each setting contributes 2 runs in Test A (seeds 3–4) and 4
+   hyperparameter setting. Each setting contributes 2 runs in Test A (seeds 2–3) and 4
    runs in Test B. The groups are:
 
    | | Modular | MNIST |

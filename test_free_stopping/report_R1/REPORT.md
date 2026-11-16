@@ -221,7 +221,7 @@ runs**, keep the best, and score that one setting on **held-out runs** it never 
 
 | Test | Tuning runs | Held-out runs | Question |
 |---|---|---|---|
-| **A: new seeds** (every task) | seeds 1–2 of every setting | seeds 3–4 of the same settings | new runs of familiar settings? |
+| **A: new seeds** (every task) | seeds 0–1 of every setting | seeds 2–3 of the same settings | new runs of familiar settings? |
 | **B, modular** | x + y (96) | x × y and x ÷ y (64) | a new task? |
 | **B, MNIST** | 3-layer network (32) | 8-layer network on 4× more data (32) | a new architecture? |
 | **B, teacher–student** | N = 50 and 100 (64) | N = 400 (32) | more data? |

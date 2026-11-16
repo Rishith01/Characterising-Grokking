@@ -2,7 +2,8 @@
 
 Causal, test-data-free stopping criteria that survive grokking.
 
-**New here? Start with [RAMPUP.md](RAMPUP.md)**, then [PLAN.md](PLAN.md) (what we run and
+**Results so far in one place: [SUMMARY.md](SUMMARY.md)** (F2, N1, R1, with the
+expected questions). **New here? Start with [RAMPUP.md](RAMPUP.md)**, then [PLAN.md](PLAN.md) (what we run and
 why) and [DESIGN.md](DESIGN.md) (how the code works). Metric definitions are in
 [METRICS.md](METRICS.md); the AGOP background and the proposed F2 signal are in
 [AGOP.md](AGOP.md).

@@ -282,7 +282,7 @@ These are the load-bearing design rules. Each one has a test.
   independent; overlapping score CIs do not mean a tie, the paired CI decides.
 - **Decision grids differ between studies.** Study A checks rules every 500 steps, the F2
   study at 223 log/uniform points. The fixed fraction at 40% stops at step 40,000 vs 41,600,
-  and many x*y, x/y grokkers jump in between: its Test-B score is 0.125 vs 0.090. Compare
+  and many x*y, x/y grokkers jump in between: its Test-B score is 0.126 vs 0.090. Compare
   rules only within a study, and check wins against every fixed fraction, not just the tuned one.
 - **MNIST has dead pixels.** Pixels that are 0 in every training image get no data
   gradient, so under weight decay their first-layer weights decay on their own. Any
