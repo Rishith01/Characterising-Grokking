@@ -1,0 +1,73 @@
+lambda,app,split,family,setting
+0.03,modular,seeds,fixed_frac,fixed_frac c=1.0
+0.03,modular,seeds,r1,R1 last growing f=0.25 eps=0.001
+0.03,modular,seeds,r1_guard,R1 last growing f=0.25 eps=0.003 guard
+0.03,modular,seeds,R1 best,R1 last growing f=0.25 eps=0.003 guard
+0.03,modular,operation,fixed_frac,fixed_frac c=1.0
+0.03,modular,operation,r1,R1 all fixed c=0.02 eps=0.003
+0.03,modular,operation,r1_guard,R1 all fixed c=0.02 eps=0.003 guard
+0.03,modular,operation,R1 best,R1 all fixed c=0.02 eps=0.003
+0.03,mnist,seeds,fixed_frac,fixed_frac c=0.4
+0.03,mnist,seeds,r1,R1 last fixed c=0.1 eps=0.01
+0.03,mnist,seeds,r1_guard,R1 last growing f=0.5 eps=0.003 guard
+0.03,mnist,seeds,R1 best,R1 last growing f=0.5 eps=0.003 guard
+0.03,mnist,depth,fixed_frac,fixed_frac c=0.4
+0.03,mnist,depth,r1,R1 last fixed c=0.1 eps=0.003
+0.03,mnist,depth,r1_guard,R1 last fixed c=0.1 eps=0.01 guard
+0.03,mnist,depth,R1 best,R1 last fixed c=0.1 eps=0.01 guard
+0.03,teacher_student,seeds,fixed_frac,fixed_frac c=1.0
+0.03,teacher_student,seeds,r1,R1 all fixed c=0.1 eps=0.001
+0.03,teacher_student,seeds,r1_guard,R1 last growing f=0.5 eps=0.001 guard
+0.03,teacher_student,seeds,R1 best,R1 last growing f=0.5 eps=0.001 guard
+0.03,teacher_student,size,fixed_frac,fixed_frac c=0.7
+0.03,teacher_student,size,r1,R1 all fixed c=0.1 eps=0.001
+0.03,teacher_student,size,r1_guard,R1 last growing f=0.5 eps=0.001 guard
+0.03,teacher_student,size,R1 best,R1 last growing f=0.5 eps=0.001 guard
+0.1,modular,seeds,fixed_frac,fixed_frac c=0.5
+0.1,modular,seeds,r1,R1 last fixed c=0.05 eps=0.003
+0.1,modular,seeds,r1_guard,R1 last fixed c=0.02 eps=0.01 guard
+0.1,modular,seeds,R1 best,R1 last fixed c=0.02 eps=0.01 guard
+0.1,modular,operation,fixed_frac,fixed_frac c=0.4
+0.1,modular,operation,r1,R1 last fixed c=0.02 eps=0.003
+0.1,modular,operation,r1_guard,R1 last fixed c=0.02 eps=0.003 guard
+0.1,modular,operation,R1 best,R1 last fixed c=0.02 eps=0.003
+0.1,mnist,seeds,fixed_frac,fixed_frac c=0.4
+0.1,mnist,seeds,r1,R1 last fixed c=0.1 eps=0.01
+0.1,mnist,seeds,r1_guard,R1 last fixed c=0.1 eps=0.1 guard
+0.1,mnist,seeds,R1 best,R1 last fixed c=0.1 eps=0.1 guard
+0.1,mnist,depth,fixed_frac,fixed_frac c=0.4
+0.1,mnist,depth,r1,R1 all fixed c=0.1 eps=0.1
+0.1,mnist,depth,r1_guard,R1 last fixed c=0.05 eps=0.1 guard
+0.1,mnist,depth,R1 best,R1 last fixed c=0.05 eps=0.1 guard
+0.1,teacher_student,seeds,fixed_frac,fixed_frac c=0.5
+0.1,teacher_student,seeds,r1,R1 all fixed c=0.1 eps=0.001
+0.1,teacher_student,seeds,r1_guard,R1 last growing f=0.5 eps=0.001 guard
+0.1,teacher_student,seeds,R1 best,R1 last growing f=0.5 eps=0.001 guard
+0.1,teacher_student,size,fixed_frac,fixed_frac c=0.5
+0.1,teacher_student,size,r1,R1 mean fixed c=0.1 eps=0.003
+0.1,teacher_student,size,r1_guard,R1 last fixed c=0.1 eps=0.03 guard
+0.1,teacher_student,size,R1 best,R1 last fixed c=0.1 eps=0.03 guard
+0.3,modular,seeds,fixed_frac,fixed_frac c=0.5
+0.3,modular,seeds,r1,R1 last fixed c=0.02 eps=0.01
+0.3,modular,seeds,r1_guard,R1 last fixed c=0.02 eps=0.01 guard
+0.3,modular,seeds,R1 best,R1 last fixed c=0.02 eps=0.01 guard
+0.3,modular,operation,fixed_frac,fixed_frac c=0.4
+0.3,modular,operation,r1,R1 last fixed c=0.05 eps=0.01
+0.3,modular,operation,r1_guard,R1 last fixed c=0.05 eps=0.01 guard
+0.3,modular,operation,R1 best,R1 last fixed c=0.05 eps=0.01
+0.3,mnist,seeds,fixed_frac,fixed_frac c=0.3
+0.3,mnist,seeds,r1,R1 mean fixed c=0.1 eps=0.1
+0.3,mnist,seeds,r1_guard,R1 mean fixed c=0.05 eps=0.1 guard
+0.3,mnist,seeds,R1 best,R1 mean fixed c=0.05 eps=0.1 guard
+0.3,mnist,depth,fixed_frac,fixed_frac c=0.3
+0.3,mnist,depth,r1,R1 all fixed c=0.01 eps=0.01
+0.3,mnist,depth,r1_guard,R1 mean fixed c=0.01 eps=0.03 guard
+0.3,mnist,depth,R1 best,R1 mean fixed c=0.01 eps=0.03 guard
+0.3,teacher_student,seeds,fixed_frac,fixed_frac c=0.2
+0.3,teacher_student,seeds,r1,R1 last fixed c=0.1 eps=0.03
+0.3,teacher_student,seeds,r1_guard,R1 last fixed c=0.05 eps=0.03 guard
+0.3,teacher_student,seeds,R1 best,R1 last fixed c=0.1 eps=0.03
+0.3,teacher_student,size,fixed_frac,fixed_frac c=0.2
+0.3,teacher_student,size,r1,R1 last fixed c=0.1 eps=0.1
+0.3,teacher_student,size,r1_guard,R1 last fixed c=0.1 eps=0.1 guard
+0.3,teacher_student,size,R1 best,R1 last fixed c=0.1 eps=0.1

@@ -288,3 +288,37 @@ differences; verdict "better/worse" only when the paired CI excludes 0.
 feature learning and generalization finish together (modular), but on average no better
 than a tuned budget fraction; it does not work on MNIST, and no feature-settling rule can
 there. Keep the plain rotation over a window (F2-B budget-free, F2-C); drop extrapolation.
+
+## Study A: N1, R1, B5 on 320 runs, held-out calibration (2026-11-16)
+
+Reports: [report_N1/REPORT.md](../../report_N1/REPORT.md) and
+[report_R1/REPORT.md](../../report_R1/REPORT.md) (B5 waits for study B, which adds its
+correlation traps). Outputs: HF `advay333/tfs:phase4/metrics_a/`. 320 runs (modular 160 and
+MNIST 64, the F2 study's runs; teacher-student 96), no replay, 320/320 ok. Same protocol as
+the F2 study; teacher-student Test B is N 50, 100 -> 400. Rules are checked every 500 steps.
+
+**Decision grid caveat.** The F2 study checked at 223 log/uniform points: its first check
+after 40% of the budget was step 41,600, here 40,000. Many x*y, x/y grokkers jump in
+between, so "stop at 40%" scores 0.090 there and 0.126 here. Compare within a study only;
+check wins against every fixed fraction (`tables/vs_every_fixed_fraction.csv`).
+
+**N1 (weight norm, 140 settings), lambda 0.1, tuned pick vs tuned fixed fraction:**
+- Modular: 0.052 vs 0.080 (seeds), 0.082 vs 0.126 (operations): ties, but clearly better
+  than never stopping and than every fraction except the tuned one (seeds); 0 of 30 / 0 of
+  31 grokkers cut off (fixed: 4, 16). Rule: |change of log||w||| <= 0.003 over 5-10% of T.
+- MNIST seeds tie (0.043 vs 0.034; a loose rule close to an early fixed stop). MNIST d8
+  **worse** (0.228 vs 0.039): every early stop is a gamma = 0 run whose norm never moves,
+  stopped at step 2,000.
+- Teacher-student ties (0.055 vs 0.054; 0.081 vs 0.056). N = 400: 8 early stops at gamma = 0.
+- N1 must not be used without weight decay; "stopped shrinking" (N1-B) fires on the
+  memorization plateau, where the norm grows.
+
+**R1 (effective rank of activations, 210 settings), lambda 0.1:**
+- Modular operations: 0.065, clearly better than the x+y-tuned fixed fraction (0.126) and
+  never stopping; 0 of 31 grokkers cut off; ties stopping at 50% or 70%.
+- Modular seeds: the tuned pick (R1-B, last layer, 1% over 2% T, after a 5% fall) 0.103,
+  ties fixed and never; cuts off 3 of 30 grokkers, because the last layer's rank can
+  collapse at the end of memorization, before the jump.
+- MNIST ties on both tests (0.036 vs 0.034; 0.060 vs 0.039), the only tuned rule so far not
+  worse on d8; needs the guard against the early rank rise.
+- Teacher-student: the rank stays ~5 (5-dim inputs), R1 rarely fires; ties.

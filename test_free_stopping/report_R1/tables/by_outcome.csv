@@ -1,0 +1,85 @@
+app,split,family,category,runs,score,acc_lost_pts,budget_wasted_pct,too_early_pct,never_stops_pct
+modular,seeds,horizon,fast,25,0.099,0.2085,96.938,0.0,100.0
+modular,seeds,horizon,grokker,30,0.0697,0.0003,69.6783,0.0,100.0
+modular,seeds,horizon,joint_plateau,2,0.1236,2.8091,95.525,0.0,100.0
+modular,seeds,horizon,late_collapse,4,0.9268,83.1867,94.9,0.0,100.0
+modular,seeds,horizon,never,19,0.0922,0.7923,84.2553,0.0,100.0
+modular,seeds,fixed_frac,fast,25,0.0488,0.1889,46.938,0.0,0.0
+modular,seeds,fixed_frac,grokker,30,0.0538,3.211,21.6483,13.3333,0.0
+modular,seeds,fixed_frac,joint_plateau,2,0.0714,2.5894,45.525,0.0,0.0
+modular,seeds,fixed_frac,late_collapse,4,0.3852,34.0327,44.9,0.0,0.0
+modular,seeds,fixed_frac,never,19,0.1001,5.8012,42.1,15.7895,0.0
+modular,seeds,R1 best,fast,25,0.0441,3.3224,10.858,0.0,0.0
+modular,seeds,R1 best,grokker,30,0.0983,8.0937,17.4,10.0,0.0
+modular,seeds,R1 best,joint_plateau,2,0.864,81.6507,47.525,0.0,0.0
+modular,seeds,R1 best,late_collapse,4,0.3779,32.8846,49.025,0.0,0.0
+modular,seeds,R1 best,never,19,0.0481,2.0804,27.2842,5.2632,21.0526
+modular,operation,horizon,fast,21,0.1016,0.479,96.8381,0.0,100.0
+modular,operation,horizon,grokker,31,0.0661,0.0,66.0806,0.0,100.0
+modular,operation,horizon,late_collapse,4,0.958,86.3139,94.8625,0.0,100.0
+modular,operation,horizon,never,8,0.1023,0.2365,99.975,0.0,100.0
+modular,operation,fixed_frac,fast,21,0.1206,8.3717,36.8381,0.0,0.0
+modular,operation,fixed_frac,grokker,31,0.1278,11.8542,9.2984,51.6129,0.0
+modular,operation,fixed_frac,late_collapse,4,0.2994,26.4552,34.8625,0.0,0.0
+modular,operation,fixed_frac,never,8,0.0423,0.2365,39.975,0.0,0.0
+modular,operation,R1 best,fast,21,0.0176,0.3542,14.1,0.0,4.7619
+modular,operation,R1 best,grokker,31,0.0397,0.0,39.7258,0.0,41.9355
+modular,operation,R1 best,late_collapse,4,0.5593,47.6283,82.9875,0.0,50.0
+modular,operation,R1 best,never,8,0.0379,0.2365,35.5375,0.0,0.0
+mnist,seeds,horizon,fast,14,0.1033,0.9071,94.1821,0.0,100.0
+mnist,seeds,horizon,grokker,10,0.0627,0.461,58.115,0.0,100.0
+mnist,seeds,horizon,joint_plateau,1,0.0236,0.03,23.35,0.0,100.0
+mnist,seeds,horizon,never,6,0.1596,9.9517,60.125,0.0,100.0
+mnist,seeds,horizon,no_fit,1,0.0271,0.16,25.45,0.0,100.0
+mnist,seeds,fixed_frac,fast,14,0.0404,0.6171,34.1821,0.0,0.0
+mnist,seeds,fixed_frac,grokker,10,0.0205,1.461,5.885,50.0,0.0
+mnist,seeds,fixed_frac,joint_plateau,1,0.0473,4.73,0.0,100.0,0.0
+mnist,seeds,fixed_frac,never,6,0.035,1.98,15.225,33.3333,0.0
+mnist,seeds,fixed_frac,no_fit,1,0.0431,4.31,0.0,100.0,0.0
+mnist,seeds,R1 best,fast,14,0.0217,0.5236,16.4679,0.0,0.0
+mnist,seeds,R1 best,grokker,10,0.0408,2.292,17.91,50.0,0.0
+mnist,seeds,R1 best,joint_plateau,1,0.0236,0.03,23.35,0.0,100.0
+mnist,seeds,R1 best,never,6,0.0505,1.2333,38.2083,33.3333,66.6667
+mnist,seeds,R1 best,no_fit,1,0.1035,10.35,0.0,100.0,0.0
+mnist,depth,horizon,fast,14,0.1015,1.0079,91.4536,0.0,100.0
+mnist,depth,horizon,grokker,2,0.0847,1.055,74.125,0.0,100.0
+mnist,depth,horizon,joint_plateau,1,0.0236,0.03,23.35,0.0,100.0
+mnist,depth,horizon,late_collapse,1,0.4632,39.71,66.1,0.0,100.0
+mnist,depth,horizon,never,12,0.1379,8.1483,56.4583,0.0,100.0
+mnist,depth,horizon,no_fit,2,0.0247,0.1,23.65,0.0,100.0
+mnist,depth,fixed_frac,fast,14,0.0387,0.7221,31.4536,0.0,0.0
+mnist,depth,fixed_frac,grokker,2,0.0231,0.9,14.125,0.0,0.0
+mnist,depth,fixed_frac,joint_plateau,1,0.0473,4.73,0.0,100.0,0.0
+mnist,depth,fixed_frac,late_collapse,1,0.0073,0.12,6.1,0.0,0.0
+mnist,depth,fixed_frac,never,12,0.0422,2.7408,14.7667,41.6667,0.0
+mnist,depth,fixed_frac,no_fit,2,0.0467,4.67,0.0,100.0,0.0
+mnist,depth,R1 best,fast,14,0.0168,1.1886,4.8929,35.7143,0.0
+mnist,depth,R1 best,grokker,2,0.0171,1.705,0.0,100.0,0.0
+mnist,depth,R1 best,joint_plateau,1,0.0236,0.03,23.35,0.0,100.0
+mnist,depth,R1 best,late_collapse,1,0.2328,23.28,0.0,100.0,0.0
+mnist,depth,R1 best,never,12,0.0899,5.1642,38.2333,41.6667,58.3333
+mnist,depth,R1 best,no_fit,2,0.1607,16.065,0.0,100.0,0.0
+teacher_student,seeds,horizon,fast,13,0.0803,1.2385,67.941,0.0,100.0
+teacher_student,seeds,horizon,grokker,26,0.0868,1.2385,74.4141,0.0,100.0
+teacher_student,seeds,horizon,joint_plateau,1,0.0099,-0.0,9.8667,0.0,100.0
+teacher_student,seeds,horizon,never,8,0.0591,0.575,53.3062,0.0,100.0
+teacher_student,seeds,fixed_frac,fast,13,0.0653,3.5231,30.0269,30.7692,0.0
+teacher_student,seeds,fixed_frac,grokker,26,0.0445,1.5346,29.1365,23.0769,0.0
+teacher_student,seeds,fixed_frac,joint_plateau,1,0.095,9.5,0.0,100.0,0.0
+teacher_student,seeds,fixed_frac,never,8,0.0589,3.925,19.6062,50.0,0.0
+teacher_student,seeds,R1 best,fast,13,0.0562,1.3077,43.1077,0.0,61.5385
+teacher_student,seeds,R1 best,grokker,26,0.0497,1.0962,38.7481,3.8462,50.0
+teacher_student,seeds,R1 best,joint_plateau,1,0.0099,-0.0,9.8667,0.0,100.0
+teacher_student,seeds,R1 best,never,8,0.07,1.8875,51.1438,12.5,87.5
+teacher_student,size,horizon,fast,14,0.0715,0.2929,68.5417,0.0,100.0
+teacher_student,size,horizon,grokker,14,0.091,0.3857,87.1679,0.0,100.0
+teacher_student,size,horizon,never,3,0.0128,0.1,11.7889,0.0,100.0
+teacher_student,size,horizon,no_fit,1,0.0133,0.1,12.2833,0.0,100.0
+teacher_student,size,fixed_frac,fast,14,0.0555,2.5857,29.6774,28.5714,0.0
+teacher_student,size,fixed_frac,grokker,14,0.0414,0.4071,37.3643,7.1429,0.0
+teacher_student,size,fixed_frac,never,3,0.1107,11.0667,0.0,100.0,0.0
+teacher_student,size,fixed_frac,no_fit,1,0.085,8.5,0.0,100.0,0.0
+teacher_student,size,R1 best,fast,14,0.0236,0.3,20.5893,0.0,42.8571
+teacher_student,size,R1 best,grokker,14,0.0468,0.2786,44.0488,0.0,42.8571
+teacher_student,size,R1 best,never,3,0.1987,19.8667,0.0,100.0,0.0
+teacher_student,size,R1 best,no_fit,1,0.17,17.0,0.0,100.0,0.0

@@ -1,0 +1,448 @@
+corpus
+             app              variant  runs  cells                        optimizers                 lr                                 weight_decay init_scale    train_size  fast  grokker  joint_plateau  late_collapse  never  no_fit
+          mnist             mnist d3    32      8 adam_l2, adamw, sgd, sgd_momentum  0.001, 0.01, 0.03       1e-06, 0.0001, 0.001, 0.003, 0.03, 0.1    1, 4, 8          1000    15       17              0              0      0       0
+          mnist             mnist d8    32      8 adam_l2, adamw, sgd, sgd_momentum 0.0001, 0.001, 0.1                  0, 0.0001, 0.001, 0.01, 0.1 1, 2, 4, 8          4000    14        2              1              1     12       2
+        modular          modular x*y    32      8 adam_l2, adamw, sgd, sgd_momentum      0.001, 0.3, 1  0, 1e-06, 3e-05, 0.0001, 0.0003, 0.001, 0.1       1, 4           0.5    11       15              0              2      4       0
+        modular          modular x+y    96     24 adam_l2, adamw, sgd, sgd_momentum      0.001, 0.3, 1 0, 1e-06, 0.0001, 0.0003, 0.001, 0.1, 0.3, 1    1, 2, 4 0.3, 0.5, 0.7    29       30              4              4     29       0
+        modular          modular x/y    32      8 adam_l2, adamw, sgd, sgd_momentum      0.001, 0.3, 1  0, 1e-06, 3e-05, 0.0001, 0.0003, 0.001, 0.1       1, 4           0.5    10       16              0              2      4       0
+teacher_student teacher_student n100    32      8 adam_l2, adamw, sgd, sgd_momentum        0.0003, 0.1              0, 1e-06, 1e-05, 3e-05, 0.03, 1  0.5, 1, 2           100     7       19              2              0      4       0
+teacher_student teacher_student n400    32      8 adam_l2, adamw, sgd, sgd_momentum        0.0003, 0.1                    0, 1e-05, 0.0001, 0.03, 1  0.5, 1, 2           400    14       14              0              0      3       1
+teacher_student  teacher_student n50    32      8 adam_l2, adamw, sgd, sgd_momentum        0.0003, 0.1                  0, 1e-06, 1e-05, 3e-05, 0.1     0.5, 1            50     6       17              0              0      9       0
+t_eps / T by category
+                                count    25%    50%    75%
+app             category                                 
+mnist           fast            29.0  0.002  0.016  0.098
+                grokker         19.0  0.311  0.398  0.518
+                joint_plateau    1.0  0.766  0.766  0.766
+                late_collapse    1.0  0.339  0.339  0.339
+                never           12.0  0.002  0.348  0.848
+                no_fit           2.0  0.755  0.764  0.772
+modular         fast            50.0  0.008  0.020  0.045
+                grokker         61.0  0.058  0.380  0.458
+                joint_plateau    4.0  0.043  0.044  0.045
+                late_collapse    8.0  0.047  0.048  0.053
+                never           37.0  0.000  0.000  0.000
+teacher_student fast            27.0  0.007  0.033  0.840
+                grokker         50.0  0.071  0.170  0.434
+                joint_plateau    2.0  0.918  0.936  0.953
+                never           16.0  0.022  0.503  0.850
+                no_fit           1.0  0.877  0.877  0.877
+best test acc by category
+ app              category     
+mnist            fast             0.927
+                 grokker          0.913
+                 joint_plateau    0.619
+                 late_collapse    0.547
+                 never            0.374
+                 no_fit           0.811
+modular          fast             1.000
+                 grokker          1.000
+                 joint_plateau    1.000
+                 late_collapse    1.000
+                 never            0.011
+teacher_student  fast             0.713
+                 grokker          0.840
+                 joint_plateau    0.723
+                 never            0.424
+                 no_fit           0.500
+Name: max_test, dtype: float64
+
+--- lambda 0.1: Modular, Test A (new seeds) (tune 80, held out 80 runs, 40 settings)
+                                label                             setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                             horizon      0.109  0.128     0.086     0.188         4.483             83.566           0.00            100.0                   0        30     0.000                      0.048        0.001        0.099            worse
+                       Fixed fraction                    fixed_frac c=0.5      0.088  0.080     0.052     0.115         4.407             36.168           8.75              0.0                   4        30    -0.048           better     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing      R1 last fixed c=0.05 eps=0.003      0.054  0.085     0.037     0.149         5.213             33.296           1.25             27.5                   1        30    -0.043           better     0.005       -0.049        0.067              tie
+R1-B  same, after the rank has fallen R1 last fixed c=0.02 eps=0.01 guard      0.054  0.103     0.047     0.172         8.253             20.037           5.00              5.0                   3        30    -0.026              tie     0.022       -0.038        0.092              tie
+            R1, tuned pick of A and B R1 last fixed c=0.02 eps=0.01 guard      0.054  0.103     0.047     0.172         8.253             20.037           5.00              5.0                   3        30    -0.026              tie     0.022       -0.038        0.092              tie
+              Perfect stop (test set)                         oracle_teps      0.006  0.006     0.005     0.008         0.637              0.000           0.00              0.0                   0        30    -0.122           better    -0.074       -0.109       -0.046           better
+
+--- lambda 0.1: Modular, Test B (new operations) (tune 96, held out 64 runs, 16 settings)
+                                label                              setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                              horizon      0.106  0.138     0.077     0.228         5.581             82.209            0.0            100.0                   0        31     0.000                      0.013       -0.064        0.077              tie
+                       Fixed fraction                     fixed_frac c=0.4      0.089  0.125     0.057     0.207        10.172             23.767           25.0              0.0                  16        31    -0.013              tie     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing       R1 last fixed c=0.02 eps=0.003      0.040  0.065     0.026     0.118         3.123             33.498            0.0             25.0                   0        31    -0.073           better    -0.061       -0.122       -0.012           better
+R1-B  same, after the rank has fallen R1 last fixed c=0.02 eps=0.003 guard      0.044  0.065     0.026     0.118         3.123             33.498            0.0             25.0                   0        31    -0.073           better    -0.061       -0.122       -0.012           better
+            R1, tuned pick of A and B       R1 last fixed c=0.02 eps=0.003      0.040  0.065     0.026     0.118         3.123             33.498            0.0             25.0                   0        31    -0.073           better    -0.061       -0.122       -0.012           better
+              Perfect stop (test set)                          oracle_teps      0.006  0.007     0.006     0.009         0.729              0.000            0.0              0.0                   0        31    -0.131           better    -0.118       -0.200       -0.051           better
+
+--- lambda 0.1: MNIST, Test A (new seeds) (tune 32, held out 32 runs, 16 settings)
+                                label                           setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                           horizon      0.101  0.096     0.067     0.138         2.413             72.164          0.000          100.000                   0        10     0.000                      0.063        0.031        0.109            worse
+                       Fixed fraction                  fixed_frac c=0.4      0.034  0.033     0.027     0.040         1.380             19.648         28.125            0.000                   5        10    -0.063           better     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing      R1 last fixed c=0.1 eps=0.01      0.053  0.072     0.049     0.100         3.613             35.884         21.875           28.125                   2        10    -0.024              tie     0.039        0.012        0.071            worse
+R1-B  same, after the rank has fallen R1 last fixed c=0.1 eps=0.1 guard      0.052  0.036     0.026     0.047         1.501             20.695         25.000           15.625                   5        10    -0.061           better     0.002       -0.011        0.016              tie
+            R1, tuned pick of A and B R1 last fixed c=0.1 eps=0.1 guard      0.052  0.036     0.026     0.047         1.501             20.695         25.000           15.625                   5        10    -0.061           better     0.002       -0.011        0.016              tie
+              Perfect stop (test set)                       oracle_teps      0.008  0.009     0.007     0.010         0.862              0.000          0.000            0.000                   0        10    -0.088           better    -0.025       -0.032       -0.017           better
+
+--- lambda 0.1: MNIST, Test B (8-layer network) (tune 32, held out 32 runs, 8 settings)
+                                label                            setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                            horizon      0.079  0.118     0.057     0.208         4.811             70.089          0.000            100.0                   0         2     0.000                      0.079        0.007        0.180            worse
+                       Fixed fraction                   fixed_frac c=0.4      0.029  0.039     0.027     0.051         1.843             20.372         25.000              0.0                   0         2    -0.079           better     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing         R1 all fixed c=0.1 eps=0.1      0.042  0.081     0.051     0.112         5.360             27.487         37.500             12.5                   0         2    -0.037              tie     0.042        0.012        0.079            worse
+R1-B  same, after the rank has fallen R1 last fixed c=0.05 eps=0.1 guard      0.037  0.060     0.029     0.091         4.296             17.208         46.875             25.0                   2         2    -0.058              tie     0.021       -0.009        0.057              tie
+            R1, tuned pick of A and B R1 last fixed c=0.05 eps=0.1 guard      0.037  0.060     0.029     0.091         4.296             17.208         46.875             25.0                   2         2    -0.058              tie     0.021       -0.009        0.057              tie
+              Perfect stop (test set)                        oracle_teps      0.009  0.008     0.006     0.010         0.833              0.000          0.000              0.0                   0         2    -0.110           better    -0.030       -0.042       -0.018           better
+
+--- lambda 0.1: Teacher-student, Test A (new seeds) (tune 48, held out 48 runs, 24 settings)
+                                label                               setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                               horizon      0.078  0.079     0.063     0.094         1.102             67.798          0.000          100.000                   0        26     0.000                      0.025        0.005        0.043            worse
+                       Fixed fraction                      fixed_frac c=0.5      0.057  0.054     0.046     0.062         2.637             27.182         31.250            0.000                   6        26    -0.025           better     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing          R1 all fixed c=0.1 eps=0.001      0.069  0.068     0.054     0.082         2.279             44.930         14.583           45.833                   3        26    -0.011              tie     0.014       -0.003        0.031              tie
+R1-B  same, after the rank has fallen R1 last growing f=0.5 eps=0.001 guard      0.059  0.054     0.040     0.070         1.262             41.393          4.167           60.417                   1        26    -0.025           better     0.000       -0.016        0.018              tie
+            R1, tuned pick of A and B R1 last growing f=0.5 eps=0.001 guard      0.059  0.054     0.040     0.070         1.262             41.393          4.167           60.417                   1        26    -0.025           better     0.000       -0.016        0.018              tie
+              Perfect stop (test set)                           oracle_teps      0.010  0.010     0.009     0.010         0.956              0.000          0.000            0.000                   0        26    -0.069           better    -0.044       -0.052       -0.036           better
+
+--- lambda 0.1: Teacher-student, Test B (N 50, 100 -> 400) (tune 64, held out 32 runs, 8 settings)
+                                label                            setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                            horizon      0.081  0.073     0.045     0.096         0.309             69.612          0.000            100.0                   0        14     0.000                      0.017       -0.022        0.050              tie
+                       Fixed fraction                   fixed_frac c=0.5      0.055  0.055     0.041     0.072         2.612             29.331         28.125              0.0                   1        14    -0.017              tie     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing      R1 mean fixed c=0.1 eps=0.003      0.070  0.073     0.028     0.133         5.722             16.222         37.500              0.0                   2        14     0.001              tie     0.018       -0.018        0.067              tie
+R1-B  same, after the rank has fallen R1 last fixed c=0.1 eps=0.03 guard      0.051  0.055     0.022     0.099         2.647             28.279         12.500             37.5                   0        14    -0.018              tie    -0.001       -0.032        0.034              tie
+            R1, tuned pick of A and B R1 last fixed c=0.1 eps=0.03 guard      0.051  0.055     0.022     0.099         2.647             28.279         12.500             37.5                   0        14    -0.018              tie    -0.001       -0.032        0.034              tie
+              Perfect stop (test set)                        oracle_teps      0.009  0.010     0.010     0.010         0.975              0.000          0.000              0.0                   0        14    -0.063           better    -0.046       -0.063       -0.031           better
+
+--- lambda 0.03: Modular, Test A (new seeds) (tune 80, held out 80 runs, 40 settings)
+                                label                                setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                                horizon      0.050  0.070     0.028     0.129         4.483             83.566           0.00           100.00                   0        30     0.000                      0.000        0.000        0.000              tie
+                       Fixed fraction                       fixed_frac c=1.0      0.050  0.070     0.028     0.129         4.483             83.566           0.00             0.00                   0        30     0.000              tie     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing       R1 last growing f=0.25 eps=0.001      0.027  0.058     0.015     0.117         4.484             43.872           0.00            43.75                   0        30    -0.012           better    -0.012       -0.015       -0.008           better
+R1-B  same, after the rank has fallen R1 last growing f=0.25 eps=0.003 guard      0.026  0.076     0.026     0.141         6.369             40.296           1.25            40.00                   1        30     0.006              tie     0.006       -0.015        0.038              tie
+            R1, tuned pick of A and B R1 last growing f=0.25 eps=0.003 guard      0.026  0.076     0.026     0.141         6.369             40.296           1.25            40.00                   1        30     0.006              tie     0.006       -0.015        0.038              tie
+              Perfect stop (test set)                            oracle_teps      0.006  0.006     0.005     0.008         0.637              0.000           0.00             0.00                   0        30    -0.064           better    -0.064       -0.122       -0.022           better
+
+--- lambda 0.03: Modular, Test B (new operations) (tune 96, held out 64 runs, 16 settings)
+                                label                             setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                             horizon      0.046  0.080     0.023     0.167         5.581             82.209            0.0          100.000                   0        31     0.000                      0.000        0.000        0.000              tie
+                       Fixed fraction                    fixed_frac c=1.0      0.046  0.080     0.023     0.167         5.581             82.209            0.0            0.000                   0        31     0.000              tie     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing       R1 all fixed c=0.02 eps=0.003      0.024  0.069     0.011     0.157         5.581             43.693            0.0           42.188                   0        31    -0.012           better    -0.012       -0.017       -0.007           better
+R1-B  same, after the rank has fallen R1 all fixed c=0.02 eps=0.003 guard      0.025  0.069     0.011     0.157         5.581             43.693            0.0           42.188                   0        31    -0.012           better    -0.012       -0.017       -0.007           better
+            R1, tuned pick of A and B       R1 all fixed c=0.02 eps=0.003      0.024  0.069     0.011     0.157         5.581             43.693            0.0           42.188                   0        31    -0.012           better    -0.012       -0.017       -0.007           better
+              Perfect stop (test set)                         oracle_teps      0.006  0.007     0.006     0.009         0.729              0.000            0.0            0.000                   0        31    -0.073           better    -0.073       -0.160       -0.016           better
+
+--- lambda 0.03: MNIST, Test A (new seeds) (tune 32, held out 32 runs, 16 settings)
+                                label                               setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                               horizon      0.051  0.046     0.023     0.085         2.413             72.164          0.000          100.000                   0        10     0.000                      0.026       -0.002        0.069              tie
+                       Fixed fraction                      fixed_frac c=0.4      0.020  0.020     0.014     0.026         1.380             19.648         28.125            0.000                   5        10    -0.026              tie     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing          R1 last fixed c=0.1 eps=0.01      0.028  0.047     0.023     0.077         3.613             35.884         21.875           28.125                   2        10     0.001              tie     0.027        0.003        0.059            worse
+R1-B  same, after the rank has fallen R1 last growing f=0.5 eps=0.003 guard      0.026  0.046     0.023     0.085         2.921             56.619          6.250           75.000                   1        10     0.000              tie     0.026       -0.002        0.069              tie
+            R1, tuned pick of A and B R1 last growing f=0.5 eps=0.003 guard      0.026  0.046     0.023     0.085         2.921             56.619          6.250           75.000                   1        10     0.000              tie     0.026       -0.002        0.069              tie
+              Perfect stop (test set)                           oracle_teps      0.008  0.009     0.007     0.010         0.862              0.000          0.000            0.000                   0        10    -0.037           better    -0.011       -0.018       -0.005           better
+
+--- lambda 0.03: MNIST, Test B (8-layer network) (tune 32, held out 32 runs, 8 settings)
+                                label                            setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                            horizon      0.027  0.069     0.020     0.156         4.811             70.089          0.000          100.000                   0         2     0.000                      0.045       -0.019        0.141              tie
+                       Fixed fraction                   fixed_frac c=0.4      0.016  0.025     0.012     0.040         1.843             20.372         25.000            0.000                   0         2    -0.045              tie     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing      R1 last fixed c=0.1 eps=0.003      0.024  0.044     0.026     0.066         3.012             45.650         34.375           43.750                   0         2    -0.025              tie     0.019       -0.007        0.050              tie
+R1-B  same, after the rank has fallen R1 last fixed c=0.1 eps=0.01 guard      0.019  0.037     0.019     0.063         2.737             31.983         21.875           34.375                   0         2    -0.032              tie     0.012       -0.013        0.047              tie
+            R1, tuned pick of A and B R1 last fixed c=0.1 eps=0.01 guard      0.019  0.037     0.019     0.063         2.737             31.983         21.875           34.375                   0         2    -0.032              tie     0.012       -0.013        0.047              tie
+              Perfect stop (test set)                        oracle_teps      0.009  0.008     0.006     0.010         0.833              0.000          0.000            0.000                   0         2    -0.061           better    -0.016       -0.031       -0.004           better
+
+--- lambda 0.03: Teacher-student, Test A (new seeds) (tune 48, held out 48 runs, 24 settings)
+                                label                               setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                               horizon      0.032  0.031     0.024     0.039         1.102             67.798          0.000          100.000                   0        26     0.000                      0.000        0.000        0.000              tie
+                       Fixed fraction                      fixed_frac c=1.0      0.032  0.031     0.024     0.039         1.102             67.798          0.000            0.000                   0        26     0.000              tie     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing          R1 all fixed c=0.1 eps=0.001      0.037  0.036     0.025     0.050         2.279             44.930         14.583           45.833                   3        26     0.005              tie     0.005       -0.009        0.021              tie
+R1-B  same, after the rank has fallen R1 last growing f=0.5 eps=0.001 guard      0.029  0.025     0.018     0.032         1.262             41.393          4.167           60.417                   1        26    -0.006              tie    -0.006       -0.013        0.001              tie
+            R1, tuned pick of A and B R1 last growing f=0.5 eps=0.001 guard      0.029  0.025     0.018     0.032         1.262             41.393          4.167           60.417                   1        26    -0.006              tie    -0.006       -0.013        0.001              tie
+              Perfect stop (test set)                           oracle_teps      0.010  0.010     0.009     0.010         0.956              0.000          0.000            0.000                   0        26    -0.022           better    -0.022       -0.029       -0.014           better
+
+--- lambda 0.03: Teacher-student, Test B (N 50, 100 -> 400) (tune 64, held out 32 runs, 8 settings)
+                                label                               setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                               horizon      0.036  0.024     0.015     0.032         0.309             69.612           0.00          100.000                   0        14     0.000                     -0.002       -0.013        0.009              tie
+                       Fixed fraction                      fixed_frac c=0.7      0.033  0.026     0.021     0.031         1.262             44.245          25.00            0.000                   0        14     0.002              tie     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing          R1 all fixed c=0.1 eps=0.001      0.042  0.026     0.017     0.038         1.484             37.503          18.75           34.375                   1        14     0.002              tie     0.000       -0.008        0.009              tie
+R1-B  same, after the rank has fallen R1 last growing f=0.5 eps=0.001 guard      0.031  0.020     0.012     0.029         0.859             38.734           6.25           53.125                   0        14    -0.004              tie    -0.006       -0.015        0.003              tie
+            R1, tuned pick of A and B R1 last growing f=0.5 eps=0.001 guard      0.031  0.020     0.012     0.029         0.859             38.734           6.25           53.125                   0        14    -0.004              tie    -0.006       -0.015        0.003              tie
+              Perfect stop (test set)                           oracle_teps      0.009  0.010     0.010     0.010         0.975              0.000           0.00            0.000                   0        14    -0.014           better    -0.016       -0.021       -0.011           better
+
+--- lambda 0.3: Modular, Test A (new seeds) (tune 80, held out 80 runs, 40 settings)
+                                label                             setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                             horizon      0.277  0.296     0.244     0.358         4.483             83.566           0.00            100.0                   0        30     0.000                      0.143        0.089        0.197            worse
+                       Fixed fraction                    fixed_frac c=0.5      0.161  0.153     0.122     0.188         4.407             36.168           8.75              0.0                   4        30    -0.143           better     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing       R1 last fixed c=0.02 eps=0.01      0.102  0.179     0.097     0.273        13.172             15.870          10.00              2.5                   7        30    -0.116           better     0.027       -0.067        0.128              tie
+R1-B  same, after the rank has fallen R1 last fixed c=0.02 eps=0.01 guard      0.098  0.143     0.081     0.218         8.253             20.037           5.00              5.0                   3        30    -0.153           better    -0.010       -0.080        0.067              tie
+            R1, tuned pick of A and B R1 last fixed c=0.02 eps=0.01 guard      0.098  0.143     0.081     0.218         8.253             20.037           5.00              5.0                   3        30    -0.153           better    -0.010       -0.080        0.067              tie
+              Perfect stop (test set)                         oracle_teps      0.006  0.006     0.005     0.008         0.637              0.000           0.00              0.0                   0        30    -0.289           better    -0.146       -0.181       -0.115           better
+
+--- lambda 0.3: Modular, Test B (new operations) (tune 96, held out 64 runs, 16 settings)
+                                label                             setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                             horizon      0.276  0.302     0.230     0.399         5.581             82.209          0.000           100.00                   0        31     0.000                      0.129        0.050        0.196            worse
+                       Fixed fraction                    fixed_frac c=0.4      0.150  0.173     0.107     0.253        10.172             23.767         25.000             0.00                  16        31    -0.129           better     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing       R1 last fixed c=0.05 eps=0.01      0.084  0.140     0.085     0.202         4.417             32.073          1.562            18.75                   1        31    -0.162           better    -0.033       -0.099        0.043              tie
+R1-B  same, after the rank has fallen R1 last fixed c=0.05 eps=0.01 guard      0.095  0.140     0.085     0.202         4.417             32.073          1.562            18.75                   1        31    -0.162           better    -0.033       -0.099        0.043              tie
+            R1, tuned pick of A and B       R1 last fixed c=0.05 eps=0.01      0.084  0.140     0.085     0.202         4.417             32.073          1.562            18.75                   1        31    -0.162           better    -0.033       -0.099        0.043              tie
+              Perfect stop (test set)                         oracle_teps      0.006  0.007     0.006     0.009         0.729              0.000          0.000             0.00                   0        31    -0.295           better    -0.166       -0.246       -0.100           better
+
+--- lambda 0.3: MNIST, Test A (new seeds) (tune 32, held out 32 runs, 16 settings)
+                                label                            setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                            horizon      0.246  0.241     0.188     0.294         2.413             72.164           0.00          100.000                   0        10     0.000                      0.179        0.128        0.235            worse
+                       Fixed fraction                   fixed_frac c=0.3      0.061  0.062     0.048     0.075         2.250             13.169          43.75            0.000                   8        10    -0.179           better     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing        R1 mean fixed c=0.1 eps=0.1      0.101  0.101     0.071     0.141         6.250             12.762          43.75            0.000                   8        10    -0.140           better     0.039        0.004        0.080            worse
+R1-B  same, after the rank has fallen R1 mean fixed c=0.05 eps=0.1 guard      0.080  0.048     0.037     0.061         2.392              8.162          37.50            9.375                   9        10    -0.192           better    -0.014       -0.033        0.007              tie
+            R1, tuned pick of A and B R1 mean fixed c=0.05 eps=0.1 guard      0.080  0.048     0.037     0.061         2.392              8.162          37.50            9.375                   9        10    -0.192           better    -0.014       -0.033        0.007              tie
+              Perfect stop (test set)                        oracle_teps      0.008  0.009     0.007     0.010         0.862              0.000           0.00            0.000                   0        10    -0.232           better    -0.053       -0.067       -0.039           better
+
+--- lambda 0.3: MNIST, Test B (8-layer network) (tune 32, held out 32 runs, 8 settings)
+                                label                             setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                             horizon      0.228  0.258     0.163     0.360         4.811             70.089           0.00            100.0                   0         2     0.000                      0.191        0.086        0.300            worse
+                       Fixed fraction                    fixed_frac c=0.3      0.055  0.067     0.049     0.085         2.722             13.378          37.50              0.0                   0         2    -0.191           better     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing        R1 all fixed c=0.01 eps=0.01      0.084  0.221     0.175     0.264         7.127             49.909          37.50             50.0                   0         2    -0.037              tie     0.154        0.100        0.198            worse
+R1-B  same, after the rank has fallen R1 mean fixed c=0.01 eps=0.03 guard      0.052  0.075     0.029     0.122         5.951              5.330          43.75             12.5                   2         2    -0.183           better     0.008       -0.041        0.063              tie
+            R1, tuned pick of A and B R1 mean fixed c=0.01 eps=0.03 guard      0.052  0.075     0.029     0.122         5.951              5.330          43.75             12.5                   2         2    -0.183           better     0.008       -0.041        0.063              tie
+              Perfect stop (test set)                         oracle_teps      0.009  0.008     0.006     0.010         0.833              0.000           0.00              0.0                   0         2    -0.250           better    -0.059       -0.077       -0.040           better
+
+--- lambda 0.3: Teacher-student, Test A (new seeds) (tune 48, held out 48 runs, 24 settings)
+                                label                             setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                             horizon      0.208  0.214     0.172     0.254         1.102             67.798          0.000            100.0                   0        26     0.000                      0.133        0.065        0.197            worse
+                       Fixed fraction                    fixed_frac c=0.2      0.085  0.082     0.054     0.111         5.858              7.669         41.667              0.0                   9        26    -0.133           better     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing        R1 last fixed c=0.1 eps=0.03      0.097  0.095     0.055     0.139         7.723              5.787         45.833              0.0                  11        26    -0.120           better     0.013       -0.006        0.034              tie
+R1-B  same, after the rank has fallen R1 last fixed c=0.05 eps=0.03 guard      0.112  0.092     0.051     0.138         2.531             22.295         25.000             37.5                   8        26    -0.122           better     0.011       -0.034        0.062              tie
+            R1, tuned pick of A and B        R1 last fixed c=0.1 eps=0.03      0.097  0.095     0.055     0.139         7.723              5.787         45.833              0.0                  11        26    -0.120           better     0.013       -0.006        0.034              tie
+              Perfect stop (test set)                         oracle_teps      0.010  0.010     0.009     0.010         0.956              0.000          0.000              0.0                   0        26    -0.205           better    -0.072       -0.101       -0.045           better
+
+--- lambda 0.3: Teacher-student, Test B (N 50, 100 -> 400) (tune 64, held out 32 runs, 8 settings)
+                                label                           setting  cal_score  score  score_lo  score_hi  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct  grokkers_too_early  grokkers  vs_never verdict_vs_never  vs_fixed  vs_fixed_lo  vs_fixed_hi verdict_vs_fixed
+                           Never stop                           horizon      0.211  0.212     0.133     0.282         0.309             69.612            0.0            100.0                   0        14     0.000                      0.120       -0.015        0.238              tie
+                       Fixed fraction                  fixed_frac c=0.2      0.079  0.092     0.037     0.159         6.666              8.540           37.5              0.0                   2        14    -0.120              tie     0.000        0.000        0.000                 
+      R1-A  rank has stopped changing       R1 last fixed c=0.1 eps=0.1      0.093  0.101     0.028     0.180         8.669              4.738           37.5              0.0                   2        14    -0.111              tie     0.009       -0.019        0.043              tie
+R1-B  same, after the rank has fallen R1 last fixed c=0.1 eps=0.1 guard      0.097  0.119     0.051     0.203         4.100             25.915           12.5             37.5                   0        14    -0.093              tie     0.026       -0.052        0.111              tie
+            R1, tuned pick of A and B       R1 last fixed c=0.1 eps=0.1      0.093  0.101     0.028     0.180         8.669              4.738           37.5              0.0                   2        14    -0.111              tie     0.009       -0.019        0.043              tie
+              Perfect stop (test set)                       oracle_teps      0.009  0.010     0.010     0.010         0.975              0.000            0.0              0.0                   0        14    -0.202           better    -0.083       -0.149       -0.028           better
+
+by outcome, lambda 0.1
+             app     split     family      category  runs  score  acc_lost_pts  budget_wasted_pct  too_early_pct  never_stops_pct
+        modular     seeds    horizon          fast    25  0.099         0.209             96.938          0.000          100.000
+        modular     seeds    horizon       grokker    30  0.070         0.000             69.678          0.000          100.000
+        modular     seeds    horizon joint_plateau     2  0.124         2.809             95.525          0.000          100.000
+        modular     seeds    horizon late_collapse     4  0.927        83.187             94.900          0.000          100.000
+        modular     seeds    horizon         never    19  0.092         0.792             84.255          0.000          100.000
+        modular     seeds fixed_frac          fast    25  0.049         0.189             46.938          0.000            0.000
+        modular     seeds fixed_frac       grokker    30  0.054         3.211             21.648         13.333            0.000
+        modular     seeds fixed_frac joint_plateau     2  0.071         2.589             45.525          0.000            0.000
+        modular     seeds fixed_frac late_collapse     4  0.385        34.033             44.900          0.000            0.000
+        modular     seeds fixed_frac         never    19  0.100         5.801             42.100         15.789            0.000
+        modular     seeds    R1 best          fast    25  0.044         3.322             10.858          0.000            0.000
+        modular     seeds    R1 best       grokker    30  0.098         8.094             17.400         10.000            0.000
+        modular     seeds    R1 best joint_plateau     2  0.864        81.651             47.525          0.000            0.000
+        modular     seeds    R1 best late_collapse     4  0.378        32.885             49.025          0.000            0.000
+        modular     seeds    R1 best         never    19  0.048         2.080             27.284          5.263           21.053
+        modular operation    horizon          fast    21  0.102         0.479             96.838          0.000          100.000
+        modular operation    horizon       grokker    31  0.066         0.000             66.081          0.000          100.000
+        modular operation    horizon late_collapse     4  0.958        86.314             94.863          0.000          100.000
+        modular operation    horizon         never     8  0.102         0.236             99.975          0.000          100.000
+        modular operation fixed_frac          fast    21  0.121         8.372             36.838          0.000            0.000
+        modular operation fixed_frac       grokker    31  0.128        11.854              9.298         51.613            0.000
+        modular operation fixed_frac late_collapse     4  0.299        26.455             34.863          0.000            0.000
+        modular operation fixed_frac         never     8  0.042         0.236             39.975          0.000            0.000
+        modular operation    R1 best          fast    21  0.018         0.354             14.100          0.000            4.762
+        modular operation    R1 best       grokker    31  0.040         0.000             39.726          0.000           41.935
+        modular operation    R1 best late_collapse     4  0.559        47.628             82.988          0.000           50.000
+        modular operation    R1 best         never     8  0.038         0.236             35.538          0.000            0.000
+          mnist     seeds    horizon          fast    14  0.103         0.907             94.182          0.000          100.000
+          mnist     seeds    horizon       grokker    10  0.063         0.461             58.115          0.000          100.000
+          mnist     seeds    horizon joint_plateau     1  0.024         0.030             23.350          0.000          100.000
+          mnist     seeds    horizon         never     6  0.160         9.952             60.125          0.000          100.000
+          mnist     seeds    horizon        no_fit     1  0.027         0.160             25.450          0.000          100.000
+          mnist     seeds fixed_frac          fast    14  0.040         0.617             34.182          0.000            0.000
+          mnist     seeds fixed_frac       grokker    10  0.020         1.461              5.885         50.000            0.000
+          mnist     seeds fixed_frac joint_plateau     1  0.047         4.730              0.000        100.000            0.000
+          mnist     seeds fixed_frac         never     6  0.035         1.980             15.225         33.333            0.000
+          mnist     seeds fixed_frac        no_fit     1  0.043         4.310              0.000        100.000            0.000
+          mnist     seeds    R1 best          fast    14  0.022         0.524             16.468          0.000            0.000
+          mnist     seeds    R1 best       grokker    10  0.041         2.292             17.910         50.000            0.000
+          mnist     seeds    R1 best joint_plateau     1  0.024         0.030             23.350          0.000          100.000
+          mnist     seeds    R1 best         never     6  0.051         1.233             38.208         33.333           66.667
+          mnist     seeds    R1 best        no_fit     1  0.104        10.350              0.000        100.000            0.000
+          mnist     depth    horizon          fast    14  0.102         1.008             91.454          0.000          100.000
+          mnist     depth    horizon       grokker     2  0.085         1.055             74.125          0.000          100.000
+          mnist     depth    horizon joint_plateau     1  0.024         0.030             23.350          0.000          100.000
+          mnist     depth    horizon late_collapse     1  0.463        39.710             66.100          0.000          100.000
+          mnist     depth    horizon         never    12  0.138         8.148             56.458          0.000          100.000
+          mnist     depth    horizon        no_fit     2  0.025         0.100             23.650          0.000          100.000
+          mnist     depth fixed_frac          fast    14  0.039         0.722             31.454          0.000            0.000
+          mnist     depth fixed_frac       grokker     2  0.023         0.900             14.125          0.000            0.000
+          mnist     depth fixed_frac joint_plateau     1  0.047         4.730              0.000        100.000            0.000
+          mnist     depth fixed_frac late_collapse     1  0.007         0.120              6.100          0.000            0.000
+          mnist     depth fixed_frac         never    12  0.042         2.741             14.767         41.667            0.000
+          mnist     depth fixed_frac        no_fit     2  0.047         4.670              0.000        100.000            0.000
+          mnist     depth    R1 best          fast    14  0.017         1.189              4.893         35.714            0.000
+          mnist     depth    R1 best       grokker     2  0.017         1.705              0.000        100.000            0.000
+          mnist     depth    R1 best joint_plateau     1  0.024         0.030             23.350          0.000          100.000
+          mnist     depth    R1 best late_collapse     1  0.233        23.280              0.000        100.000            0.000
+          mnist     depth    R1 best         never    12  0.090         5.164             38.233         41.667           58.333
+          mnist     depth    R1 best        no_fit     2  0.161        16.065              0.000        100.000            0.000
+teacher_student     seeds    horizon          fast    13  0.080         1.238             67.941          0.000          100.000
+teacher_student     seeds    horizon       grokker    26  0.087         1.238             74.414          0.000          100.000
+teacher_student     seeds    horizon joint_plateau     1  0.010        -0.000              9.867          0.000          100.000
+teacher_student     seeds    horizon         never     8  0.059         0.575             53.306          0.000          100.000
+teacher_student     seeds fixed_frac          fast    13  0.065         3.523             30.027         30.769            0.000
+teacher_student     seeds fixed_frac       grokker    26  0.044         1.535             29.137         23.077            0.000
+teacher_student     seeds fixed_frac joint_plateau     1  0.095         9.500              0.000        100.000            0.000
+teacher_student     seeds fixed_frac         never     8  0.059         3.925             19.606         50.000            0.000
+teacher_student     seeds    R1 best          fast    13  0.056         1.308             43.108          0.000           61.538
+teacher_student     seeds    R1 best       grokker    26  0.050         1.096             38.748          3.846           50.000
+teacher_student     seeds    R1 best joint_plateau     1  0.010        -0.000              9.867          0.000          100.000
+teacher_student     seeds    R1 best         never     8  0.070         1.887             51.144         12.500           87.500
+teacher_student      size    horizon          fast    14  0.071         0.293             68.542          0.000          100.000
+teacher_student      size    horizon       grokker    14  0.091         0.386             87.168          0.000          100.000
+teacher_student      size    horizon         never     3  0.013         0.100             11.789          0.000          100.000
+teacher_student      size    horizon        no_fit     1  0.013         0.100             12.283          0.000          100.000
+teacher_student      size fixed_frac          fast    14  0.056         2.586             29.677         28.571            0.000
+teacher_student      size fixed_frac       grokker    14  0.041         0.407             37.364          7.143            0.000
+teacher_student      size fixed_frac         never     3  0.111        11.067              0.000        100.000            0.000
+teacher_student      size fixed_frac        no_fit     1  0.085         8.500              0.000        100.000            0.000
+teacher_student      size    R1 best          fast    14  0.024         0.300             20.589          0.000           42.857
+teacher_student      size    R1 best       grokker    14  0.047         0.279             44.049          0.000           42.857
+teacher_student      size    R1 best         never     3  0.199        19.867              0.000        100.000            0.000
+teacher_student      size    R1 best        no_fit     1  0.170        17.000              0.000        100.000            0.000
+
+tuned pick against every fixed fraction (lambda 0.1)
+             app     split    c  fixed_score  pick_score   diff     lo     hi verdict
+        modular     seeds 0.02        0.489       0.103 -0.386 -0.527 -0.252  better
+        modular     seeds 0.05        0.301       0.103 -0.198 -0.342 -0.048  better
+        modular     seeds 0.10        0.274       0.103 -0.171 -0.296 -0.049  better
+        modular     seeds 0.15        0.268       0.103 -0.166 -0.276 -0.054  better
+        modular     seeds 0.20        0.273       0.103 -0.170 -0.281 -0.059  better
+        modular     seeds 0.30        0.204       0.103 -0.101 -0.213  0.006     tie
+        modular     seeds 0.40        0.101       0.103  0.002 -0.064  0.074     tie
+        modular     seeds 0.50        0.080       0.103  0.022 -0.038  0.092     tie
+        modular     seeds 0.70        0.112       0.103 -0.009 -0.061  0.049     tie
+        modular     seeds 1.00        0.128       0.103 -0.026 -0.078  0.038     tie
+        modular operation 0.02        0.610       0.065 -0.545 -0.739 -0.323  better
+        modular operation 0.05        0.376       0.065 -0.311 -0.547 -0.073  better
+        modular operation 0.10        0.382       0.065 -0.317 -0.555 -0.082  better
+        modular operation 0.15        0.409       0.065 -0.344 -0.577 -0.113  better
+        modular operation 0.20        0.418       0.065 -0.353 -0.576 -0.133  better
+        modular operation 0.30        0.319       0.065 -0.254 -0.442 -0.082  better
+        modular operation 0.40        0.125       0.065 -0.061 -0.122 -0.012  better
+        modular operation 0.50        0.070       0.065 -0.006 -0.023  0.012     tie
+        modular operation 0.70        0.080       0.065 -0.015 -0.035  0.005     tie
+        modular operation 1.00        0.138       0.065 -0.073 -0.111 -0.041  better
+          mnist     seeds 0.02        0.258       0.036 -0.223 -0.361 -0.096  better
+          mnist     seeds 0.05        0.141       0.036 -0.105 -0.208 -0.023  better
+          mnist     seeds 0.10        0.095       0.036 -0.059 -0.129 -0.004  better
+          mnist     seeds 0.15        0.068       0.036 -0.032 -0.078  0.004     tie
+          mnist     seeds 0.20        0.051       0.036 -0.016 -0.044  0.008     tie
+          mnist     seeds 0.30        0.036       0.036  0.000 -0.014  0.014     tie
+          mnist     seeds 0.40        0.033       0.036  0.002 -0.011  0.016     tie
+          mnist     seeds 0.50        0.041       0.036 -0.005 -0.020  0.009     tie
+          mnist     seeds 0.70        0.066       0.036 -0.030 -0.064 -0.004  better
+          mnist     seeds 1.00        0.096       0.036 -0.061 -0.105 -0.028  better
+          mnist     depth 0.02        0.295       0.060 -0.235 -0.424 -0.055  better
+          mnist     depth 0.05        0.107       0.060 -0.047 -0.100  0.006     tie
+          mnist     depth 0.10        0.081       0.060 -0.021 -0.057  0.019     tie
+          mnist     depth 0.15        0.064       0.060 -0.004 -0.027  0.024     tie
+          mnist     depth 0.20        0.054       0.060  0.006 -0.012  0.029     tie
+          mnist     depth 0.30        0.041       0.060  0.020 -0.007  0.051     tie
+          mnist     depth 0.40        0.039       0.060  0.021 -0.009  0.057     tie
+          mnist     depth 0.50        0.047       0.060  0.013 -0.019  0.045     tie
+          mnist     depth 0.70        0.080       0.060 -0.020 -0.064  0.027     tie
+          mnist     depth 1.00        0.118       0.060 -0.058 -0.136  0.012     tie
+teacher_student     seeds 0.02        0.152       0.054 -0.098 -0.175 -0.026  better
+teacher_student     seeds 0.05        0.115       0.054 -0.061 -0.130  0.003     tie
+teacher_student     seeds 0.10        0.091       0.054 -0.037 -0.096  0.017     tie
+teacher_student     seeds 0.15        0.076       0.054 -0.022 -0.071  0.024     tie
+teacher_student     seeds 0.20        0.066       0.054 -0.012 -0.052  0.026     tie
+teacher_student     seeds 0.30        0.058       0.054 -0.004 -0.033  0.025     tie
+teacher_student     seeds 0.40        0.055       0.054 -0.001 -0.023  0.022     tie
+teacher_student     seeds 0.50        0.054       0.054  0.000 -0.016  0.018     tie
+teacher_student     seeds 0.70        0.058       0.054 -0.004 -0.019  0.010     tie
+teacher_student     seeds 1.00        0.079       0.054 -0.025 -0.041 -0.009  better
+teacher_student      size 0.02        0.175       0.055 -0.120 -0.267  0.002     tie
+teacher_student      size 0.05        0.132       0.055 -0.077 -0.197  0.015     tie
+teacher_student      size 0.10        0.101       0.055 -0.046 -0.136  0.023     tie
+teacher_student      size 0.15        0.085       0.055 -0.030 -0.103  0.025     tie
+teacher_student      size 0.20        0.075       0.055 -0.020 -0.081  0.028     tie
+teacher_student      size 0.30        0.065       0.055 -0.010 -0.052  0.025     tie
+teacher_student      size 0.40        0.059       0.055 -0.005 -0.037  0.026     tie
+teacher_student      size 0.50        0.055       0.055 -0.001 -0.032  0.034     tie
+teacher_student      size 0.70        0.057       0.055 -0.002 -0.041  0.048     tie
+teacher_student      size 1.00        0.073       0.055 -0.018 -0.068  0.046     tie
+
+signal diagnostics (medians): value at 3x t_eps and at the end, relative to t_eps; |log change| over the last 10% of the budget
+                  at3x_over_teps  end_over_teps  last10pct_change
+group                                                           
+MNIST 3-layer             0.536          0.449             0.010
+MNIST 8-layer             0.813          0.763             0.011
+Modular                   0.464          0.443             0.006
+Teacher-student           0.997          0.998             0.001 group
+MNIST 3-layer       32
+MNIST 8-layer       20
+Modular            123
+Teacher-student     80
+dtype: int64
+
+tuned settings
+  lambda             app     split     family                                setting
+   0.03         modular     seeds fixed_frac                       fixed_frac c=1.0
+   0.03         modular     seeds         r1       R1 last growing f=0.25 eps=0.001
+   0.03         modular     seeds   r1_guard R1 last growing f=0.25 eps=0.003 guard
+   0.03         modular     seeds    R1 best R1 last growing f=0.25 eps=0.003 guard
+   0.03         modular operation fixed_frac                       fixed_frac c=1.0
+   0.03         modular operation         r1          R1 all fixed c=0.02 eps=0.003
+   0.03         modular operation   r1_guard    R1 all fixed c=0.02 eps=0.003 guard
+   0.03         modular operation    R1 best          R1 all fixed c=0.02 eps=0.003
+   0.03           mnist     seeds fixed_frac                       fixed_frac c=0.4
+   0.03           mnist     seeds         r1           R1 last fixed c=0.1 eps=0.01
+   0.03           mnist     seeds   r1_guard  R1 last growing f=0.5 eps=0.003 guard
+   0.03           mnist     seeds    R1 best  R1 last growing f=0.5 eps=0.003 guard
+   0.03           mnist     depth fixed_frac                       fixed_frac c=0.4
+   0.03           mnist     depth         r1          R1 last fixed c=0.1 eps=0.003
+   0.03           mnist     depth   r1_guard     R1 last fixed c=0.1 eps=0.01 guard
+   0.03           mnist     depth    R1 best     R1 last fixed c=0.1 eps=0.01 guard
+   0.03 teacher_student     seeds fixed_frac                       fixed_frac c=1.0
+   0.03 teacher_student     seeds         r1           R1 all fixed c=0.1 eps=0.001
+   0.03 teacher_student     seeds   r1_guard  R1 last growing f=0.5 eps=0.001 guard
+   0.03 teacher_student     seeds    R1 best  R1 last growing f=0.5 eps=0.001 guard
+   0.03 teacher_student      size fixed_frac                       fixed_frac c=0.7
+   0.03 teacher_student      size         r1           R1 all fixed c=0.1 eps=0.001
+   0.03 teacher_student      size   r1_guard  R1 last growing f=0.5 eps=0.001 guard
+   0.03 teacher_student      size    R1 best  R1 last growing f=0.5 eps=0.001 guard
+   0.10         modular     seeds fixed_frac                       fixed_frac c=0.5
+   0.10         modular     seeds         r1         R1 last fixed c=0.05 eps=0.003
+   0.10         modular     seeds   r1_guard    R1 last fixed c=0.02 eps=0.01 guard
+   0.10         modular     seeds    R1 best    R1 last fixed c=0.02 eps=0.01 guard
+   0.10         modular operation fixed_frac                       fixed_frac c=0.4
+   0.10         modular operation         r1         R1 last fixed c=0.02 eps=0.003
+   0.10         modular operation   r1_guard   R1 last fixed c=0.02 eps=0.003 guard
+   0.10         modular operation    R1 best         R1 last fixed c=0.02 eps=0.003
+   0.10           mnist     seeds fixed_frac                       fixed_frac c=0.4
+   0.10           mnist     seeds         r1           R1 last fixed c=0.1 eps=0.01
+   0.10           mnist     seeds   r1_guard      R1 last fixed c=0.1 eps=0.1 guard
+   0.10           mnist     seeds    R1 best      R1 last fixed c=0.1 eps=0.1 guard
+   0.10           mnist     depth fixed_frac                       fixed_frac c=0.4
+   0.10           mnist     depth         r1             R1 all fixed c=0.1 eps=0.1
+   0.10           mnist     depth   r1_guard     R1 last fixed c=0.05 eps=0.1 guard
+   0.10           mnist     depth    R1 best     R1 last fixed c=0.05 eps=0.1 guard
+   0.10 teacher_student     seeds fixed_frac                       fixed_frac c=0.5
+   0.10 teacher_student     seeds         r1           R1 all fixed c=0.1 eps=0.001
+   0.10 teacher_student     seeds   r1_guard  R1 last growing f=0.5 eps=0.001 guard
+   0.10 teacher_student     seeds    R1 best  R1 last growing f=0.5 eps=0.001 guard
+   0.10 teacher_student      size fixed_frac                       fixed_frac c=0.5
+   0.10 teacher_student      size         r1          R1 mean fixed c=0.1 eps=0.003
+   0.10 teacher_student      size   r1_guard     R1 last fixed c=0.1 eps=0.03 guard
+   0.10 teacher_student      size    R1 best     R1 last fixed c=0.1 eps=0.03 guard
+   0.30         modular     seeds fixed_frac                       fixed_frac c=0.5
+   0.30         modular     seeds         r1          R1 last fixed c=0.02 eps=0.01
+   0.30         modular     seeds   r1_guard    R1 last fixed c=0.02 eps=0.01 guard
+   0.30         modular     seeds    R1 best    R1 last fixed c=0.02 eps=0.01 guard
+   0.30         modular operation fixed_frac                       fixed_frac c=0.4
+   0.30         modular operation         r1          R1 last fixed c=0.05 eps=0.01
+   0.30         modular operation   r1_guard    R1 last fixed c=0.05 eps=0.01 guard
+   0.30         modular operation    R1 best          R1 last fixed c=0.05 eps=0.01
+   0.30           mnist     seeds fixed_frac                       fixed_frac c=0.3
+   0.30           mnist     seeds         r1            R1 mean fixed c=0.1 eps=0.1
+   0.30           mnist     seeds   r1_guard     R1 mean fixed c=0.05 eps=0.1 guard
+   0.30           mnist     seeds    R1 best     R1 mean fixed c=0.05 eps=0.1 guard
+   0.30           mnist     depth fixed_frac                       fixed_frac c=0.3
+   0.30           mnist     depth         r1           R1 all fixed c=0.01 eps=0.01
+   0.30           mnist     depth   r1_guard    R1 mean fixed c=0.01 eps=0.03 guard
+   0.30           mnist     depth    R1 best    R1 mean fixed c=0.01 eps=0.03 guard
+   0.30 teacher_student     seeds fixed_frac                       fixed_frac c=0.2
+   0.30 teacher_student     seeds         r1           R1 last fixed c=0.1 eps=0.03
+   0.30 teacher_student     seeds   r1_guard    R1 last fixed c=0.05 eps=0.03 guard
+   0.30 teacher_student     seeds    R1 best           R1 last fixed c=0.1 eps=0.03
+   0.30 teacher_student      size fixed_frac                       fixed_frac c=0.2
+   0.30 teacher_student      size         r1            R1 last fixed c=0.1 eps=0.1
+   0.30 teacher_student      size   r1_guard      R1 last fixed c=0.1 eps=0.1 guard
+   0.30 teacher_student      size    R1 best            R1 last fixed c=0.1 eps=0.1

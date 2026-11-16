@@ -140,11 +140,14 @@ the exact claim or arXiv number):
    as a Phase 5 candidate on grokking tasks is the user's call.
    Raised but not yet decided: S1b's ∇J = g + γw is the wrong fixed point for AdamW
    (decoupled decay), so S1b on AdamW would never stop.
-2. **Study A (N1, R1, B5), written 2026-11-16:** `molab/phase4_metrics_a.py` +
+2. **Study A (N1, R1, B5), written and run 2026-11-16 (320/320 runs ok, 2.4 min, 16 workers):** `molab/phase4_metrics_a.py` +
    `stopping/metric_study.py` (DESIGN §13.11): 320 runs (modular 160, MNIST 64,
    teacher-student 96), no replay, outputs to HF `phase4/metrics_a/`. When the user has
    run it: download the outputs and write one plain-language report per metric
    (`report_N1/`, `report_R1/`, `report_B5/`), structured like report_AGOP/REPORT.md.
+   **Done 2026-11-16 for N1 and R1** (`report_N1/REPORT.md`, `report_R1/REPORT.md`; figures
+   and tables from `python scripts/metric_report.py <download of phase4/metrics_a> <N1|R1|B5>`).
+   B5's report waits for study B (traps). Summary: results/phase4/RESULTS.md, last section.
    Next after that, study B: B2, S1b (optimizer-specific null: g + γw for SGD, SGD+m,
    Adam+L2; THEORY §5 for AdamW) and B5's correlation traps, which need one replay pass.
    Build S1b under `stopping/signals/` (DESIGN §13.8), with tests.
@@ -277,6 +280,10 @@ These are the load-bearing design rules. Each one has a test.
   (dense eval grids dominate); interpolate each run, then take the median.
 - **Bootstrap over settings, paired for comparisons.** Seeds of a setting are not
   independent; overlapping score CIs do not mean a tie, the paired CI decides.
+- **Decision grids differ between studies.** Study A checks rules every 500 steps, the F2
+  study at 223 log/uniform points. The fixed fraction at 40% stops at step 40,000 vs 41,600,
+  and many x*y, x/y grokkers jump in between: its Test-B score is 0.125 vs 0.090. Compare
+  rules only within a study, and check wins against every fixed fraction, not just the tuned one.
 - **MNIST has dead pixels.** Pixels that are 0 in every training image get no data
   gradient, so under weight decay their first-layer weights decay on their own. Any
   input-space signal (AGOP, F2) must mask zero-variance inputs, as B2 already does.

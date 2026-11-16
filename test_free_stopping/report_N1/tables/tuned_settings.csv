@@ -1,0 +1,73 @@
+lambda,app,split,family,setting
+0.03,modular,seeds,fixed_frac,fixed_frac c=1.0
+0.03,modular,seeds,n1_abs,N1 abs fixed c=0.1 norm=none eps=0.003
+0.03,modular,seeds,n1_shrink,N1 shrink fixed c=0.1 norm=none eps=0.01
+0.03,modular,seeds,N1 best,N1 abs fixed c=0.1 norm=none eps=0.003
+0.03,modular,operation,fixed_frac,fixed_frac c=1.0
+0.03,modular,operation,n1_abs,N1 abs fixed c=0.1 norm=none eps=0.003
+0.03,modular,operation,n1_shrink,N1 shrink fixed c=0.1 norm=none eps=0.01
+0.03,modular,operation,N1 best,N1 abs fixed c=0.1 norm=none eps=0.003
+0.03,mnist,seeds,fixed_frac,fixed_frac c=0.4
+0.03,mnist,seeds,n1_abs,N1 abs fixed c=0.1 norm=none eps=0.1
+0.03,mnist,seeds,n1_shrink,N1 shrink fixed c=0.1 norm=none eps=0.1
+0.03,mnist,seeds,N1 best,N1 shrink fixed c=0.1 norm=none eps=0.1
+0.03,mnist,depth,fixed_frac,fixed_frac c=0.4
+0.03,mnist,depth,n1_abs,N1 abs fixed c=0.05 norm=none eps=0.03
+0.03,mnist,depth,n1_shrink,N1 shrink fixed c=0.05 norm=none eps=0.03
+0.03,mnist,depth,N1 best,N1 shrink fixed c=0.05 norm=none eps=0.03
+0.03,teacher_student,seeds,fixed_frac,fixed_frac c=1.0
+0.03,teacher_student,seeds,n1_abs,N1 abs fixed c=0.1 norm=decay eps=0.01
+0.03,teacher_student,seeds,n1_shrink,N1 shrink fixed c=0.1 norm=decay eps=0.01
+0.03,teacher_student,seeds,N1 best,N1 abs fixed c=0.1 norm=decay eps=0.01
+0.03,teacher_student,size,fixed_frac,fixed_frac c=0.7
+0.03,teacher_student,size,n1_abs,N1 abs fixed c=0.1 norm=decay eps=0.03
+0.03,teacher_student,size,n1_shrink,N1 shrink fixed c=0.1 norm=decay eps=0.1
+0.03,teacher_student,size,N1 best,N1 abs fixed c=0.1 norm=decay eps=0.03
+0.1,modular,seeds,fixed_frac,fixed_frac c=0.5
+0.1,modular,seeds,n1_abs,N1 abs fixed c=0.05 norm=none eps=0.003
+0.1,modular,seeds,n1_shrink,N1 shrink fixed c=0.1 norm=none eps=0.01
+0.1,modular,seeds,N1 best,N1 abs fixed c=0.05 norm=none eps=0.003
+0.1,modular,operation,fixed_frac,fixed_frac c=0.4
+0.1,modular,operation,n1_abs,N1 abs fixed c=0.1 norm=none eps=0.003
+0.1,modular,operation,n1_shrink,N1 shrink fixed c=0.1 norm=none eps=0.01
+0.1,modular,operation,N1 best,N1 abs fixed c=0.1 norm=none eps=0.003
+0.1,mnist,seeds,fixed_frac,fixed_frac c=0.4
+0.1,mnist,seeds,n1_abs,N1 abs fixed c=0.1 norm=none eps=0.1
+0.1,mnist,seeds,n1_shrink,N1 shrink fixed c=0.1 norm=none eps=0.1
+0.1,mnist,seeds,N1 best,N1 shrink fixed c=0.1 norm=none eps=0.1
+0.1,mnist,depth,fixed_frac,fixed_frac c=0.4
+0.1,mnist,depth,n1_abs,N1 abs fixed c=0.05 norm=none eps=0.1
+0.1,mnist,depth,n1_shrink,N1 shrink fixed c=0.01 norm=decay eps=0.3
+0.1,mnist,depth,N1 best,N1 shrink fixed c=0.01 norm=decay eps=0.3
+0.1,teacher_student,seeds,fixed_frac,fixed_frac c=0.5
+0.1,teacher_student,seeds,n1_abs,N1 abs fixed c=0.1 norm=decay eps=0.03
+0.1,teacher_student,seeds,n1_shrink,N1 shrink fixed c=0.1 norm=decay eps=0.01
+0.1,teacher_student,seeds,N1 best,N1 abs fixed c=0.1 norm=decay eps=0.03
+0.1,teacher_student,size,fixed_frac,fixed_frac c=0.5
+0.1,teacher_student,size,n1_abs,N1 abs fixed c=0.1 norm=decay eps=0.1
+0.1,teacher_student,size,n1_shrink,N1 shrink fixed c=0.1 norm=decay eps=0.3
+0.1,teacher_student,size,N1 best,N1 abs fixed c=0.1 norm=decay eps=0.1
+0.3,modular,seeds,fixed_frac,fixed_frac c=0.5
+0.3,modular,seeds,n1_abs,N1 abs fixed c=0.02 norm=none eps=0.003
+0.3,modular,seeds,n1_shrink,N1 shrink fixed c=0.1 norm=none eps=0.01
+0.3,modular,seeds,N1 best,N1 abs fixed c=0.02 norm=none eps=0.003
+0.3,modular,operation,fixed_frac,fixed_frac c=0.4
+0.3,modular,operation,n1_abs,N1 abs fixed c=0.01 norm=none eps=0.001
+0.3,modular,operation,n1_shrink,N1 shrink fixed c=0.1 norm=none eps=0.01
+0.3,modular,operation,N1 best,N1 abs fixed c=0.01 norm=none eps=0.001
+0.3,mnist,seeds,fixed_frac,fixed_frac c=0.3
+0.3,mnist,seeds,n1_abs,N1 abs fixed c=0.1 norm=decay eps=1.0
+0.3,mnist,seeds,n1_shrink,N1 shrink fixed c=0.1 norm=decay eps=1.0
+0.3,mnist,seeds,N1 best,N1 shrink fixed c=0.1 norm=decay eps=1.0
+0.3,mnist,depth,fixed_frac,fixed_frac c=0.3
+0.3,mnist,depth,n1_abs,N1 abs fixed c=0.05 norm=none eps=0.1
+0.3,mnist,depth,n1_shrink,N1 shrink fixed c=0.05 norm=none eps=0.1
+0.3,mnist,depth,N1 best,N1 shrink fixed c=0.05 norm=none eps=0.1
+0.3,teacher_student,seeds,fixed_frac,fixed_frac c=0.2
+0.3,teacher_student,seeds,n1_abs,N1 abs fixed c=0.1 norm=decay eps=0.3
+0.3,teacher_student,seeds,n1_shrink,N1 shrink fixed c=0.1 norm=none eps=0.1
+0.3,teacher_student,seeds,N1 best,N1 abs fixed c=0.1 norm=decay eps=0.3
+0.3,teacher_student,size,fixed_frac,fixed_frac c=0.2
+0.3,teacher_student,size,n1_abs,N1 abs fixed c=0.1 norm=decay eps=0.3
+0.3,teacher_student,size,n1_shrink,N1 shrink fixed c=0.1 norm=none eps=0.1
+0.3,teacher_student,size,N1 best,N1 abs fixed c=0.1 norm=decay eps=0.3
