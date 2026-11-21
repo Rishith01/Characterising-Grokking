@@ -297,7 +297,7 @@ correlation traps). Outputs: HF `advay333/tfs:phase4/metrics_a/`. 320 runs (modu
 MNIST 64, the F2 study's runs; teacher-student 96), no replay, 320/320 ok. Same protocol as
 the F2 study; teacher-student Test B is N 50, 100 -> 400. Rules are checked every 500 steps.
 
-**Decision grid caveat.** The F2 study checked at 223 log/uniform points: its first check
+**Decision grid caveat** (*superseded in part 2026-11-16: the main cause is patience, not the grid; see "Re-score on the F2 grid" below*). The F2 study checked at 223 log/uniform points: its first check
 after 40% of the budget was step 41,600, here 40,000. Many x*y, x/y grokkers jump in
 between, so "stop at 40%" scores 0.090 there and 0.126 here. Compare within a study only;
 check wins against every fixed fraction (`tables/vs_every_fixed_fraction.csv`).
@@ -322,3 +322,61 @@ check wins against every fixed fraction (`tables/vs_every_fixed_fraction.csv`).
 - MNIST ties on both tests (0.036 vs 0.034; 0.060 vs 0.039), the only tuned rule so far not
   worse on d8; needs the guard against the early rank rise.
 - Teacher-student: the rank stays ~5 (5-dim inputs), R1 rarely fires; ties.
+
+## Re-score on the F2 grid (2026-11-16; OPEN, reports and SUMMARY.md not yet corrected)
+
+The user asked to re-score N1 and R1 at the F2 study's 223 check points per run so all three
+metrics share one table, and to hold off correcting the reports. Scripts:
+`scripts/rescore_f2grid.py`, `scripts/compare_f2grid.py` (hard-coded input paths; inputs are
+HF `phase4/metrics_a` traces/curves/selection.csv and HF `phase4/agop_final` series.parquet and
+rows.parquet). Method: each run's F2 step grid; N1 from its 50-step telemetry as in study A;
+R1's smoothed rank and guard computed on the 500-step summary grid and read causally (last
+recording <= t); fixed fraction with patience 3 as in the F2 study. Modular and MNIST only (F2
+has no teacher-student). **Validation:** fixed fraction, never stop and perfect stop reproduce
+the F2 study's costs exactly (2,688 run x rule costs, zero difference).
+
+**1. The cause of the 40% discrepancy is patience.** The F2 study applied the 3-check patience
+to the fixed fraction too, so "stop at 40%" fired at 40,250 -> 40,950 -> 41,600. Study A applied
+none (step 40,000). Modular new ops, held-out cost lambda 0.1 by fraction (study A / F2 study):
+30% 0.319 / 0.296; 40% 0.125 (0.126 in the report tables, rounding) / 0.090; 50% 0.070 / 0.046;
+70% 0.080 / 0.114. A cliff between 30% and 50% of the budget, where x*y, x/y grokkers jump.
+Both cut off the same 16 of 31 grokkers; the score difference is accuracy gained by the stop.
+
+**2. R1's "clearly better on modular new ops" does not survive.** Study-A stops against the
+fixed fraction as stopped in the F2 study, paired: R1 0.065 vs 0.090, -0.026 [-0.066, +0.011]
+tie; N1 0.082 vs 0.090, -0.009 [-0.052, +0.033] tie. R1 still cuts off 0 of 31 grokkers.
+
+**3. N1 is grid-robust; R1 cannot be scored fairly on F2's grid.** Same study-A tuned settings,
+500-step grid -> F2 grid: N1 modular 0.052 -> 0.046, 0.082 -> 0.081; MNIST 0.043 -> 0.044, d8
+0.228 -> 0.251. R1 unchanged except modular new ops 0.065 -> 0.148 (grokkers cut 0 -> 5) and
+seeds 0.103 -> 0.110. Cause: R1's data arrives every 500 steps but F2's grid checks up to 3 times
+between recordings early on, so "3 checks in a row" can rest on 1-2 measurements (e.g. stops at
+2,850 on runs with t_eps ~48k). Fair R1 scoring on that grid needs patience counted in
+recordings.
+
+**4. One grid, lambda 0.1, re-tuned picks (score; verdict vs tuned fixed fraction):**
+
+| Test | Fixed | F2 | N1 | R1 |
+|---|---|---|---|---|
+| Modular, new seeds | 0.076 | 0.073 tie | 0.080 tie | 0.088 tie |
+| Modular, new ops | 0.090 | 0.086 tie | 0.093 tie | 0.148 tie (patience artifact) |
+| MNIST, new seeds | 0.034 | 0.070 worse | 0.044 tie | 0.041 tie |
+| MNIST, d8 | 0.039 | 0.119 worse | 0.251 worse | 0.058 tie |
+
+Pairwise (paired cluster bootstrap): no differences on modular except R1 - N1 +0.008 [+0.002,
++0.015] on new seeds; on d8 R1 beats F2 (-0.061 [-0.076, -0.042]) and N1 (-0.193 [-0.385,
+-0.048]); at lambda 0.3 N1 and R1 both beat F2 on MNIST. Grokkers cut off, modular new seeds /
+new ops: F2 0/30, 1/31; N1 0/30, 0/31; R1 0/30, 5/31; fixed 3/30, 16/31.
+
+**5. Budget-free lags** (f*t only, study A grid, lambda 0.1): N1 0.083 / 0.088 on modular (ties;
+never stops on 44-47% of runs), MNIST seeds 0.102, worse (+0.068 [0.019, 0.126]); R1 0.104 /
+0.097 (ties), MNIST seeds 0.066, worse (+0.033 [0.006, 0.063]). The best modular rules use a
+lag tied to the budget (window length, not stop time).
+
+**6. Duplicate setting:** one modular x+y gamma = 0 setting is in the selection as both AdamW
+and Adam+L2 (identical runs): 1 of 40 modular settings.
+
+**Statements known to be wrong, not yet corrected (user's call):** SUMMARY.md §0 point 4, §5
+(R1 "better"), §6 point 10 and §7 Q4, Q9 (grid as the cause); report_R1 "clearly better" on new
+ops (one-paragraph summary, 9.1 table, 9.2, conclusion 1); the "Comparing with the F2 report"
+grid paragraphs in report_N1 9.3 and report_R1 9.2; this file's Study A caveat above.

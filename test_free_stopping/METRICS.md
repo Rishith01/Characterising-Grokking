@@ -548,7 +548,9 @@ is amplified per coordinate by the preconditioner.
    below), or self-normalize by weight motion, or by lr_eff·γ·Δ. Sub-choices for R̂:
    G^{1/2} or G; lags proportional to t.
 4. **S1b on full-batch tasks:** MNIST only, or a nominal batch size. Also **S1b on
-   AdamW** (S1b caveats): keep g + γw, or use the step-based residual.
+   AdamW** (S1b caveats): keep g + γw, or use the step-based residual. **2026-11-16:** see
+   THEORY.md §5b: the correct AdamW null (Option A) ≈ B2 and has no power on the plateau;
+   proposed instead a windowed ρ* t-test (Option B).
 5. **γ = 0 fallback** for S1 (normalize by ‖g‖ or ‖Δw‖).
 6. **Layer aggregation** for S1, S1b, R1 and B5 (all parameters, max over layers, or a
    single layer).

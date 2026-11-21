@@ -331,6 +331,31 @@ already has (use it on MNIST only).
 
 ---
 
+### 5b. Addendum (2026-11-16): the AdamW null has no power on the plateau
+
+*Reasoning with back-of-envelope numbers; untested; not decided by the user.*
+
+- **Option A (the null above) is essentially B2.** z*_k ≈ −γw_k ≈ −0.004 per coordinate, so on
+  the grokking plateau (g ≈ noise, norm shrinking at the decay rate) the deviation from AdamW's
+  fixed point is ~0.004 standard errors per coordinate. In the coordinate-wise χ² statistic
+  the plateau adds Σ(γw_k)² = γ²‖w‖² ≈ 0.04 (MNIST d3: γ 0.01, ‖w‖ 20) against noise √(2P) ≈
+  630. Per step, the AdamW plateau is indistinguishable from convergence: Option A is expected
+  to fire on the plateau, like B2 under SGD.
+- **Option B (recommended): test the radial drift over a window.** The decay acts along ŵ.
+  Projected there, its pull is γ‖w‖ ≈ 0.2 per step (units of lr) against O(1) noise in ⟨u, ŵ⟩,
+  so it becomes significant within a few thousand steps (momentum-correlated). The statistic
+  is ρ* (§2.2; for AdamW D = lr·γ·‖w‖² exactly; the ½‖Δw‖² term is required), with a
+  batch-means t-test of its window mean = 0 (SASA, Lang et al. 2019). Telemetry only, no
+  replay; the same formula serves SGD and SGD+m.
+- **Caveat:** ρ* is N1's rate in decay units (§2.4), so Option B is a calibrated,
+  optimizer-normalized N1, not a new signal. It inherits N1's limits (blind to rotation,
+  undefined at γ = 0, late on MNIST).
+- **Proposed study B:** B2 (MNIST; nominal-batch variant on full-batch tasks); S1b on g + γw
+  for SGD, SGD+m, Adam+L2; AdamW with both Option A and Option B; B5 traps (replay). Free
+  checks first: (1) B2's EB at the end of the pilot's AdamW runs (prediction → 0 where the norm
+  has settled); (2) ρ* on study A telemetry (prediction ≈ 1 on the plateau, ≈ 0 after the jump),
+  which also shows whether Option B adds anything over N1.
+
 ## 6. N1 and R1
 
 - **N1**: the norm is optimizer-agnostic. Keep it as the free reference; ρ* is its

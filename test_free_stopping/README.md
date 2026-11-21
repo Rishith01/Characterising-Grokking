@@ -28,7 +28,8 @@ why) and [DESIGN.md](DESIGN.md) (how the code works). Metric definitions are in
   see [report_AGOP/REPORT.md](report_AGOP/REPORT.md). Verdict: on modular, F2 halves the
   cost of training to the end and never cuts off a grokker, but only ties a tuned fixed
   fraction of the budget; on MNIST it loses to the fixed fraction, and even an oracle
-  that knows the final AGOP does not help. S1 and S1b remain unbuilt. The theory review of the metric set is in [THEORY.md](THEORY.md).
+  that knows the final AGOP does not help. Study A (2026-11-16) tested N1 and R1 ([report_N1](report_N1/REPORT.md),
+  [report_R1](report_R1/REPORT.md)); B5, B2 and S1b come in study B. S1 and S1b remain unbuilt. The theory review of the metric set is in [THEORY.md](THEORY.md).
 - **Phases 5–6** (calibration, evaluation, write-up): not started.
 
 ## Local setup (development, CPU)

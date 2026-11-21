@@ -32,8 +32,11 @@ covers *what* we run and *in what order*. A new contributor should start with
     [results/phase4](results/phase4/RESULTS.md). F2 works on modular (ties a tuned
     budget fraction, safer on grokkers) and fails on MNIST; it is not carried into
     Phase 5 as a main signal unless the user decides otherwise.
-  - S1 and S1b are not built: they wait on the decisions in METRICS.md §6. The full
-    Phase 4 notebook and Phase 5 are not started.
+  - Study A (2026-11-16): N1, R1 (B5 pending) on 320 held-out runs; reports
+    `report_N1/`, `report_R1/`; summary for the supervisor in [SUMMARY.md](SUMMARY.md). Open:
+    the grid/patience issue (results/phase4, "Re-score on the F2 grid").
+  - S1 and S1b are not built: they wait on the decisions in METRICS.md §6 (AdamW: THEORY
+    §5b). Study B (B2, S1b, B5 traps) is next. The full Phase 4 notebook and Phase 5 are not started.
 - §5's metric list is being cut down to theory-backed signals. The proposed set is in
   §5, "Proposed reduced set", detailed in [METRICS.md](METRICS.md); the user has not
   confirmed it yet.

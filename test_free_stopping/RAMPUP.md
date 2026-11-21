@@ -1,7 +1,7 @@
 # Ramp-up: taking over `test_free_stopping`
 
 This is the starting point for a new agent (or person) picking up the project. Read this
-file, then the documents in §2. Updated 2026-11-15. **Phase 3 is done** (the full
+file, then the documents in §2. Updated 2026-11-16. **Phase 3 is done** (the full
 1,664-run corpus is on HF). **Phase 4 is in progress**: the signal package is built and
 piloted on MNIST; **F2 (AGOP settling) has been studied and closed** (report_AGOP/);
 S1 and S1b still wait on the user's metric decisions.
@@ -122,7 +122,7 @@ the exact claim or arXiv number):
 
 ---
 
-## 4. Current state (2026-11-15)
+## 4. Current state (2026-11-16)
 
 | Phase | Status |
 |---|---|
@@ -150,6 +150,15 @@ the exact claim or arXiv number):
    B5's report waits for study B (traps). Summary: results/phase4/RESULTS.md, last section.
    Next after that, study B: B2, S1b (optimizer-specific null: g + γw for SGD, SGD+m,
    Adam+L2; THEORY §5 for AdamW) and B5's correlation traps, which need one replay pass.
+   **AdamW (2026-11-16, THEORY §5b, not decided):** the correct null ≈ B2 and has no power on
+   the plateau; proposed a windowed ρ* t-test instead (a calibrated N1). Two free checks first.
+   **Open, user will return to it: the grid/patience issue** (results/phase4/RESULTS.md,
+   "Re-score on the F2 grid"). R1's "clearly better on new ops" is a tie once the fixed
+   fraction gets the F2 study's patience; R1 is not fairly scorable on F2's grid. SUMMARY.md and
+   the N1/R1 reports still carry the old statements (listed there); do not correct them until
+   the user says so. Scripts: `scripts/rescore_f2grid.py`, `scripts/compare_f2grid.py`.
+   Also 2026-11-16: [SUMMARY.md](SUMMARY.md) written for the supervisor (all results + expected
+   questions); the three reports' seed labels fixed to 0–1 / 2–3; README links SUMMARY.md.
    Build S1b under `stopping/signals/` (DESIGN §13.8), with tests.
 3. Pilot them: rerun `molab/phase4_pilot.py` with the new signals on MNIST, and add
    teacher–student and modular pilots (the notebook has a `DATASET` constant).
@@ -280,7 +289,9 @@ These are the load-bearing design rules. Each one has a test.
   (dense eval grids dominate); interpolate each run, then take the median.
 - **Bootstrap over settings, paired for comparisons.** Seeds of a setting are not
   independent; overlapping score CIs do not mean a tie, the paired CI decides.
-- **Decision grids differ between studies.** Study A checks rules every 500 steps, the F2
+- **Decision grids differ between studies** (*superseded in part 2026-11-16: the main cause
+  is that the F2 study applied 3-check patience to the fixed fraction; also, a signal recorded
+  every 500 steps must not be checked more often, or patience weakens; see RESULTS*). Study A checks rules every 500 steps, the F2
   study at 223 log/uniform points. The fixed fraction at 40% stops at step 40,000 vs 41,600,
   and many x*y, x/y grokkers jump in between: its Test-B score is 0.126 vs 0.090. Compare
   rules only within a study, and check wins against every fixed fraction, not just the tuned one.
@@ -295,7 +306,7 @@ These are the load-bearing design rules. Each one has a test.
 - **Machine:** Windows 11, Python 3.13. Git Bash (POSIX syntax) and PowerShell. Work
   from `BTP/test_free_stopping/`.
 - **Local venv:** `.venv` (CPU-only torch). Run everything with `.venv/Scripts/python.exe`.
-  Tests: `.venv/Scripts/python.exe -m pytest -q` (123 tests, a few minutes). Lint
+  Tests: `.venv/Scripts/python.exe -m pytest -q` (156 tests, a few minutes). Lint
   notebooks with `.venv/Scripts/marimo.exe check molab/<file>.py`.
 - **No MNIST locally.** Tests use synthetic IDX files.
 - **Molab:** NVIDIA RTX PRO 6000 Blackwell (96 GB), 20 CPUs, sessions up to 12 h, files do

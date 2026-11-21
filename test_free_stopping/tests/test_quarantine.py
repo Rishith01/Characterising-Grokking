@@ -8,6 +8,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 TFS = ROOT / "tfs"
 STOPPING = ROOT / "stopping"
+TRAJECTORY = ROOT / "trajectory"  # Phase 5: extraction and quantities never read test data
 # stopping/: everything except the evaluation-side modules heldout.py (B6, the one
 # reader of test data), pilot.py (plots against test curves) and agop_study.py (scores
 # the F2 experiment's stops against test curves).
@@ -15,7 +16,7 @@ STOPPING_EXEMPT = {STOPPING / "heldout.py", STOPPING / "pilot.py", STOPPING / "a
                    STOPPING / "agop_final.py"}
 GUARDED = [TFS / "causal", TFS / "storage" / "reader.py",
            TFS / "training" / "replay.py", TFS / "training" / "recorder.py", TFS / "training" / "loop.py",
-           STOPPING]
+           STOPPING, TRAJECTORY]
 
 
 def _modules():
